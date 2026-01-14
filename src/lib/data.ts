@@ -1,0 +1,614 @@
+// Sample data for Dialogue MVP
+
+export interface Episode {
+  id: string;
+  title: string;
+  playlistId: string;
+  duration: number; // in seconds
+  speaker: string;
+  speakerRole?: string;
+  date: string;
+  takeaways: string[];
+  tags: string[];
+  plays?: number;
+  completion?: number;
+  progress?: number; // 0-100 for continue listening
+}
+
+export interface Playlist {
+  id: string;
+  title: string;
+  description: string;
+  episodeCount: number;
+  totalMinutes: number;
+  category: 'essentials' | 'accounts' | 'competitive' | 'skills' | 'news' | 'wins' | 'team';
+  icon: string;
+  episodes: Episode[];
+}
+
+export const playlists: Playlist[] = [
+  {
+    id: 'this-week',
+    title: "This Week's Essentials",
+    description: "Your curated briefings for the week. Everything you need in 15 minutes.",
+    episodeCount: 5,
+    totalMinutes: 15,
+    category: 'essentials',
+    icon: 'star',
+    episodes: [
+      {
+        id: 'tw-1',
+        title: 'Q1 Priority: Manufacturing Cloud Push',
+        playlistId: 'this-week',
+        duration: 180,
+        speaker: 'Sarah Chen',
+        speakerRole: 'VP Sales',
+        date: '2026-01-13',
+        takeaways: [
+          'Manufacturing cloud deals up 40% in pipeline',
+          'Focus on supply chain visibility messaging',
+          'New case study from Acme Corp available',
+        ],
+        tags: ['manufacturing', 'cloud', 'q1-priority'],
+        plays: 142,
+      },
+      {
+        id: 'tw-2',
+        title: 'Competitor Update: TechCorp Price Drop',
+        playlistId: 'this-week',
+        duration: 120,
+        speaker: 'Michael Torres',
+        speakerRole: 'Competitive Intel',
+        date: '2026-01-12',
+        takeaways: [
+          'TechCorp reduced enterprise tier by 15%',
+          'Position on total cost of ownership',
+          'Highlight our implementation speed advantage',
+        ],
+        tags: ['competitive', 'techcorp', 'pricing'],
+        plays: 98,
+      },
+      {
+        id: 'tw-3',
+        title: 'Objection: "We Have In-House Teams"',
+        playlistId: 'this-week',
+        duration: 150,
+        speaker: 'Lisa Park',
+        speakerRole: 'Sales Enablement',
+        date: '2026-01-11',
+        takeaways: [
+          'Acknowledge their team\'s expertise first',
+          'Focus on augmentation, not replacement',
+          'Share hybrid model success stories',
+        ],
+        tags: ['objection', 'in-house', 'talk-track'],
+        plays: 234,
+      },
+      {
+        id: 'tw-4',
+        title: 'Account Briefing: First National Bank',
+        playlistId: 'this-week',
+        duration: 240,
+        speaker: 'James Wilson',
+        speakerRole: 'Account Director',
+        date: '2026-01-10',
+        takeaways: [
+          'CTO transition happening in Q2',
+          'Digital transformation budget approved',
+          'Risk and compliance top priorities',
+        ],
+        tags: ['account', 'financial-services', 'first-national'],
+        plays: 67,
+      },
+      {
+        id: 'tw-5',
+        title: 'Win Wire: GlobalMfg $2.5M Deal',
+        playlistId: 'this-week',
+        duration: 210,
+        speaker: 'David Kim',
+        speakerRole: 'Senior AE',
+        date: '2026-01-09',
+        takeaways: [
+          'Champion was VP of Operations',
+          'Triggered by supply chain disruption',
+          'Beat TechCorp on implementation timeline',
+        ],
+        tags: ['win', 'manufacturing', 'globalmfg'],
+        plays: 156,
+      },
+    ],
+  },
+  {
+    id: 'top-accounts',
+    title: 'Top Accounts',
+    description: 'Deep dives on your priority accounts. Updated weekly.',
+    episodeCount: 5,
+    totalMinutes: 25,
+    category: 'accounts',
+    icon: 'building',
+    episodes: [
+      {
+        id: 'ta-1',
+        title: 'Account Briefing: First National Bank',
+        playlistId: 'top-accounts',
+        duration: 300,
+        speaker: 'James Wilson',
+        speakerRole: 'Account Director',
+        date: '2026-01-10',
+        takeaways: [
+          'CTO transition happening in Q2',
+          'Digital transformation budget approved',
+          'Risk and compliance top priorities',
+          'Key stakeholder: Maria Santos (CIO)',
+          'Competitor presence: Oracle legacy systems',
+        ],
+        tags: ['account', 'financial-services', 'first-national'],
+        plays: 89,
+      },
+      {
+        id: 'ta-2',
+        title: 'Account Briefing: Precision Motors',
+        playlistId: 'top-accounts',
+        duration: 280,
+        speaker: 'Amy Rodriguez',
+        speakerRole: 'Account Director',
+        date: '2026-01-08',
+        takeaways: [
+          'EV transition driving IT modernization',
+          'Looking to consolidate vendors',
+          'Previous bad experience with offshore teams',
+        ],
+        tags: ['account', 'manufacturing', 'automotive'],
+        plays: 72,
+      },
+      {
+        id: 'ta-3',
+        title: 'Account Briefing: Metro Health Systems',
+        playlistId: 'top-accounts',
+        duration: 320,
+        speaker: 'Robert Chang',
+        speakerRole: 'Healthcare Lead',
+        date: '2026-01-06',
+        takeaways: [
+          'HIPAA compliance non-negotiable',
+          'Integration with Epic EHR required',
+          'Budget cycle ends March 31',
+        ],
+        tags: ['account', 'healthcare', 'metro-health'],
+        plays: 45,
+      },
+      {
+        id: 'ta-4',
+        title: 'Account Briefing: Continental Foods',
+        playlistId: 'top-accounts',
+        duration: 260,
+        speaker: 'Jennifer Lee',
+        speakerRole: 'CPG Lead',
+        date: '2026-01-04',
+        takeaways: [
+          'Supply chain visibility top priority',
+          'SAP environment, seeking integration partner',
+          'Sustainability reporting requirements',
+        ],
+        tags: ['account', 'manufacturing', 'cpg'],
+        plays: 38,
+      },
+      {
+        id: 'ta-5',
+        title: 'Account Briefing: Summit Insurance',
+        playlistId: 'top-accounts',
+        duration: 290,
+        speaker: 'Mark Thompson',
+        speakerRole: 'FSI Lead',
+        date: '2026-01-02',
+        takeaways: [
+          'Claims processing modernization initiative',
+          'Cloud-first mandate from new CEO',
+          'Incumbent: Infosys',
+        ],
+        tags: ['account', 'financial-services', 'insurance'],
+        plays: 52,
+      },
+    ],
+  },
+  {
+    id: 'competitive',
+    title: 'Competitive Radar',
+    description: 'Weekly intel on what competitors are doing.',
+    episodeCount: 4,
+    totalMinutes: 12,
+    category: 'competitive',
+    icon: 'radar',
+    episodes: [
+      {
+        id: 'cr-1',
+        title: 'TechCorp: New Pricing & Packaging',
+        playlistId: 'competitive',
+        duration: 180,
+        speaker: 'Michael Torres',
+        speakerRole: 'Competitive Intel',
+        date: '2026-01-12',
+        takeaways: [
+          'Enterprise tier reduced 15%',
+          'Bundling support into base price',
+          'Positioning against their hidden costs',
+        ],
+        tags: ['competitive', 'techcorp', 'pricing'],
+        plays: 187,
+      },
+      {
+        id: 'cr-2',
+        title: 'GlobalServ Manufacturing Push',
+        playlistId: 'competitive',
+        duration: 150,
+        speaker: 'Michael Torres',
+        speakerRole: 'Competitive Intel',
+        date: '2026-01-05',
+        takeaways: [
+          'Launched industry-specific practice',
+          'Hired 3 former industry executives',
+          'Counter: our deeper technical bench',
+        ],
+        tags: ['competitive', 'globalserv', 'manufacturing'],
+        plays: 134,
+      },
+      {
+        id: 'cr-3',
+        title: 'Accenture: FSI Market Moves',
+        playlistId: 'competitive',
+        duration: 200,
+        speaker: 'Sarah Mitchell',
+        speakerRole: 'Competitive Intel',
+        date: '2025-12-28',
+        takeaways: [
+          'Won two major bank deals in Q4',
+          'Emphasizing regulatory expertise',
+          'Our angle: speed and agility advantage',
+        ],
+        tags: ['competitive', 'accenture', 'financial-services'],
+        plays: 98,
+      },
+      {
+        id: 'cr-4',
+        title: 'Wipro Cloud Partnership Announcement',
+        playlistId: 'competitive',
+        duration: 180,
+        speaker: 'Michael Torres',
+        speakerRole: 'Competitive Intel',
+        date: '2025-12-21',
+        takeaways: [
+          'Extended AWS partnership scope',
+          'Will bundle cloud credits',
+          'Position on multi-cloud flexibility',
+        ],
+        tags: ['competitive', 'wipro', 'cloud'],
+        plays: 76,
+      },
+    ],
+  },
+  {
+    id: 'objections',
+    title: 'Objection Handling',
+    description: 'Ready-to-use responses for common objections.',
+    episodeCount: 6,
+    totalMinutes: 18,
+    category: 'skills',
+    icon: 'message-circle',
+    episodes: [
+      {
+        id: 'oh-1',
+        title: '"We Have In-House Teams"',
+        playlistId: 'objections',
+        duration: 150,
+        speaker: 'Lisa Park',
+        speakerRole: 'Sales Enablement',
+        date: '2026-01-11',
+        takeaways: [
+          'Acknowledge their team\'s expertise first',
+          'Focus on augmentation, not replacement',
+          'Share hybrid model success stories',
+        ],
+        tags: ['objection', 'in-house', 'talk-track'],
+        plays: 312,
+      },
+      {
+        id: 'oh-2',
+        title: '"Your Price Is Too High"',
+        playlistId: 'objections',
+        duration: 180,
+        speaker: 'Lisa Park',
+        speakerRole: 'Sales Enablement',
+        date: '2026-01-04',
+        takeaways: [
+          'Shift to total cost of ownership',
+          'Quantify risk of going cheaper',
+          'Reference implementation success rates',
+        ],
+        tags: ['objection', 'pricing', 'talk-track'],
+        plays: 445,
+      },
+      {
+        id: 'oh-3',
+        title: '"We\'re Happy with Current Vendor"',
+        playlistId: 'objections',
+        duration: 200,
+        speaker: 'Lisa Park',
+        speakerRole: 'Sales Enablement',
+        date: '2025-12-28',
+        takeaways: [
+          'Validate their current relationship',
+          'Introduce small proof-of-concept angle',
+          'Focus on gaps they might not see yet',
+        ],
+        tags: ['objection', 'incumbent', 'talk-track'],
+        plays: 267,
+      },
+      {
+        id: 'oh-4',
+        title: '"We Need to Think About It"',
+        playlistId: 'objections',
+        duration: 160,
+        speaker: 'Lisa Park',
+        speakerRole: 'Sales Enablement',
+        date: '2025-12-21',
+        takeaways: [
+          'Uncover the real hesitation',
+          'Offer specific next step options',
+          'Create urgency without pressure',
+        ],
+        tags: ['objection', 'stall', 'talk-track'],
+        plays: 389,
+      },
+      {
+        id: 'oh-5',
+        title: '"We Had a Bad Experience with IT Services"',
+        playlistId: 'objections',
+        duration: 190,
+        speaker: 'Lisa Park',
+        speakerRole: 'Sales Enablement',
+        date: '2025-12-14',
+        takeaways: [
+          'Show empathy, ask what went wrong',
+          'Explain our governance model',
+          'Offer references they can call',
+        ],
+        tags: ['objection', 'risk', 'talk-track'],
+        plays: 198,
+      },
+      {
+        id: 'oh-6',
+        title: '"The Timing Isn\'t Right"',
+        playlistId: 'objections',
+        duration: 170,
+        speaker: 'Lisa Park',
+        speakerRole: 'Sales Enablement',
+        date: '2025-12-07',
+        takeaways: [
+          'Understand their planning cycle',
+          'Offer to start discovery now',
+          'Position as preparation, not commitment',
+        ],
+        tags: ['objection', 'timing', 'talk-track'],
+        plays: 234,
+      },
+    ],
+  },
+  {
+    id: 'wins-references',
+    title: 'Wins & References',
+    description: 'Real stories from recent wins. Use in your pitches.',
+    episodeCount: 4,
+    totalMinutes: 14,
+    category: 'wins',
+    icon: 'trophy',
+    episodes: [
+      {
+        id: 'wr-1',
+        title: 'Win Wire: GlobalMfg $2.5M Deal',
+        playlistId: 'wins-references',
+        duration: 210,
+        speaker: 'David Kim',
+        speakerRole: 'Senior AE',
+        date: '2026-01-09',
+        takeaways: [
+          'Champion was VP of Operations',
+          'Triggered by supply chain disruption',
+          'Beat TechCorp on implementation timeline',
+          'Key proof point: 30% faster time-to-value',
+        ],
+        tags: ['win', 'manufacturing', 'globalmfg'],
+        plays: 198,
+      },
+      {
+        id: 'wr-2',
+        title: 'Win Wire: Regional Bank Digital Core',
+        playlistId: 'wins-references',
+        duration: 230,
+        speaker: 'Amanda Foster',
+        speakerRole: 'FSI AE',
+        date: '2025-12-30',
+        takeaways: [
+          'Regulatory expertise was differentiator',
+          'Started with compliance assessment',
+          'Expanded from $500K to $1.8M',
+        ],
+        tags: ['win', 'financial-services', 'expansion'],
+        plays: 156,
+      },
+      {
+        id: 'wr-3',
+        title: 'Win Wire: MedDevice Cloud Migration',
+        playlistId: 'wins-references',
+        duration: 200,
+        speaker: 'Chris Yang',
+        speakerRole: 'Healthcare AE',
+        date: '2025-12-18',
+        takeaways: [
+          'FDA compliance experience mattered',
+          'Reference from Metro Health helped',
+          'Multi-cloud strategy resonated',
+        ],
+        tags: ['win', 'healthcare', 'cloud'],
+        plays: 87,
+      },
+      {
+        id: 'wr-4',
+        title: 'Win Wire: AutoParts ERP Modernization',
+        playlistId: 'wins-references',
+        duration: 220,
+        speaker: 'Rachel Martinez',
+        speakerRole: 'Manufacturing AE',
+        date: '2025-12-10',
+        takeaways: [
+          'Displaced 10-year incumbent',
+          'Proof-of-concept strategy worked',
+          'Strong SAP integration story',
+        ],
+        tags: ['win', 'manufacturing', 'erp'],
+        plays: 134,
+      },
+    ],
+  },
+  {
+    id: 'industry-news',
+    title: 'Industry News',
+    description: 'External market trends and news relevant to your deals.',
+    episodeCount: 3,
+    totalMinutes: 9,
+    category: 'news',
+    icon: 'newspaper',
+    episodes: [
+      {
+        id: 'in-1',
+        title: 'Manufacturing: Supply Chain Outlook 2026',
+        playlistId: 'industry-news',
+        duration: 180,
+        speaker: 'Dr. Ellen Richards',
+        speakerRole: 'Industry Analyst',
+        date: '2026-01-10',
+        takeaways: [
+          'Nearshoring trend accelerating',
+          'Digital twin adoption growing 35% YoY',
+          'Sustainability reporting requirements expanding',
+        ],
+        tags: ['industry', 'manufacturing', 'trends'],
+        plays: 234,
+      },
+      {
+        id: 'in-2',
+        title: 'Banking: Regulatory Changes Coming',
+        playlistId: 'industry-news',
+        duration: 200,
+        speaker: 'Marcus Webb',
+        speakerRole: 'FSI Analyst',
+        date: '2026-01-06',
+        takeaways: [
+          'New data residency requirements',
+          'AI governance frameworks expected',
+          'Open banking API mandates expanding',
+        ],
+        tags: ['industry', 'financial-services', 'regulation'],
+        plays: 178,
+      },
+      {
+        id: 'in-3',
+        title: 'Insurance: Claims Automation Trends',
+        playlistId: 'industry-news',
+        duration: 160,
+        speaker: 'Karen Sullivan',
+        speakerRole: 'Insurance Lead',
+        date: '2025-12-28',
+        takeaways: [
+          'Straight-through processing targets rising',
+          'Customer experience driving investment',
+          'Legacy system replacement cycles shortening',
+        ],
+        tags: ['industry', 'insurance', 'automation'],
+        plays: 112,
+      },
+    ],
+  },
+  {
+    id: 'team-learnings',
+    title: 'Team Learnings – January 2026',
+    description: 'Insights shared by your teammates this month.',
+    episodeCount: 3,
+    totalMinutes: 8,
+    category: 'team',
+    icon: 'users',
+    episodes: [
+      {
+        id: 'tl-1',
+        title: 'How I Shortened Discovery by 40%',
+        playlistId: 'team-learnings',
+        duration: 150,
+        speaker: 'Marcus Johnson',
+        speakerRole: 'Senior AE',
+        date: '2026-01-08',
+        takeaways: [
+          'Pre-call research framework',
+          'Key questions to ask upfront',
+          'Templates you can reuse',
+        ],
+        tags: ['learning', 'discovery', 'process'],
+        plays: 287,
+      },
+      {
+        id: 'tl-2',
+        title: 'Multi-Threading Strategy That Works',
+        playlistId: 'team-learnings',
+        duration: 180,
+        speaker: 'Priya Sharma',
+        speakerRole: 'Enterprise AE',
+        date: '2026-01-05',
+        takeaways: [
+          'Mapping stakeholder interests',
+          'Timing your outreach right',
+          'LinkedIn tactics that don\'t feel salesy',
+        ],
+        tags: ['learning', 'stakeholders', 'strategy'],
+        plays: 312,
+      },
+      {
+        id: 'tl-3',
+        title: 'Reference Call Best Practices',
+        playlistId: 'team-learnings',
+        duration: 140,
+        speaker: 'Tom Bradley',
+        speakerRole: 'Mid-Market AE',
+        date: '2026-01-02',
+        takeaways: [
+          'Choosing the right reference',
+          'Prepping your reference effectively',
+          'Follow-up that closes deals',
+        ],
+        tags: ['learning', 'references', 'closing'],
+        plays: 198,
+      },
+    ],
+  },
+];
+
+export const allEpisodes = playlists.flatMap(p => p.episodes);
+
+export const trendingEpisodes = [
+  allEpisodes.find(e => e.id === 'oh-2')!,
+  allEpisodes.find(e => e.id === 'tl-2')!,
+  allEpisodes.find(e => e.id === 'in-1')!,
+];
+
+export const continueListening: Episode & { progress: number } = {
+  ...allEpisodes.find(e => e.id === 'ta-1')!,
+  progress: 65,
+};
+
+export function formatDuration(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+}
+
+export function formatMinutes(seconds: number): string {
+  const minutes = Math.ceil(seconds / 60);
+  return `${minutes} min`;
+}
