@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { 
   Star, Building2, Radar, MessageCircle, Trophy, 
-  Newspaper, Users, Briefcase 
+  Newspaper, Users, Briefcase, Calendar, UserCircle 
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Playlist } from '@/lib/data';
@@ -15,6 +15,8 @@ const iconMap = {
   newspaper: Newspaper,
   users: Users,
   briefcase: Briefcase,
+  calendar: Calendar,
+  'user-circle': UserCircle,
 };
 
 const categoryColors = {
@@ -25,6 +27,8 @@ const categoryColors = {
   news: 'from-emerald-500/20 to-emerald-500/5',
   wins: 'from-amber-500/20 to-amber-500/5',
   team: 'from-pink-500/20 to-pink-500/5',
+  events: 'from-cyan-500/20 to-cyan-500/5',
+  brand: 'from-violet-500/20 to-violet-500/5',
 };
 
 interface PlaylistCardProps {

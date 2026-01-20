@@ -77,7 +77,7 @@ export default function Home() {
         <section>
           <h2 className="font-semibold text-lg mb-3">Browse</h2>
           <div className="grid grid-cols-2 gap-3">
-            {otherPlaylists.slice(0, 6).map((playlist) => (
+            {otherPlaylists.slice(0, 8).map((playlist) => (
               <PlaylistCard 
                 key={playlist.id} 
                 playlist={playlist} 
