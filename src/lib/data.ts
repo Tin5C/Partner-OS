@@ -21,7 +21,7 @@ export interface Playlist {
   description: string;
   episodeCount: number;
   totalMinutes: number;
-  category: 'essentials' | 'accounts' | 'competitive' | 'skills' | 'news' | 'wins' | 'team' | 'events' | 'brand';
+  category: 'essentials' | 'accounts' | 'competitive' | 'skills' | 'news' | 'wins' | 'team' | 'events' | 'brand' | 'books';
   icon: string;
   episodes: Episode[];
 }
@@ -718,6 +718,97 @@ export const playlists: Playlist[] = [
         ],
         tags: ['brand', 'profile', 'linkedin'],
         plays: 156,
+      },
+    ],
+  },
+  {
+    id: 'book-briefings',
+    title: 'Book Briefings',
+    description: 'Self-improvement classics turned into quick audio briefings. Learn from the best books in minutes.',
+    episodeCount: 5,
+    totalMinutes: 25,
+    category: 'books',
+    icon: 'book-open',
+    episodes: [
+      {
+        id: 'bb-1',
+        title: 'Atomic Habits: Key Takeaways',
+        playlistId: 'book-briefings',
+        duration: 300,
+        speaker: 'Michael Torres',
+        speakerRole: 'Learning & Development',
+        date: '2026-01-15',
+        takeaways: [
+          '1% better every day compounds to 37x improvement',
+          'Focus on identity-based habits, not outcomes',
+          'Make good habits obvious, attractive, easy, and satisfying',
+        ],
+        tags: ['books', 'habits', 'productivity'],
+        plays: 523,
+      },
+      {
+        id: 'bb-2',
+        title: 'The Challenger Sale: Core Concepts',
+        playlistId: 'book-briefings',
+        duration: 320,
+        speaker: 'Sarah Chen',
+        speakerRole: 'VP Sales',
+        date: '2026-01-12',
+        takeaways: [
+          'Teach customers something new about their business',
+          'Tailor your message to the stakeholder',
+          'Take control of the sale with constructive tension',
+        ],
+        tags: ['books', 'sales', 'methodology'],
+        plays: 687,
+      },
+      {
+        id: 'bb-3',
+        title: 'Never Split the Difference: Negotiation',
+        playlistId: 'book-briefings',
+        duration: 280,
+        speaker: 'Lisa Park',
+        speakerRole: 'Sales Enablement',
+        date: '2026-01-10',
+        takeaways: [
+          'Use tactical empathy to understand their position',
+          'Label emotions to defuse tension',
+          'Calibrated questions give you control without confrontation',
+        ],
+        tags: ['books', 'negotiation', 'deals'],
+        plays: 445,
+      },
+      {
+        id: 'bb-4',
+        title: 'SPIN Selling Essentials',
+        playlistId: 'book-briefings',
+        duration: 290,
+        speaker: 'James Wilson',
+        speakerRole: 'Sales Director',
+        date: '2026-01-08',
+        takeaways: [
+          'Situation questions establish context',
+          'Problem questions uncover pain points',
+          'Implication and Need-payoff questions drive urgency',
+        ],
+        tags: ['books', 'sales', 'methodology'],
+        plays: 398,
+      },
+      {
+        id: 'bb-5',
+        title: 'Think Again: Rethinking for Sellers',
+        playlistId: 'book-briefings',
+        duration: 310,
+        speaker: 'Amanda Foster',
+        speakerRole: 'Senior AE',
+        date: '2026-01-05',
+        takeaways: [
+          'Stay curious—be a scientist, not a preacher',
+          'Embrace the joy of being wrong',
+          'Ask questions that make prospects think differently',
+        ],
+        tags: ['books', 'mindset', 'growth'],
+        plays: 312,
       },
     ],
   },
