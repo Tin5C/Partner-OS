@@ -58,7 +58,7 @@ export default {
         progress: "hsl(var(--progress))",
         success: "hsl(var(--success))",
         tag: {
-          DEFAULT: "hsl(var(--tag-bg))",
+          DEFAULT: "hsl(var(--tag))",
           foreground: "hsl(var(--tag-foreground))",
         },
         sidebar: {
