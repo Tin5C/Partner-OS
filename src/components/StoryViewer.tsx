@@ -157,6 +157,18 @@ export function StoryViewer({
 
         {/* Main content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-5">
+          {/* Hero image */}
+          {story.imageUrl && (
+            <div className="relative w-full aspect-video rounded-xl overflow-hidden">
+              <img 
+                src={story.imageUrl} 
+                alt={story.title}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+            </div>
+          )}
+
           {/* Title */}
           <h2 className="text-xl font-semibold leading-tight">{story.title}</h2>
 
