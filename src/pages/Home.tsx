@@ -5,6 +5,7 @@ import { AudioPlayer } from '@/components/AudioPlayer';
 import { FocusCardComponent } from '@/components/FocusCard';
 import { PreviewDrawer } from '@/components/PreviewDrawer';
 import { EpisodeRow } from '@/components/EpisodeRow';
+import { StoriesRail } from '@/components/StoriesRail';
 import { focusCards, FocusCard } from '@/lib/focusCards';
 import { continueListening } from '@/lib/data';
 import { usePlayer } from '@/contexts/PlayerContext';
@@ -24,6 +25,9 @@ export default function Home() {
       <Header showGreeting showSearch />
 
       <main className="px-4 space-y-6 stagger-children">
+        {/* Stories Rail - Today's Highlights */}
+        <StoriesRail />
+
         {/* Continue Listening */}
         {continueListening && !currentEpisode && (
           <section>
