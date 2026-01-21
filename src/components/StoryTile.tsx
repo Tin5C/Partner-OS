@@ -17,8 +17,7 @@ export function StoryTile({ story, listenedState, onClick }: StoryTileProps) {
     <button
       onClick={onClick}
       className={cn(
-        "group relative flex-shrink-0 w-36 h-44 rounded-xl",
-        "bg-gradient-to-br from-muted/80 to-muted/40",
+        "group relative flex-shrink-0 w-36 h-44 rounded-xl overflow-hidden",
         "border transition-all duration-200",
         "hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]",
         // Ring states based on listened state
@@ -27,16 +26,30 @@ export function StoryTile({ story, listenedState, onClick }: StoryTileProps) {
         listenedState === 'listened' && "border-primary ring-2 ring-primary/40"
       )}
     >
+      {/* Background image or gradient */}
+      {story.imageUrl ? (
+        <img 
+          src={story.imageUrl} 
+          alt={story.title}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-muted/80 to-muted/40" />
+      )}
+
+      {/* Gradient overlay for text readability */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+
       {/* Listened check indicator */}
       {listenedState === 'listened' && (
-        <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center z-10">
+        <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center z-10">
           <Check className="w-3 h-3 text-primary-foreground" />
         </div>
       )}
 
       {/* Play overlay on hover (desktop) */}
       {story.audioUrl && (
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-xl">
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30 z-10">
           <div className="w-10 h-10 rounded-full bg-primary/90 flex items-center justify-center">
             <Play className="w-5 h-5 text-primary-foreground ml-0.5" fill="currentColor" />
           </div>
@@ -44,10 +57,10 @@ export function StoryTile({ story, listenedState, onClick }: StoryTileProps) {
       )}
 
       {/* Content */}
-      <div className="flex flex-col h-full p-3 text-left">
+      <div className="relative flex flex-col h-full p-3 text-left z-[5]">
         {/* Type pill */}
         <span className={cn(
-          "self-start px-2 py-0.5 text-[10px] font-medium rounded-full border",
+          "self-start px-2 py-0.5 text-[10px] font-medium rounded-full border backdrop-blur-sm",
           storyTypeColors[story.type]
         )}>
           {storyTypeLabels[story.type]}
@@ -57,7 +70,7 @@ export function StoryTile({ story, listenedState, onClick }: StoryTileProps) {
         <div className="flex-1" />
 
         {/* Title */}
-        <p className="text-sm font-medium leading-tight line-clamp-3 text-foreground">
+        <p className="text-sm font-medium leading-tight line-clamp-3 text-white drop-shadow-md">
           {truncatedTitle}
         </p>
       </div>

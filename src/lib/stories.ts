@@ -1,3 +1,15 @@
+// Image imports
+import startupVisionQa from '@/assets/stories/startup-vision-qa.jpg';
+import startupEnergy from '@/assets/stories/startup-energy.jpg';
+import startupMaintenance from '@/assets/stories/startup-maintenance.jpg';
+import expertExecution from '@/assets/stories/expert-execution.jpg';
+import expertRoi from '@/assets/stories/expert-roi.jpg';
+import competitorSovereignty from '@/assets/stories/competitor-sovereignty.jpg';
+import competitorPackaging from '@/assets/stories/competitor-packaging.jpg';
+import eventAutomation from '@/assets/stories/event-automation.jpg';
+import eventWebinar from '@/assets/stories/event-webinar.jpg';
+import leadsCost from '@/assets/stories/leads-cost.jpg';
+
 export type StoryType = "startup" | "expert" | "competitor" | "event" | "leads";
 export type ListenedState = "unseen" | "seen" | "listened";
 
@@ -16,6 +28,7 @@ export interface StoryItem {
   relatedEpisodeId?: string;
   relatedPlaylistId?: string;
   publishedAt?: string;
+  imageUrl?: string; // Story thumbnail image
 }
 
 // Seed stories for demo/testing
@@ -37,7 +50,8 @@ export const stories: StoryItem[] = [
     durationSec: 20,
     tags: ["Manufacturing", "Quality"],
     relatedEpisodeId: "ep-industry-news-manufacturing",
-    publishedAt: "2026-01-10"
+    publishedAt: "2026-01-10",
+    imageUrl: startupVisionQa
   },
   {
     id: "story-002",
@@ -56,7 +70,8 @@ export const stories: StoryItem[] = [
     durationSec: 22,
     tags: ["Manufacturing", "Energy"],
     relatedEpisodeId: "ep-industry-news-manufacturing",
-    publishedAt: "2026-01-10"
+    publishedAt: "2026-01-10",
+    imageUrl: startupEnergy
   },
   {
     id: "story-003",
@@ -75,7 +90,8 @@ export const stories: StoryItem[] = [
     durationSec: 18,
     tags: ["Manufacturing", "Maintenance"],
     relatedEpisodeId: "ep-industry-news-manufacturing",
-    publishedAt: "2026-01-10"
+    publishedAt: "2026-01-10",
+    imageUrl: startupMaintenance
   },
   {
     id: "story-004",
@@ -94,7 +110,8 @@ export const stories: StoryItem[] = [
     durationSec: 20,
     tags: ["Manufacturing", "Ops"],
     relatedEpisodeId: "ep-industry-news-manufacturing",
-    publishedAt: "2026-01-10"
+    publishedAt: "2026-01-10",
+    imageUrl: expertExecution
   },
   {
     id: "story-005",
@@ -113,7 +130,8 @@ export const stories: StoryItem[] = [
     durationSec: 24,
     tags: ["Manufacturing", "Value"],
     relatedEpisodeId: "ep-competitive-radar",
-    publishedAt: "2026-01-10"
+    publishedAt: "2026-01-10",
+    imageUrl: expertRoi
   },
   {
     id: "story-006",
@@ -132,7 +150,8 @@ export const stories: StoryItem[] = [
     durationSec: 22,
     tags: ["Security", "Procurement"],
     relatedEpisodeId: "ep-competitive-radar",
-    publishedAt: "2026-01-10"
+    publishedAt: "2026-01-10",
+    imageUrl: competitorSovereignty
   },
   {
     id: "story-007",
@@ -151,7 +170,8 @@ export const stories: StoryItem[] = [
     durationSec: 18,
     tags: ["Commercial", "Platform"],
     relatedEpisodeId: "ep-competitive-radar",
-    publishedAt: "2026-01-10"
+    publishedAt: "2026-01-10",
+    imageUrl: competitorPackaging
   },
   {
     id: "story-008",
@@ -170,7 +190,8 @@ export const stories: StoryItem[] = [
     durationSec: 20,
     tags: ["Manufacturing", "Automation"],
     relatedEpisodeId: "ep-industry-news-manufacturing",
-    publishedAt: "2026-01-10"
+    publishedAt: "2026-01-10",
+    imageUrl: eventAutomation
   },
   {
     id: "story-009",
@@ -189,7 +210,8 @@ export const stories: StoryItem[] = [
     durationSec: 24,
     tags: ["Service", "Manufacturing"],
     relatedEpisodeId: "ep-top-focus-sulzer",
-    publishedAt: "2026-01-10"
+    publishedAt: "2026-01-10",
+    imageUrl: eventWebinar
   },
   {
     id: "story-010",
@@ -208,7 +230,8 @@ export const stories: StoryItem[] = [
     durationSec: 20,
     tags: ["Intent", "Value"],
     relatedEpisodeId: "ep-objection-handling",
-    publishedAt: "2026-01-10"
+    publishedAt: "2026-01-10",
+    imageUrl: leadsCost
   }
 ];
 
