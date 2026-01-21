@@ -45,7 +45,7 @@
     --player-foreground: 0 0% 100%;
     --progress: 175 70% 45%;
     --success: 152 60% 42%;
-    --tag-bg: 175 30% 92%;
+    --tag: 175 30% 92%;
     --tag-foreground: 175 60% 28%;
 
     --sidebar-background: 0 0% 98%;
@@ -91,7 +91,7 @@
     --player-foreground: 0 0% 100%;
     --progress: 175 70% 45%;
     --success: 152 60% 45%;
-    --tag-bg: 175 40% 15%;
+    --tag: 175 40% 15%;
     --tag-foreground: 175 50% 70%;
 
     --sidebar-background: 240 5.9% 10%;
