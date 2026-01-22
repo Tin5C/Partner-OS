@@ -38,7 +38,7 @@ export function StoryViewer({
   const [playbackSpeed, setPlaybackSpeed] = useState<PlaybackSpeed>(1);
 
   const hasAudio = !!story?.audioUrl;
-  const durationSec = story?.durationSec || 20;
+  const durationSec = story?.duration_sec || 45;
 
   // Reset state when story changes
   useEffect(() => {
@@ -119,12 +119,12 @@ export function StoryViewer({
     
     try {
       await navigator.share({
-        title: story.title,
-        text: story.bullets.join('\n'),
+        title: story.headline,
+        text: `${story.one_liner}\n\n${story.talk_track}`,
       });
     } catch {
       // Fallback: copy to clipboard
-      navigator.clipboard.writeText(`${story.title}\n\n${story.bullets.join('\n')}`);
+      navigator.clipboard.writeText(`${story.headline}\n\n${story.one_liner}\n\n${story.talk_track}`);
     }
   };
 
@@ -144,7 +144,7 @@ export function StoryViewer({
           // Desktop: tall modal for story feel
           "sm:max-w-md sm:h-[80vh] sm:max-h-[700px] sm:rounded-2xl"
         )}>
-          <DialogTitle className="sr-only">{story.title}</DialogTitle>
+          <DialogTitle className="sr-only">{story.headline}</DialogTitle>
           
           {/* Close button */}
           <div className="absolute top-4 right-4 z-30">
@@ -208,7 +208,7 @@ export function StoryViewer({
         // Desktop: centered modal
         "sm:max-w-md sm:rounded-2xl"
       )}>
-        <DialogTitle className="sr-only">{story.title}</DialogTitle>
+        <DialogTitle className="sr-only">{story.headline}</DialogTitle>
         
         {/* Header with close button */}
         <div className="flex items-center justify-between p-4 border-b border-border/50">
@@ -230,35 +230,40 @@ export function StoryViewer({
             <div className="relative w-full aspect-video rounded-xl overflow-hidden">
               <img 
                 src={story.imageUrl} 
-                alt={story.title}
+                alt={story.headline}
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
             </div>
           )}
 
-          {/* Title */}
-          <h2 className="text-xl font-semibold leading-tight">{story.title}</h2>
+          {/* Headline */}
+          <h2 className="text-xl font-semibold leading-tight">{story.headline}</h2>
+
+          {/* One-liner: What changed */}
+          <p className="text-muted-foreground">{story.one_liner}</p>
 
           {/* Source chip */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Source:</span>
-            {story.sourceUrl ? (
-              <a 
-                href={story.sourceUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-xs text-primary hover:underline flex items-center gap-1"
-              >
-                {story.sourceName}
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            ) : (
-              <span className="text-xs text-foreground">{story.sourceName}</span>
-            )}
-          </div>
+          {story.sourceName && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Source:</span>
+              {story.sourceUrl ? (
+                <a 
+                  href={story.sourceUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-xs text-primary hover:underline flex items-center gap-1"
+                >
+                  {story.sourceName}
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              ) : (
+                <span className="text-xs text-foreground">{story.sourceName}</span>
+              )}
+            </div>
+          )}
 
-          {/* Audio Controls or Read Highlights label */}
+          {/* Audio Controls */}
           {hasAudio ? (
             <div className="space-y-4 p-4 rounded-xl bg-muted/50">
               {/* Play button + controls */}
@@ -314,33 +319,26 @@ export function StoryViewer({
             </div>
           )}
 
-          {/* Bullets */}
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium text-muted-foreground">Key highlights</h3>
-            <ul className="space-y-2">
-              {story.bullets.map((bullet, idx) => (
-                <li key={idx} className="flex items-start gap-2 text-sm">
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
-                  <span>{bullet}</span>
-                </li>
-              ))}
-            </ul>
+          {/* Why it matters */}
+          <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
+            <p className="text-sm">
+              <span className="font-medium text-primary">Why it matters: </span>
+              {story.why_it_matters}
+            </p>
           </div>
 
-          {/* Why it matters */}
-          {story.whyItMatters && (
-            <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
-              <p className="text-sm">
-                <span className="font-medium text-primary">Why it matters: </span>
-                {story.whyItMatters}
-              </p>
-            </div>
-          )}
+          {/* Talk track */}
+          <div className="p-3 rounded-lg bg-secondary/50 border border-secondary">
+            <p className="text-sm">
+              <span className="font-medium">Talk track: </span>
+              <span className="italic">"{story.talk_track}"</span>
+            </p>
+          </div>
 
           {/* Tags */}
-          {story.tags && story.tags.length > 0 && (
+          {story.topic_tags && story.topic_tags.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              {story.tags.map((tag, idx) => (
+              {story.topic_tags.map((tag, idx) => (
                 <span 
                   key={idx}
                   className="px-2 py-0.5 text-xs rounded-full bg-muted text-muted-foreground"

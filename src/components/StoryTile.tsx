@@ -13,10 +13,6 @@ export function StoryTile({ story, listenedState, onClick }: StoryTileProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isHovering, setIsHovering] = useState(false);
   
-  const truncatedTitle = story.title.length > 42 
-    ? story.title.slice(0, 39) + '...' 
-    : story.title;
-
   const hasVideo = !!story.videoUrl;
 
   const handleMouseEnter = () => {
@@ -70,7 +66,7 @@ export function StoryTile({ story, listenedState, onClick }: StoryTileProps) {
           {/* Fallback image when not hovering */}
           <img 
             src={story.imageUrl} 
-            alt={story.title}
+            alt={story.headline}
             className={cn(
               "absolute inset-0 w-full h-full object-cover transition-opacity duration-300",
               isHovering ? "opacity-0" : "opacity-100"
@@ -80,7 +76,7 @@ export function StoryTile({ story, listenedState, onClick }: StoryTileProps) {
       ) : story.imageUrl ? (
         <img 
           src={story.imageUrl} 
-          alt={story.title}
+          alt={story.headline}
           className="absolute inset-0 w-full h-full object-cover"
         />
       ) : (
@@ -130,9 +126,9 @@ export function StoryTile({ story, listenedState, onClick }: StoryTileProps) {
         {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Title */}
+        {/* Headline */}
         <p className="text-sm font-medium leading-tight line-clamp-3 text-white drop-shadow-md">
-          {truncatedTitle}
+          {story.headline}
         </p>
       </div>
     </button>

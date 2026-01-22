@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { StoryItem, storyTypeColors
- } from '@/lib/stories';
+import { StoryItem, storyTypeColors } from '@/lib/stories';
 import { cn } from '@/lib/utils';
 
 interface CompetitorStorySlidesProps {
@@ -13,31 +12,31 @@ export function CompetitorStorySlides({ story, onComplete }: CompetitorStorySlid
   const [currentSlide, setCurrentSlide] = useState(0);
   const [progress, setProgress] = useState(0);
   
-  // Create slides from story data
+  // Create slides from story data using new fields
   const slides = [
-    // Slide 1: Title + Main move
+    // Slide 1: Headline + What changed
     {
       type: 'intro',
       content: {
-        headline: story.title.replace('Competitor: ', ''),
-        bullet: story.bullets[0],
+        headline: story.headline,
+        bullet: story.one_liner,
       }
     },
-    // Slide 2: Market read
+    // Slide 2: Why it matters
     {
       type: 'insight',
       content: {
-        headline: 'Market Read',
-        bullet: story.bullets[1],
+        headline: 'Why It Matters',
+        bullet: story.why_it_matters,
       }
     },
-    // Slide 3: Your position + Why it matters
+    // Slide 3: Talk track
     {
       type: 'action',
       content: {
-        headline: 'Your Position',
-        bullet: story.bullets[2],
-        whyItMatters: story.whyItMatters,
+        headline: 'Your Talk Track',
+        bullet: story.talk_track,
+        whyItMatters: null, // No additional context on action slide
       }
     },
   ];
@@ -177,16 +176,6 @@ export function CompetitorStorySlides({ story, onComplete }: CompetitorStorySlid
               {currentSlideData.content.bullet}
             </p>
           </div>
-
-          {/* Why it matters (only on last slide) */}
-          {currentSlideData.type === 'action' && currentSlideData.content.whyItMatters && (
-            <div className="mt-4 bg-orange-500/20 backdrop-blur-md rounded-xl p-4 border border-orange-500/30">
-              <p className="text-sm text-orange-200">
-                <span className="font-semibold text-orange-300">Why it matters: </span>
-                {currentSlideData.content.whyItMatters}
-              </p>
-            </div>
-          )}
         </div>
 
         {/* Slide indicator */}
