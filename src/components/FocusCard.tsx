@@ -3,6 +3,14 @@ import { cn } from '@/lib/utils';
 import { FocusCard as FocusCardType } from '@/lib/focusCards';
 import userAvatar from '@/assets/user-avatar.jpg';
 
+// Logo imports
+import sulzerLogo from '@/assets/logos/sulzer.png';
+import awsLogo from '@/assets/logos/aws.png';
+import gcpLogo from '@/assets/logos/gcp.png';
+import azureLogo from '@/assets/logos/azure.png';
+import mckinseyLogo from '@/assets/logos/mckinsey.png';
+import gartnerLogo from '@/assets/logos/gartner.png';
+
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   'building-2': Building2,
   'radar': Radar,
@@ -10,6 +18,15 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   'message-circle': MessageCircle,
   'user-circle': User,
   'book-open': BookOpen,
+};
+
+const logoMap: Record<string, string> = {
+  sulzer: sulzerLogo,
+  aws: awsLogo,
+  gcp: gcpLogo,
+  azure: azureLogo,
+  mckinsey: mckinseyLogo,
+  gartner: gartnerLogo,
 };
 
 // Muted background colors per tile type - no gradients, solid only
@@ -32,6 +49,7 @@ export function FocusCardComponent({ card, onClick, className }: FocusCardProps)
   const Icon = iconMap[card.icon] || Building2;
   const colors = tileColors[card.id] || { bg: 'bg-muted/50', iconBg: 'bg-muted' };
   const isPersonalBrand = card.id === 'personal-brand-daniel';
+  const hasLogos = card.logos && card.logos.length > 0;
 
   return (
     <button
@@ -61,7 +79,27 @@ export function FocusCardComponent({ card, onClick, className }: FocusCardProps)
             <Icon className="w-5 h-5 text-foreground/70" />
           </div>
         )}
-        <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
+        
+        {/* Logos row - positioned top right */}
+        {hasLogos ? (
+          <div className="flex items-center -space-x-1">
+            {card.logos!.slice(0, 3).map((logoId, idx) => (
+              <div 
+                key={logoId}
+                className="w-6 h-6 rounded-full bg-white border border-border/30 flex items-center justify-center overflow-hidden shadow-sm"
+                style={{ zIndex: 3 - idx }}
+              >
+                <img 
+                  src={logoMap[logoId]} 
+                  alt={logoId} 
+                  className="w-4 h-4 object-contain"
+                />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
+        )}
       </div>
 
       {/* Title - Primary */}

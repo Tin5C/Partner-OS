@@ -21,6 +21,7 @@ export interface FocusCard {
   secondaryAction?: { label: string; action: 'open-playlist' | 'view-scorecard' | 'continue-listening' };
   icon: string;
   gradient: string;
+  logos?: string[]; // Array of logo identifiers for this card
 }
 
 const currentWeek = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -52,6 +53,7 @@ export const focusCards: FocusCard[] = [
     secondaryAction: { label: 'Open playlist', action: 'open-playlist' },
     icon: 'building-2',
     gradient: 'from-blue-500/20 to-blue-500/5',
+    logos: ['sulzer'],
   },
   {
     id: 'competitive-radar',
@@ -77,6 +79,7 @@ export const focusCards: FocusCard[] = [
     secondaryAction: { label: 'Open playlist', action: 'open-playlist' },
     icon: 'radar',
     gradient: 'from-red-500/20 to-red-500/5',
+    logos: ['aws', 'gcp', 'azure'],
   },
   {
     id: 'industry-news-manufacturing',
@@ -102,6 +105,7 @@ export const focusCards: FocusCard[] = [
     secondaryAction: { label: 'Open playlist', action: 'open-playlist' },
     icon: 'newspaper',
     gradient: 'from-amber-500/20 to-amber-500/5',
+    logos: ['mckinsey', 'gartner'],
   },
   {
     id: 'objection-handling',
