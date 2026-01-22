@@ -10,6 +10,11 @@ import eventAutomation from '@/assets/stories/event-automation.jpg';
 import eventWebinar from '@/assets/stories/event-webinar.jpg';
 import leadsCost from '@/assets/stories/leads-cost.jpg';
 
+// Video imports
+import startupVisionQaVideo from '@/assets/stories/startup-vision-qa.mp4';
+import startupEnergyVideo from '@/assets/stories/startup-energy.mp4';
+import startupMaintenanceVideo from '@/assets/stories/startup-maintenance.mp4';
+
 export type StoryType = "startup" | "expert" | "competitor" | "event" | "leads";
 export type ListenedState = "unseen" | "seen" | "listened";
 
@@ -29,6 +34,7 @@ export interface StoryItem {
   relatedPlaylistId?: string;
   publishedAt?: string;
   imageUrl?: string; // Story thumbnail image
+  videoUrl?: string; // Short video for Instagram-style stories
 }
 
 // Seed stories for demo/testing
@@ -51,7 +57,8 @@ export const stories: StoryItem[] = [
     tags: ["Manufacturing", "Quality"],
     relatedEpisodeId: "ep-industry-news-manufacturing",
     publishedAt: "2026-01-10",
-    imageUrl: startupVisionQa
+    imageUrl: startupVisionQa,
+    videoUrl: startupVisionQaVideo
   },
   {
     id: "story-002",
@@ -71,7 +78,8 @@ export const stories: StoryItem[] = [
     tags: ["Manufacturing", "Energy"],
     relatedEpisodeId: "ep-industry-news-manufacturing",
     publishedAt: "2026-01-10",
-    imageUrl: startupEnergy
+    imageUrl: startupEnergy,
+    videoUrl: startupEnergyVideo
   },
   {
     id: "story-003",
@@ -91,7 +99,8 @@ export const stories: StoryItem[] = [
     tags: ["Manufacturing", "Maintenance"],
     relatedEpisodeId: "ep-industry-news-manufacturing",
     publishedAt: "2026-01-10",
-    imageUrl: startupMaintenance
+    imageUrl: startupMaintenance,
+    videoUrl: startupMaintenanceVideo
   },
   {
     id: "story-004",
