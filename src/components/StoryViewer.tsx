@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { StoryItem, storyTypeColors, storyTypeLabels } from '@/lib/stories';
+import { CompetitorStorySlides } from '@/components/CompetitorStorySlides';
 import { cn } from '@/lib/utils';
 
 interface StoryViewerProps {
@@ -128,9 +129,76 @@ export function StoryViewer({
   };
 
   const canOpenEpisode = story?.relatedEpisodeId || story?.relatedPlaylistId;
+  const isCompetitorStory = story?.type === 'competitor';
 
   if (!story) return null;
 
+  // Competitor stories get the Instagram-style slide view
+  if (isCompetitorStory) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className={cn(
+          "p-0 gap-0 overflow-hidden bg-black",
+          // Mobile: full screen
+          "max-sm:h-[100dvh] max-sm:max-h-[100dvh] max-sm:w-full max-sm:max-w-full max-sm:rounded-none",
+          // Desktop: tall modal for story feel
+          "sm:max-w-md sm:h-[80vh] sm:max-h-[700px] sm:rounded-2xl"
+        )}>
+          <DialogTitle className="sr-only">{story.title}</DialogTitle>
+          
+          {/* Close button */}
+          <div className="absolute top-4 right-4 z-30">
+            <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 bg-black/40 hover:bg-black/60 text-white">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Instagram-style slides */}
+          <CompetitorStorySlides 
+            story={story} 
+            onComplete={() => onMarkListened(story.id)}
+          />
+
+          {/* Footer actions */}
+          <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 to-transparent z-20">
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="flex-1 bg-white/10 border-white/20 text-white hover:bg-white/20"
+                onClick={() => onToggleSave(story.id)}
+              >
+                {isSaved ? (
+                  <><BookmarkCheck className="h-4 w-4 mr-2" />Saved</>
+                ) : (
+                  <><Bookmark className="h-4 w-4 mr-2" />Save</>
+                )}
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="flex-1 bg-white/10 border-white/20 text-white hover:bg-white/20"
+                onClick={handleShare}
+              >
+                <Share2 className="h-4 w-4 mr-2" />Share
+              </Button>
+              {canOpenEpisode && (
+                <Button 
+                  size="sm"
+                  className="flex-1"
+                  onClick={handleOpenFullEpisode}
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />Full Brief
+                </Button>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Default story viewer for non-competitor stories
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={cn(
