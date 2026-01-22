@@ -2,6 +2,7 @@ import { Search, LogOut } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import userAvatar from '@/assets/user-avatar.jpg';
 
 interface HeaderProps {
   title?: string;
@@ -34,15 +35,24 @@ export function Header({
       className
     )}>
       <div className="flex items-center justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          {showGreeting ? (
-            <div>
-              <p className="text-sm text-muted-foreground">{getGreeting()}</p>
-              <h1 className="text-xl font-bold truncate">{user?.name}</h1>
-            </div>
-          ) : title ? (
-            <h1 className="text-xl font-bold truncate">{title}</h1>
-          ) : null}
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          {showGreeting && (
+            <img 
+              src={userAvatar} 
+              alt={user?.name || 'User'} 
+              className="w-11 h-11 rounded-full object-cover ring-2 ring-primary/20 flex-shrink-0"
+            />
+          )}
+          <div className="min-w-0">
+            {showGreeting ? (
+              <div>
+                <p className="text-sm text-muted-foreground">{getGreeting()}</p>
+                <h1 className="text-xl font-bold truncate">{user?.name}</h1>
+              </div>
+            ) : title ? (
+              <h1 className="text-xl font-bold truncate">{title}</h1>
+            ) : null}
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
