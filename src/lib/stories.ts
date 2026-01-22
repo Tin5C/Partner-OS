@@ -37,8 +37,50 @@ export interface StoryItem {
   videoUrl?: string; // Short video for Instagram-style stories
 }
 
-// Seed stories for demo/testing
+// Seed stories for demo/testing - Competitors first
 export const stories: StoryItem[] = [
+  // COMPETITOR STORIES (first)
+  {
+    id: "story-006",
+    type: "competitor",
+    label: "Competitor",
+    title: "Competitor: Sovereignty angle",
+    bullets: [
+      "Move: sovereignty messaging pushed harder",
+      "Market read: procurement uses it as filter",
+      "Position: workload boundaries + controls"
+    ],
+    whyItMatters: "Sovereignty shows up early—even in ops deals.",
+    sourceName: "Internal note (sample)",
+    sourceUrl: "",
+    audioUrl: "",
+    durationSec: 22,
+    tags: ["Security", "Procurement"],
+    relatedEpisodeId: "ep-competitive-radar",
+    publishedAt: "2026-01-10",
+    imageUrl: competitorSovereignty
+  },
+  {
+    id: "story-007",
+    type: "competitor",
+    label: "Competitor",
+    title: "Competitor: Packaging change",
+    bullets: [
+      "Move: packaging/pricing bundles adjusted",
+      "Market read: buyers expect simpler terms",
+      "Seller angle: lead with clarity + predictability"
+    ],
+    whyItMatters: "Commercial friction is a silent deal killer.",
+    sourceName: "Internal note (sample)",
+    sourceUrl: "",
+    audioUrl: "",
+    durationSec: 18,
+    tags: ["Commercial", "Platform"],
+    relatedEpisodeId: "ep-competitive-radar",
+    publishedAt: "2026-01-10",
+    imageUrl: competitorPackaging
+  },
+  // STARTUP STORIES
   {
     id: "story-001",
     type: "startup",
@@ -102,6 +144,7 @@ export const stories: StoryItem[] = [
     imageUrl: startupMaintenance,
     videoUrl: startupMaintenanceVideo
   },
+  // EXPERT STORIES
   {
     id: "story-004",
     type: "expert",
@@ -142,46 +185,7 @@ export const stories: StoryItem[] = [
     publishedAt: "2026-01-10",
     imageUrl: expertRoi
   },
-  {
-    id: "story-006",
-    type: "competitor",
-    label: "Competitor",
-    title: "Competitor: Sovereignty angle",
-    bullets: [
-      "Move: sovereignty messaging pushed harder",
-      "Market read: procurement uses it as filter",
-      "Position: workload boundaries + controls"
-    ],
-    whyItMatters: "Sovereignty shows up early—even in ops deals.",
-    sourceName: "Internal note (sample)",
-    sourceUrl: "",
-    audioUrl: "",
-    durationSec: 22,
-    tags: ["Security", "Procurement"],
-    relatedEpisodeId: "ep-competitive-radar",
-    publishedAt: "2026-01-10",
-    imageUrl: competitorSovereignty
-  },
-  {
-    id: "story-007",
-    type: "competitor",
-    label: "Competitor",
-    title: "Competitor: Packaging change",
-    bullets: [
-      "Move: packaging/pricing bundles adjusted",
-      "Market read: buyers expect simpler terms",
-      "Seller angle: lead with clarity + predictability"
-    ],
-    whyItMatters: "Commercial friction is a silent deal killer.",
-    sourceName: "Internal note (sample)",
-    sourceUrl: "",
-    audioUrl: "",
-    durationSec: 18,
-    tags: ["Commercial", "Platform"],
-    relatedEpisodeId: "ep-competitive-radar",
-    publishedAt: "2026-01-10",
-    imageUrl: competitorPackaging
-  },
+  // EVENT STORIES
   {
     id: "story-008",
     type: "event",
@@ -222,6 +226,7 @@ export const stories: StoryItem[] = [
     publishedAt: "2026-01-10",
     imageUrl: eventWebinar
   },
+  // LEADS STORIES
   {
     id: "story-010",
     type: "leads",
