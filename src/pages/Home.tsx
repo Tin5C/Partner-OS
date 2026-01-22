@@ -9,6 +9,7 @@ import { StoriesRail } from '@/components/StoriesRail';
 import { focusCards, FocusCard } from '@/lib/focusCards';
 import { continueListening } from '@/lib/data';
 import { usePlayer } from '@/contexts/PlayerContext';
+import userAvatar from '@/assets/user-avatar.jpg';
 
 export default function Home() {
   const { currentEpisode } = usePlayer();
@@ -42,10 +43,16 @@ export default function Home() {
 
         {/* Focus Cards Grid - Command Center */}
         <section>
-          <div className="flex items-center gap-2 mb-3">
-            <h2 className="font-semibold text-lg">Your Focus</h2>
-            <span className="text-xs text-muted-foreground">•</span>
-            <span className="text-xs text-muted-foreground">What needs attention</span>
+          <div className="flex items-center gap-3 mb-3">
+            <img 
+              src={userAvatar} 
+              alt="Your focus" 
+              className="w-8 h-8 rounded-full object-cover ring-2 ring-primary/10"
+            />
+            <div>
+              <h2 className="font-semibold text-base leading-tight">Your Focus</h2>
+              <p className="text-xs text-muted-foreground">What needs attention</p>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             {focusCards.map((card) => (
