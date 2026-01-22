@@ -40,9 +40,13 @@ export default function Home() {
           </section>
         )}
 
-        {/* Focus Cards Grid */}
+        {/* Focus Cards Grid - Command Center */}
         <section>
-          <h2 className="font-semibold text-lg mb-3">Your Focus</h2>
+          <div className="flex items-center gap-2 mb-3">
+            <h2 className="font-semibold text-lg">Your Focus</h2>
+            <span className="text-xs text-muted-foreground">•</span>
+            <span className="text-xs text-muted-foreground">What needs attention</span>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             {focusCards.map((card) => (
               <FocusCardComponent
