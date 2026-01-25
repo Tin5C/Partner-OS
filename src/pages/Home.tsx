@@ -59,7 +59,8 @@ export default function Home() {
               <FocusCardComponent
                 key={card.id}
                 card={card}
-                onClick={() => handleCardClick(card)}
+                onListen={() => handleCardClick(card)}
+                onRead={() => handleCardClick(card)}
               />
             ))}
           </div>
