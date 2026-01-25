@@ -1,4 +1,4 @@
-import { Clock, Building2, Radar, Newspaper, MessageCircle, User, BookOpen, ChevronRight } from 'lucide-react';
+import { Clock, Building2, Radar, Newspaper, MessageCircle, User, BookOpen, Headphones, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FocusCard as FocusCardType } from '@/lib/focusCards';
 import userAvatar from '@/assets/user-avatar.jpg';
@@ -41,24 +41,22 @@ const tileColors: Record<string, { bg: string; iconBg: string }> = {
 
 interface FocusCardProps {
   card: FocusCardType;
-  onClick: () => void;
+  onListen: () => void;
+  onRead: () => void;
   className?: string;
 }
 
-export function FocusCardComponent({ card, onClick, className }: FocusCardProps) {
+export function FocusCardComponent({ card, onListen, onRead, className }: FocusCardProps) {
   const Icon = iconMap[card.icon] || Building2;
   const colors = tileColors[card.id] || { bg: 'bg-muted/50', iconBg: 'bg-muted' };
   const isPersonalBrand = card.id === 'personal-brand-daniel';
   const hasLogos = card.logos && card.logos.length > 0;
 
   return (
-    <button
-      onClick={onClick}
+    <div
       className={cn(
         'relative flex flex-col p-4 rounded-xl text-left',
         'border border-border/50',
-        'hover:border-border transition-all duration-200',
-        'hover:shadow-sm active:scale-[0.98]',
         colors.bg,
         className
       )}
@@ -81,7 +79,7 @@ export function FocusCardComponent({ card, onClick, className }: FocusCardProps)
         )}
         
         {/* Logos row - positioned top right */}
-        {hasLogos ? (
+        {hasLogos && (
           <div className="flex items-center -space-x-1">
             {card.logos!.slice(0, 3).map((logoId, idx) => (
               <div 
@@ -97,8 +95,6 @@ export function FocusCardComponent({ card, onClick, className }: FocusCardProps)
               </div>
             ))}
           </div>
-        ) : (
-          <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
         )}
       </div>
 
@@ -111,7 +107,7 @@ export function FocusCardComponent({ card, onClick, className }: FocusCardProps)
       </p>
 
       {/* Footer: Time + Tag */}
-      <div className="flex items-center gap-2 mt-auto">
+      <div className="flex items-center gap-2 mb-3">
         <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
           <Clock className="w-3 h-3" />
           {card.timeEstimate}
@@ -125,6 +121,38 @@ export function FocusCardComponent({ card, onClick, className }: FocusCardProps)
           </span>
         ))}
       </div>
-    </button>
+
+      {/* Action Buttons */}
+      <div className="flex items-center gap-2 mt-auto pt-2 border-t border-border/30">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onListen();
+          }}
+          className={cn(
+            'flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium',
+            'bg-primary text-primary-foreground',
+            'hover:bg-primary/90 active:scale-[0.98] transition-all duration-150'
+          )}
+        >
+          <Headphones className="w-3.5 h-3.5" />
+          Listen
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onRead();
+          }}
+          className={cn(
+            'flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium',
+            'bg-secondary text-secondary-foreground',
+            'hover:bg-secondary/80 active:scale-[0.98] transition-all duration-150'
+          )}
+        >
+          <FileText className="w-3.5 h-3.5" />
+          Read
+        </button>
+      </div>
+    </div>
   );
 }
