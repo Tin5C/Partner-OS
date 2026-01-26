@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   X, Play, Pause, RotateCcw, RotateCw, 
-  Bookmark, BookmarkCheck, Share2, ExternalLink 
+  Bookmark, BookmarkCheck, Share2, ExternalLink,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,12 @@ interface StoryViewerProps {
   onMarkListened: (storyId: string) => void;
   isSaved: boolean;
   onToggleSave: (storyId: string) => void;
+  onNext?: () => void;
+  onPrev?: () => void;
+  hasNext?: boolean;
+  hasPrev?: boolean;
+  currentIndex?: number;
+  totalCount?: number;
 }
 
 type PlaybackSpeed = 1 | 1.25 | 1.5;
@@ -30,7 +37,13 @@ export function StoryViewer({
   onClose,
   onMarkListened,
   isSaved,
-  onToggleSave 
+  onToggleSave,
+  onNext,
+  onPrev,
+  hasNext = false,
+  hasPrev = false,
+  currentIndex = 0,
+  totalCount = 1
 }: StoryViewerProps) {
   const navigate = useNavigate();
   const [isPlaying, setIsPlaying] = useState(false);
@@ -59,6 +72,12 @@ export function StoryViewer({
         if (newProgress >= 100) {
           setIsPlaying(false);
           if (story) onMarkListened(story.id);
+          // Auto-advance to next story after completion
+          setTimeout(() => {
+            if (hasNext && onNext) {
+              onNext();
+            }
+          }, 500);
           return 100;
         }
         
@@ -72,7 +91,7 @@ export function StoryViewer({
     }, 100);
 
     return () => clearInterval(interval);
-  }, [isPlaying, hasAudio, durationSec, playbackSpeed, story, onMarkListened]);
+  }, [isPlaying, hasAudio, durationSec, playbackSpeed, story, onMarkListened, hasNext, onNext]);
 
   const togglePlay = useCallback(() => {
     setIsPlaying(prev => !prev);
@@ -146,8 +165,34 @@ export function StoryViewer({
         )}>
           <DialogTitle className="sr-only">{story.headline}</DialogTitle>
           
-          {/* Close button */}
-          <div className="absolute top-4 right-4 z-30">
+          {/* Header: Story counter + close */}
+          <div className="absolute top-4 left-4 right-4 z-30 flex items-center justify-between">
+            {/* Story counter */}
+            <div className="flex items-center gap-2">
+              {hasPrev && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={onPrev} 
+                  className="h-8 w-8 bg-black/40 hover:bg-black/60 text-white"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+              )}
+              <span className="text-xs text-white/80 bg-black/40 px-2 py-1 rounded-full">
+                {currentIndex + 1} / {totalCount}
+              </span>
+              {hasNext && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={onNext} 
+                  className="h-8 w-8 bg-black/40 hover:bg-black/60 text-white"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
             <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 bg-black/40 hover:bg-black/60 text-white">
               <X className="h-4 w-4" />
             </Button>
@@ -156,7 +201,15 @@ export function StoryViewer({
           {/* Instagram-style slides */}
           <CompetitorStorySlides 
             story={story} 
-            onComplete={() => onMarkListened(story.id)}
+            onComplete={() => {
+              onMarkListened(story.id);
+              // Auto-advance to next story after completion
+              setTimeout(() => {
+                if (hasNext && onNext) {
+                  onNext();
+                }
+              }, 500);
+            }}
           />
 
           {/* Footer actions */}
@@ -210,17 +263,34 @@ export function StoryViewer({
       )}>
         <DialogTitle className="sr-only">{story.headline}</DialogTitle>
         
-        {/* Header with close button */}
+        {/* Header with navigation and close button */}
         <div className="flex items-center justify-between p-4 border-b border-border/50">
-          <span className={cn(
-            "px-2.5 py-1 text-xs font-medium rounded-full border",
-            storyTypeColors[story.type]
-          )}>
-            {storyTypeLabels[story.type]}
-          </span>
-          <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <span className={cn(
+              "px-2.5 py-1 text-xs font-medium rounded-full border",
+              storyTypeColors[story.type]
+            )}>
+              {storyTypeLabels[story.type]}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {currentIndex + 1} / {totalCount}
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            {hasPrev && (
+              <Button variant="ghost" size="icon" onClick={onPrev} className="h-8 w-8">
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            )}
+            {hasNext && (
+              <Button variant="ghost" size="icon" onClick={onNext} className="h-8 w-8">
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Main content */}
