@@ -1,29 +1,44 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, ArrowRight, Headphones } from 'lucide-react';
+import { Lock, ArrowRight, Headphones, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
 export default function AccessGate() {
-  const [code, setCode] = useState('');
+  const [selectedUser, setSelectedUser] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, availableUsers } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!selectedUser) {
+      setError('Select a user.');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const success = await login(code);
-      if (success) {
+      const result = await login(selectedUser, password);
+      if (result.success) {
         navigate('/');
       } else {
-        setError('Invalid access code. Please try again.');
+        setError(result.error || 'Login failed.');
       }
     } catch {
       setError('Something went wrong. Please try again.');
@@ -47,36 +62,64 @@ export default function AccessGate() {
 
           {/* Gate form */}
           <div className="bg-card rounded-2xl p-6 shadow-card">
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-6">
               <Lock className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Pilot access required</span>
+              <span className="text-sm text-muted-foreground">Select your profile</span>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* User dropdown */}
               <div className="space-y-2">
-                <Input
-                  type="text"
-                  placeholder="Enter your access code"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  className={cn(
-                    'h-12 text-center text-lg font-mono tracking-widest uppercase',
-                    error && 'border-destructive focus-visible:ring-destructive'
-                  )}
-                  autoComplete="off"
-                  autoFocus
-                />
-                {error && (
-                  <p className="text-sm text-destructive text-center">{error}</p>
-                )}
+                <Label htmlFor="user-select">Profile</Label>
+                <Select value={selectedUser} onValueChange={(value) => {
+                  setSelectedUser(value);
+                  setError('');
+                }}>
+                  <SelectTrigger id="user-select" className="h-12">
+                    <SelectValue placeholder="Select a user" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableUsers.map((user) => (
+                      <SelectItem key={user.key} value={user.key}>
+                        {user.displayName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
+              {/* Password input */}
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setError('');
+                  }}
+                  className={cn(
+                    'h-12',
+                    error && 'border-destructive focus-visible:ring-destructive'
+                  )}
+                  autoComplete="current-password"
+                />
+              </div>
+
+              {/* Error message */}
+              {error && (
+                <p className="text-sm text-destructive text-center">{error}</p>
+              )}
+
+              {/* Submit button */}
               <Button 
                 type="submit" 
                 className="w-full h-12"
-                disabled={!code.trim() || loading}
+                disabled={!selectedUser || loading}
               >
-                {loading ? 'Checking...' : 'Enter'}
+                {loading ? 'Checking...' : 'Continue'}
                 {!loading && <ArrowRight className="w-4 h-4 ml-2" />}
               </Button>
             </form>
@@ -84,16 +127,13 @@ export default function AccessGate() {
 
           {/* Help text */}
           <p className="text-xs text-center text-muted-foreground">
-            Don't have an access code?{' '}
-            <a href="mailto:enablement@company.com" className="text-primary hover:underline">
-              Contact your enablement team
-            </a>
+            MVP access — ask admin for your password.
           </p>
 
-          {/* Demo codes hint */}
+          {/* Demo passwords hint */}
           <div className="bg-muted/50 rounded-xl p-4 text-center">
             <p className="text-xs text-muted-foreground">
-              <strong>Demo codes:</strong> PILOT2026 (seller) or ADMIN2026 (admin)
+              <strong>Demo:</strong> Password is {'{name}'}123 (e.g., daniel123)
             </p>
           </div>
         </div>
