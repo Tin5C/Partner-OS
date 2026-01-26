@@ -20,10 +20,14 @@ export interface ExecSummary {
   sources?: { title: string; url?: string }[]; // collapsed
 }
 
+// Category type for grouping cards
+export type FocusCategory = 'core' | 'improve' | 'reputation';
+
 export interface FocusCard {
   id: string;
   title: string;
   subtitle: string;
+  category: FocusCategory; // Group: core, improve, or reputation
   previewBullets: string[];
   insightLine?: string;
   insightLabel?: string;
@@ -128,6 +132,7 @@ export const focusCards: FocusCard[] = [
     id: 'top-focus-sulzer',
     title: 'Top Focus — Sulzer',
     subtitle: 'Highlights for the week',
+    category: 'core',
     previewBullets: [
       'Employer brand signal (Top Employer 2025) → execution capacity',
       'Services/rentals expansion continues (wastewater rental acquisition)',
@@ -192,6 +197,7 @@ export const focusCards: FocusCard[] = [
   {
     id: 'competitive-radar',
     title: 'Competitive Radar',
+    category: 'core',
     subtitle: 'What shifted in the market',
     previewBullets: [
       'Sovereign cloud messaging is rising as a procurement filter',
@@ -257,7 +263,8 @@ export const focusCards: FocusCard[] = [
   },
   {
     id: 'industry-news-manufacturing',
-    title: 'Industry News — Manufacturing',
+    title: 'Industry Signals — Manufacturing',
+    category: 'core',
     subtitle: 'Applied to Sulzer',
     previewBullets: [
       'Resilience + risk now shape investment decisions',
@@ -319,7 +326,8 @@ export const focusCards: FocusCard[] = [
   },
   {
     id: 'book-briefings',
-    title: 'Book Briefings',
+    title: 'Skill of the Week',
+    category: 'improve',
     subtitle: 'Micro-learning for this week',
     previewBullets: [
       'Execution discipline',
@@ -373,6 +381,7 @@ export const focusCards: FocusCard[] = [
   {
     id: 'objection-handling-w0',
     title: 'Objection Handling',
+    category: 'core',
     subtitle: 'This week\'s top objections',
     previewBullets: [
       '"We need to see more proof of ROI first."',
@@ -423,7 +432,8 @@ export const focusCards: FocusCard[] = [
   },
   {
     id: 'personal-brand-w0',
-    title: 'Personal Brand',
+    title: 'Market Presence',
+    category: 'reputation',
     subtitle: 'Your weekly brand pulse',
     previewBullets: [
       'LinkedIn engagement: +12% vs last week',
@@ -477,6 +487,7 @@ export const focusCards: FocusCard[] = [
   {
     id: 'top-focus-sulzer-w1',
     title: 'Top Focus — Sulzer',
+    category: 'core',
     subtitle: 'Mid-week developments',
     previewBullets: [
       'Board approved Q1 expansion budget',
@@ -504,6 +515,7 @@ export const focusCards: FocusCard[] = [
   {
     id: 'competitive-radar-w1',
     title: 'Competitive Radar',
+    category: 'core',
     subtitle: 'Last week\'s market shifts',
     previewBullets: [
       'New pricing tiers announced by major competitor',
@@ -529,7 +541,8 @@ export const focusCards: FocusCard[] = [
   },
   {
     id: 'industry-news-w1',
-    title: 'Industry News — Manufacturing',
+    title: 'Industry Signals — Manufacturing',
+    category: 'core',
     subtitle: 'Last week\'s developments',
     previewBullets: [
       'Major acquisition reshapes competitive landscape',
@@ -556,6 +569,7 @@ export const focusCards: FocusCard[] = [
   {
     id: 'objection-handling-w1',
     title: 'Objection Handling',
+    category: 'core',
     subtitle: 'This month\'s set (derived from Competitive + Industry signals)',
     previewBullets: [
       'Sovereignty is unclear—procurement will block this.',
@@ -580,7 +594,8 @@ export const focusCards: FocusCard[] = [
   },
   {
     id: 'personal-brand-w1',
-    title: 'Personal Brand — Daniel',
+    title: 'Market Presence',
+    category: 'reputation',
     subtitle: 'Snapshot scorecard',
     previewBullets: [
       'Tier: Practitioner (cross-channel: light)',
@@ -605,7 +620,8 @@ export const focusCards: FocusCard[] = [
   },
   {
     id: 'book-briefings-w1',
-    title: 'Book Briefings',
+    title: 'Skill of the Week',
+    category: 'improve',
     subtitle: 'Negotiation tactics',
     previewBullets: [
       'Never Split the Difference: tactical empathy',
@@ -633,6 +649,7 @@ export const focusCards: FocusCard[] = [
   {
     id: 'top-focus-sulzer-w2',
     title: 'Top Focus — Sulzer',
+    category: 'core',
     subtitle: 'Q4 review highlights',
     previewBullets: [
       'Q4 earnings beat expectations by 3%',
@@ -660,6 +677,7 @@ export const focusCards: FocusCard[] = [
   {
     id: 'competitive-radar-w2',
     title: 'Competitive Radar',
+    category: 'core',
     subtitle: 'Pricing intelligence update',
     previewBullets: [
       'Competitor A reduced enterprise tier by 15%',
@@ -685,7 +703,8 @@ export const focusCards: FocusCard[] = [
   },
   {
     id: 'industry-news-w2',
-    title: 'Industry News — Manufacturing',
+    title: 'Industry Signals — Manufacturing',
+    category: 'core',
     subtitle: 'Sector-wide trends',
     previewBullets: [
       'Supply chain normalization continues',
@@ -712,6 +731,7 @@ export const focusCards: FocusCard[] = [
   {
     id: 'objection-handling-w2',
     title: 'Objection Handling',
+    category: 'core',
     subtitle: 'Budget season objections',
     previewBullets: [
       '"Budget is locked until next fiscal year."',
@@ -736,7 +756,8 @@ export const focusCards: FocusCard[] = [
   },
   {
     id: 'personal-brand-w2',
-    title: 'Personal Brand',
+    title: 'Market Presence',
+    category: 'reputation',
     subtitle: 'Content calendar review',
     previewBullets: [
       'Best performing post: industry insight thread',
@@ -761,7 +782,8 @@ export const focusCards: FocusCard[] = [
   },
   {
     id: 'book-briefings-w2',
-    title: 'Book Briefings',
+    title: 'Skill of the Week',
+    category: 'improve',
     subtitle: 'Strategic selling',
     previewBullets: [
       'The Challenger Sale: teaching for differentiation',
@@ -789,6 +811,7 @@ export const focusCards: FocusCard[] = [
   {
     id: 'top-focus-sulzer-w3',
     title: 'Top Focus — Sulzer',
+    category: 'core',
     subtitle: 'Strategic planning insights',
     previewBullets: [
       'Annual strategy review completed',
@@ -816,6 +839,7 @@ export const focusCards: FocusCard[] = [
   {
     id: 'competitive-radar-w3',
     title: 'Competitive Radar',
+    category: 'core',
     subtitle: 'Product launch analysis',
     previewBullets: [
       'Competitor announced new enterprise features',
@@ -841,7 +865,8 @@ export const focusCards: FocusCard[] = [
   },
   {
     id: 'industry-news-w3',
-    title: 'Industry News — Manufacturing',
+    title: 'Industry Signals — Manufacturing',
+    category: 'core',
     subtitle: 'Quarterly outlook',
     previewBullets: [
       'Economic indicators pointing to cautious optimism',
@@ -868,6 +893,7 @@ export const focusCards: FocusCard[] = [
   {
     id: 'objection-handling-w3',
     title: 'Objection Handling',
+    category: 'core',
     subtitle: 'Technical evaluation pushback',
     previewBullets: [
       '"Your solution is too complex for our team."',
@@ -892,7 +918,8 @@ export const focusCards: FocusCard[] = [
   },
   {
     id: 'personal-brand-w3',
-    title: 'Personal Brand',
+    title: 'Market Presence',
+    category: 'reputation',
     subtitle: 'Network expansion focus',
     previewBullets: [
       'Connection requests from target accounts up 25%',
@@ -917,7 +944,8 @@ export const focusCards: FocusCard[] = [
   },
   {
     id: 'book-briefings-w3',
-    title: 'Book Briefings',
+    title: 'Skill of the Week',
+    category: 'improve',
     subtitle: 'Relationship selling',
     previewBullets: [
       'The Trusted Advisor: building credibility',
