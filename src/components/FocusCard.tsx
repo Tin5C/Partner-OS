@@ -29,14 +29,21 @@ const logoMap: Record<string, string> = {
   gartner: gartnerLogo,
 };
 
-// Soft background colors per tile type - light and airy
-const tileColors: Record<string, { bg: string; iconBg: string }> = {
-  'top-focus-sulzer': { bg: 'bg-blue-50/80 dark:bg-blue-950/20', iconBg: 'bg-blue-100 dark:bg-blue-900/40' },
-  'competitive-radar': { bg: 'bg-rose-50/80 dark:bg-rose-950/20', iconBg: 'bg-rose-100 dark:bg-rose-900/40' },
-  'industry-news-manufacturing': { bg: 'bg-amber-50/80 dark:bg-amber-950/20', iconBg: 'bg-amber-100 dark:bg-amber-900/40' },
-  'objection-handling': { bg: 'bg-purple-50/80 dark:bg-purple-950/20', iconBg: 'bg-purple-100 dark:bg-purple-900/40' },
-  'personal-brand-daniel': { bg: 'bg-violet-50/80 dark:bg-violet-950/20', iconBg: 'bg-violet-100 dark:bg-violet-900/40' },
-  'book-briefings': { bg: 'bg-teal-50/80 dark:bg-teal-950/20', iconBg: 'bg-teal-100 dark:bg-teal-900/40' },
+// Soft background colors per category - light and airy
+const categoryColors: Record<string, { bg: string; iconBg: string }> = {
+  'core': { bg: 'bg-blue-50/80 dark:bg-blue-950/20', iconBg: 'bg-blue-100 dark:bg-blue-900/40' },
+  'improve': { bg: 'bg-teal-50/80 dark:bg-teal-950/20', iconBg: 'bg-teal-100 dark:bg-teal-900/40' },
+  'reputation': { bg: 'bg-violet-50/80 dark:bg-violet-950/20', iconBg: 'bg-violet-100 dark:bg-violet-900/40' },
+};
+
+// Icon-specific background colors for visual variety within Core group
+const iconColors: Record<string, string> = {
+  'building-2': 'bg-blue-100 dark:bg-blue-900/40',
+  'radar': 'bg-rose-100 dark:bg-rose-900/40',
+  'newspaper': 'bg-amber-100 dark:bg-amber-900/40',
+  'message-circle': 'bg-purple-100 dark:bg-purple-900/40',
+  'user-circle': 'bg-violet-100 dark:bg-violet-900/40',
+  'book-open': 'bg-teal-100 dark:bg-teal-900/40',
 };
 
 interface FocusCardProps {
@@ -48,8 +55,9 @@ interface FocusCardProps {
 
 export function FocusCardComponent({ card, onListen, onRead, className }: FocusCardProps) {
   const Icon = iconMap[card.icon] || Building2;
-  const colors = tileColors[card.id] || { bg: 'bg-secondary/50', iconBg: 'bg-secondary' };
-  const isPersonalBrand = card.id === 'personal-brand-daniel';
+  const colors = categoryColors[card.category] || { bg: 'bg-secondary/50', iconBg: 'bg-secondary' };
+  const iconBg = iconColors[card.icon] || colors.iconBg;
+  const isMarketPresence = card.id.startsWith('personal-brand');
   const hasLogos = card.logos && card.logos.length > 0;
 
   return (
@@ -63,7 +71,7 @@ export function FocusCardComponent({ card, onListen, onRead, className }: FocusC
     >
       {/* Icon or User Photo */}
       <div className="flex items-start justify-between mb-4">
-        {isPersonalBrand ? (
+        {isMarketPresence ? (
           <img 
             src={userAvatar} 
             alt="Your profile" 
@@ -72,7 +80,7 @@ export function FocusCardComponent({ card, onListen, onRead, className }: FocusC
         ) : (
           <div className={cn(
             'w-11 h-11 rounded-xl flex items-center justify-center shadow-soft',
-            colors.iconBg
+            iconBg
           )}>
             <Icon className="w-5 h-5 text-foreground/70" />
           </div>
