@@ -1,6 +1,25 @@
 // Focus Cards Data Model - Spotify-like preview cards for Home
 import { Episode } from './data';
 
+// Listening highlights for follow-along during audio playback
+export interface ListeningHighlight {
+  id: string;
+  text: string;
+  startTime: number; // seconds from start
+  endTime: number;
+}
+
+// Executive Summary structured content
+export interface ExecSummary {
+  tldr: string; // 2 lines max
+  whatChanged: string[]; // 3 bullets
+  whyItMatters: string[]; // 2-3 bullets
+  risks?: string[]; // optional
+  nextBestActions: string[]; // 3 actions
+  questionsToAsk: string[]; // 3 questions
+  sources?: { title: string; url?: string }[]; // collapsed
+}
+
 export interface FocusCard {
   id: string;
   title: string;
@@ -23,6 +42,9 @@ export interface FocusCard {
   icon: string;
   gradient: string;
   logos?: string[]; // Array of logo identifiers for this card
+  // New fields for Listen Briefing / Exec Summary
+  listeningHighlights?: ListeningHighlight[];
+  execSummary?: ExecSummary;
 }
 
 // Helper to get Monday of current week
@@ -59,6 +81,47 @@ const week3 = getWeekStartOffset(3); // 3 weeks ago
 
 const currentWeek = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
+// Default exec summary template
+const defaultExecSummary = (card: Partial<FocusCard>): ExecSummary => ({
+  tldr: card.insightLine || 'Key insights and actions for this briefing.',
+  whatChanged: card.previewBullets?.slice(0, 3) || [],
+  whyItMatters: [
+    card.insightLine || 'Understanding these signals helps you stay ahead.',
+    'Early awareness enables better positioning in conversations.'
+  ],
+  nextBestActions: [
+    card.suggestedMove || 'Review and apply insights to your next conversation.',
+    'Share key points with relevant team members.',
+    'Update your account strategy based on new signals.'
+  ],
+  questionsToAsk: [
+    'What\'s your current approach to this area?',
+    'How has this changed over the past quarter?',
+    'What would success look like for you here?'
+  ],
+  sources: [
+    { title: 'Internal Research', url: undefined },
+    { title: 'Industry Analysis', url: undefined }
+  ]
+});
+
+// Default listening highlights (timed for ~6 min briefing)
+const defaultListeningHighlights = (bullets: string[]): ListeningHighlight[] => {
+  const highlights: ListeningHighlight[] = [];
+  const timePerHighlight = 60; // 1 minute per highlight
+  
+  bullets.forEach((bullet, idx) => {
+    highlights.push({
+      id: `highlight-${idx}`,
+      text: bullet,
+      startTime: idx * timePerHighlight,
+      endTime: (idx + 1) * timePerHighlight - 1
+    });
+  });
+  
+  return highlights;
+};
+
 export const focusCards: FocusCard[] = [
   // Week 0 (current week) cards
   {
@@ -89,6 +152,42 @@ export const focusCards: FocusCard[] = [
     icon: 'building-2',
     gradient: 'from-blue-500/20 to-blue-500/5',
     logos: ['sulzer'],
+    listeningHighlights: [
+      { id: 'h1', text: 'Sulzer earned Top Employer 2025 certification, signaling strong execution capacity and talent retention.', startTime: 0, endTime: 45 },
+      { id: 'h2', text: 'Wastewater rental acquisition expands their services portfolio—attach rate opportunity.', startTime: 46, endTime: 120 },
+      { id: 'h3', text: 'Order intake metrics suggest cautious but sustained investment appetite.', startTime: 121, endTime: 180 },
+      { id: 'h4', text: 'Key theme: Standardization and delivery confidence matter more than product features.', startTime: 181, endTime: 240 },
+      { id: 'h5', text: 'Suggested approach: Lead with deployment excellence, not just capabilities.', startTime: 241, endTime: 300 },
+      { id: 'h6', text: 'Action: Ask about deployment variance and services growth metrics in your next call.', startTime: 301, endTime: 360 },
+    ],
+    execSummary: {
+      tldr: 'Sulzer\'s Top Employer signal + services expansion indicate execution focus over feature competition.',
+      whatChanged: [
+        'Top Employer 2025 certification earned—talent and execution capacity signal',
+        'Wastewater rental acquisition completed—services attach expansion',
+        'Order intake baseline stabilized—cautious but consistent investment'
+      ],
+      whyItMatters: [
+        'Buyers are evaluating vendors on delivery confidence, not just product specs',
+        'Services revenue is becoming a strategic priority—opens attach discussions',
+        'Investment appetite exists but requires clear ROI framing'
+      ],
+      nextBestActions: [
+        'Lead with deployment excellence narrative in your next conversation',
+        'Probe services growth metrics—what\'s the attach rate target?',
+        'Frame proposals around execution certainty, not feature lists'
+      ],
+      questionsToAsk: [
+        'What\'s your current baseline for deployment variance across sites?',
+        'How are you measuring services growth against the installed base?',
+        'What would successful standardization look like in the next 12 months?'
+      ],
+      sources: [
+        { title: 'Sulzer Annual Report 2024' },
+        { title: 'Top Employer Institute Certification' },
+        { title: 'Internal Account Intelligence' }
+      ]
+    }
   },
   {
     id: 'competitive-radar',
@@ -116,6 +215,45 @@ export const focusCards: FocusCard[] = [
     icon: 'radar',
     gradient: 'from-red-500/20 to-red-500/5',
     logos: ['aws', 'gcp', 'azure'],
+    listeningHighlights: [
+      { id: 'h1', text: 'Major competitor leading with data sovereignty in DACH sales pitches.', startTime: 0, endTime: 60 },
+      { id: 'h2', text: 'Procurement teams using sovereignty as early-stage filter—answer it or get filtered out.', startTime: 61, endTime: 120 },
+      { id: 'h3', text: 'Buyers expect pilot-to-production in weeks, not months.', startTime: 121, endTime: 180 },
+      { id: 'h4', text: 'Platform release cadence is becoming a competitive comparison point.', startTime: 181, endTime: 240 },
+      { id: 'h5', text: 'Strategy: Lead with your own controls story before they ask.', startTime: 241, endTime: 300 },
+    ],
+    execSummary: {
+      tldr: 'Competitors are weaponizing sovereignty—treat it as a sales motion, not a technical checkbox.',
+      whatChanged: [
+        'Data sovereignty now leads competitor pitches in DACH region',
+        'Pilot expectations compressed—weeks, not months',
+        'Platform cadence becoming a differentiation point'
+      ],
+      whyItMatters: [
+        'Sovereignty is an early procurement filter—miss it, miss the shortlist',
+        'Speed to value is expected, not exceptional',
+        'Comparison happens on cadence and commitment, not just features'
+      ],
+      risks: [
+        'Getting filtered out before reaching technical evaluation',
+        'Appearing reactive rather than proactive on compliance'
+      ],
+      nextBestActions: [
+        'Lead with your controls story before they ask about sovereignty',
+        'Prepare a 2-week pilot framework for common use cases',
+        'Reference your platform roadmap cadence in competitive situations'
+      ],
+      questionsToAsk: [
+        'What\'s your current stance on workload boundaries and data residency?',
+        'How do you typically evaluate pilot success criteria?',
+        'What does your ideal vendor release cadence look like?'
+      ],
+      sources: [
+        { title: 'Competitive Intelligence Report Q1' },
+        { title: 'Win/Loss Analysis - DACH' },
+        { title: 'Analyst Briefing Notes' }
+      ]
+    }
   },
   {
     id: 'industry-news-manufacturing',
@@ -143,6 +281,41 @@ export const focusCards: FocusCard[] = [
     icon: 'newspaper',
     gradient: 'from-amber-500/20 to-amber-500/5',
     logos: ['mckinsey', 'gartner'],
+    listeningHighlights: [
+      { id: 'h1', text: 'Manufacturing investment now filtered through resilience and risk lens.', startTime: 0, endTime: 60 },
+      { id: 'h2', text: 'Energy costs remain board-level constraint—affects transformation pace.', startTime: 61, endTime: 120 },
+      { id: 'h3', text: 'Execution risk is driving cost—standardization emerges as the hedge.', startTime: 121, endTime: 180 },
+      { id: 'h4', text: 'Services becoming margin lever—data monetization is real.', startTime: 181, endTime: 240 },
+      { id: 'h5', text: 'Sulzer signals: hiring + expansion = deployment discipline focus.', startTime: 241, endTime: 300 },
+    ],
+    execSummary: {
+      tldr: 'Manufacturing buyers filter on resilience—position around execution certainty and services growth.',
+      whatChanged: [
+        'Resilience and risk now primary investment filters',
+        'Energy affordability constraining transformation timelines',
+        'Services revenue becoming strategic priority for margin'
+      ],
+      whyItMatters: [
+        'Buyers need confidence in execution, not just capability promises',
+        'Cost pressure makes standardization more attractive than customization',
+        'Services attach creates stickier revenue—opens new conversations'
+      ],
+      nextBestActions: [
+        'Frame proposals around execution certainty and risk reduction',
+        'Lead services conversation with data monetization angle',
+        'Reference industry benchmarks for deployment standardization'
+      ],
+      questionsToAsk: [
+        'How has your investment criteria evolved over the past year?',
+        'What role does energy cost play in your transformation timeline?',
+        'How do you think about services revenue in your growth model?'
+      ],
+      sources: [
+        { title: 'McKinsey Manufacturing Report 2024' },
+        { title: 'Gartner Industrial Outlook' },
+        { title: 'Industry Conference Insights' }
+      ]
+    }
   },
   {
     id: 'book-briefings',
@@ -168,6 +341,34 @@ export const focusCards: FocusCard[] = [
     secondaryAction: { label: 'Continue listening', action: 'continue-listening' },
     icon: 'book-open',
     gradient: 'from-rose-500/20 to-rose-500/5',
+    listeningHighlights: [
+      { id: 'h1', text: 'This week: Atomic Habits applied to sales execution.', startTime: 0, endTime: 60 },
+      { id: 'h2', text: 'Key concept: 1% improvements compound over time.', startTime: 61, endTime: 120 },
+      { id: 'h3', text: 'Application: Stack one sales habit onto an existing routine.', startTime: 121, endTime: 180 },
+    ],
+    execSummary: {
+      tldr: 'Micro-learning format: 5 episodes, 3 takeaways each, one weekly action.',
+      whatChanged: [
+        'New format optimized for busy schedules',
+        'Each episode tied to practical application',
+        'Weekly theme aligns with current account priorities'
+      ],
+      whyItMatters: [
+        'Small improvements compound into significant results',
+        'Applicable tactics beat theoretical knowledge',
+        'Consistency matters more than intensity'
+      ],
+      nextBestActions: [
+        'Listen to one episode before your next customer call',
+        'Apply one technique from this week\'s theme',
+        'Share a takeaway with your team'
+      ],
+      questionsToAsk: [
+        'What habit could you improve by 1% this week?',
+        'Where does consistency break down in your process?',
+        'What would compound improvement look like in 90 days?'
+      ]
+    }
   },
   {
     id: 'objection-handling-w0',
@@ -191,6 +392,34 @@ export const focusCards: FocusCard[] = [
     primaryAction: 'play',
     icon: 'message-circle',
     gradient: 'from-purple-500/20 to-purple-500/5',
+    listeningHighlights: [
+      { id: 'h1', text: '"We need more ROI proof" — Acknowledge the need for evidence, then ask about their measurement criteria.', startTime: 0, endTime: 60 },
+      { id: 'h2', text: '"Team isn\'t ready" — Clarify what readiness looks like, reframe as a change management opportunity.', startTime: 61, endTime: 120 },
+      { id: 'h3', text: '"Locked into current vendor" — Explore the contract timeline and parallel evaluation options.', startTime: 121, endTime: 180 },
+    ],
+    execSummary: {
+      tldr: 'Three common objections this week—use ACRN framework for consistent responses.',
+      whatChanged: [
+        'ROI scrutiny increasing in current budget climate',
+        'Change readiness concerns surfacing earlier in deals',
+        'Vendor lock-in being used as negotiation tactic'
+      ],
+      whyItMatters: [
+        'Early objection handling prevents deal stalls',
+        'Consistent framework builds confidence',
+        'Understanding the real concern behind the objection is key'
+      ],
+      nextBestActions: [
+        'Prepare ROI proof points specific to their industry',
+        'Offer change management resources proactively',
+        'Map contract timelines in your territory'
+      ],
+      questionsToAsk: [
+        'What does ROI success look like for your organization?',
+        'What would make your team feel ready for this change?',
+        'When does your current agreement come up for review?'
+      ]
+    }
   },
   {
     id: 'personal-brand-w0',
@@ -214,6 +443,34 @@ export const focusCards: FocusCard[] = [
     primaryAction: 'play',
     icon: 'user-circle',
     gradient: 'from-violet-500/20 to-violet-500/5',
+    listeningHighlights: [
+      { id: 'h1', text: 'Your LinkedIn engagement is up 12% this week—momentum is building.', startTime: 0, endTime: 45 },
+      { id: 'h2', text: 'Content gap identified: more industry point-of-view posts needed.', startTime: 46, endTime: 90 },
+      { id: 'h3', text: 'Quick win: comment thoughtfully on 3 prospect posts today.', startTime: 91, endTime: 135 },
+    ],
+    execSummary: {
+      tldr: 'Engagement trending up—focus on industry POV content this week.',
+      whatChanged: [
+        'LinkedIn engagement up 12% week-over-week',
+        'Profile views increased from target accounts',
+        'Content mix shifting toward insights'
+      ],
+      whyItMatters: [
+        'Personal brand accelerates deal velocity',
+        'Prospects research sellers before meetings',
+        'Consistent presence builds trust over time'
+      ],
+      nextBestActions: [
+        'Post one industry point-of-view this week',
+        'Comment on 3 prospect posts with value-add insights',
+        'Share one customer success story (with permission)'
+      ],
+      questionsToAsk: [
+        'What industry trend could you share a perspective on?',
+        'Which prospects should you engage with this week?',
+        'What customer story would resonate with your audience?'
+      ]
+    }
   },
 
   // Week 1 (1 week ago) cards - ALL 6 categories
@@ -241,6 +498,8 @@ export const focusCards: FocusCard[] = [
     icon: 'building-2',
     gradient: 'from-blue-500/20 to-blue-500/5',
     logos: ['sulzer'],
+    get listeningHighlights() { return defaultListeningHighlights(this.previewBullets); },
+    get execSummary() { return defaultExecSummary(this); }
   },
   {
     id: 'competitive-radar-w1',
@@ -265,6 +524,8 @@ export const focusCards: FocusCard[] = [
     icon: 'radar',
     gradient: 'from-red-500/20 to-red-500/5',
     logos: ['aws', 'azure'],
+    get listeningHighlights() { return defaultListeningHighlights(this.previewBullets); },
+    get execSummary() { return defaultExecSummary(this); }
   },
   {
     id: 'industry-news-w1',
@@ -289,6 +550,8 @@ export const focusCards: FocusCard[] = [
     icon: 'newspaper',
     gradient: 'from-amber-500/20 to-amber-500/5',
     logos: ['mckinsey', 'gartner'],
+    get listeningHighlights() { return defaultListeningHighlights(this.previewBullets); },
+    get execSummary() { return defaultExecSummary(this); }
   },
   {
     id: 'objection-handling-w1',
@@ -312,6 +575,8 @@ export const focusCards: FocusCard[] = [
     primaryAction: 'play',
     icon: 'message-circle',
     gradient: 'from-purple-500/20 to-purple-500/5',
+    get listeningHighlights() { return defaultListeningHighlights(this.previewBullets); },
+    get execSummary() { return defaultExecSummary(this); }
   },
   {
     id: 'personal-brand-w1',
@@ -335,6 +600,8 @@ export const focusCards: FocusCard[] = [
     primaryAction: 'play',
     icon: 'user-circle',
     gradient: 'from-violet-500/20 to-violet-500/5',
+    get listeningHighlights() { return defaultListeningHighlights(this.previewBullets); },
+    get execSummary() { return defaultExecSummary(this); }
   },
   {
     id: 'book-briefings-w1',
@@ -358,6 +625,8 @@ export const focusCards: FocusCard[] = [
     primaryAction: 'open-playlist',
     icon: 'book-open',
     gradient: 'from-rose-500/20 to-rose-500/5',
+    get listeningHighlights() { return defaultListeningHighlights(this.previewBullets); },
+    get execSummary() { return defaultExecSummary(this); }
   },
 
   // Week 2 (2 weeks ago) cards - ALL 6 categories
@@ -385,6 +654,8 @@ export const focusCards: FocusCard[] = [
     icon: 'building-2',
     gradient: 'from-blue-500/20 to-blue-500/5',
     logos: ['sulzer'],
+    get listeningHighlights() { return defaultListeningHighlights(this.previewBullets); },
+    get execSummary() { return defaultExecSummary(this); }
   },
   {
     id: 'competitive-radar-w2',
@@ -409,6 +680,8 @@ export const focusCards: FocusCard[] = [
     icon: 'radar',
     gradient: 'from-red-500/20 to-red-500/5',
     logos: ['aws', 'gcp'],
+    get listeningHighlights() { return defaultListeningHighlights(this.previewBullets); },
+    get execSummary() { return defaultExecSummary(this); }
   },
   {
     id: 'industry-news-w2',
@@ -433,6 +706,8 @@ export const focusCards: FocusCard[] = [
     icon: 'newspaper',
     gradient: 'from-amber-500/20 to-amber-500/5',
     logos: ['mckinsey'],
+    get listeningHighlights() { return defaultListeningHighlights(this.previewBullets); },
+    get execSummary() { return defaultExecSummary(this); }
   },
   {
     id: 'objection-handling-w2',
@@ -456,6 +731,8 @@ export const focusCards: FocusCard[] = [
     primaryAction: 'play',
     icon: 'message-circle',
     gradient: 'from-purple-500/20 to-purple-500/5',
+    get listeningHighlights() { return defaultListeningHighlights(this.previewBullets); },
+    get execSummary() { return defaultExecSummary(this); }
   },
   {
     id: 'personal-brand-w2',
@@ -479,6 +756,8 @@ export const focusCards: FocusCard[] = [
     primaryAction: 'play',
     icon: 'user-circle',
     gradient: 'from-violet-500/20 to-violet-500/5',
+    get listeningHighlights() { return defaultListeningHighlights(this.previewBullets); },
+    get execSummary() { return defaultExecSummary(this); }
   },
   {
     id: 'book-briefings-w2',
@@ -502,6 +781,8 @@ export const focusCards: FocusCard[] = [
     primaryAction: 'open-playlist',
     icon: 'book-open',
     gradient: 'from-rose-500/20 to-rose-500/5',
+    get listeningHighlights() { return defaultListeningHighlights(this.previewBullets); },
+    get execSummary() { return defaultExecSummary(this); }
   },
 
   // Week 3 (3 weeks ago) cards - ALL 6 categories
@@ -510,13 +791,13 @@ export const focusCards: FocusCard[] = [
     title: 'Top Focus — Sulzer',
     subtitle: 'Strategic planning insights',
     previewBullets: [
-      'Annual planning cycle kicking off',
-      'Digital transformation budget under review',
-      'New CTO priorities emerging',
+      'Annual strategy review completed',
+      'New digital transformation roadmap published',
+      'Key stakeholder realignment in progress',
     ],
-    insightLine: 'Get in early—influence the criteria before RFP.',
+    insightLine: 'Strategic clarity emerging—align your timing.',
     insightLabel: 'Why it matters',
-    footer: 'Shape the conversation, don\'t react to it.',
+    footer: 'Map your approach to their planning cycle.',
     tags: [
       { label: 'Focus', value: 'Sulzer' },
       { label: 'Type', value: 'Account Update' },
@@ -529,67 +810,73 @@ export const focusCards: FocusCard[] = [
     icon: 'building-2',
     gradient: 'from-blue-500/20 to-blue-500/5',
     logos: ['sulzer'],
+    get listeningHighlights() { return defaultListeningHighlights(this.previewBullets); },
+    get execSummary() { return defaultExecSummary(this); }
   },
   {
     id: 'competitive-radar-w3',
     title: 'Competitive Radar',
-    subtitle: 'Monthly summary',
+    subtitle: 'Product launch analysis',
     previewBullets: [
-      'Market share shifts documented',
-      'Competitive win/loss analysis complete',
-      'New battlecards published',
+      'Competitor announced new enterprise features',
+      'Market positioning shift detected',
+      'Customer migration patterns emerging',
     ],
-    insightLine: 'Review battlecards before major pitches.',
-    insightLabel: 'Action',
-    footer: 'Stay sharp on competitive positioning.',
+    insightLine: 'Feature parity claims incoming—prepare differentiation story.',
+    insightLabel: 'How to think',
+    footer: 'Stay ahead of the narrative.',
     tags: [
       { label: 'Type', value: 'Competitive' },
     ],
-    timeEstimate: '~8 min',
+    timeEstimate: '~5 min',
     lastUpdated: currentWeek,
     weekStart: week3,
     linkedPlaylistId: 'competitive',
     primaryAction: 'play',
     icon: 'radar',
     gradient: 'from-red-500/20 to-red-500/5',
-    logos: ['gcp', 'azure'],
+    logos: ['aws', 'gcp', 'azure'],
+    get listeningHighlights() { return defaultListeningHighlights(this.previewBullets); },
+    get execSummary() { return defaultExecSummary(this); }
   },
   {
     id: 'industry-news-w3',
     title: 'Industry News — Manufacturing',
-    subtitle: 'Month-end roundup',
+    subtitle: 'Quarterly outlook',
     previewBullets: [
-      'Sector outlook upgraded by analysts',
-      'M&A activity picking up in EMEA',
-      'Sustainability mandates accelerating',
+      'Economic indicators pointing to cautious optimism',
+      'Investment patterns shifting to operational efficiency',
+      'Sustainability requirements driving new evaluations',
     ],
-    insightLine: 'ESG is now a buying criterion—prepare your narrative.',
-    insightLabel: 'Trend',
-    footer: 'Align your pitch to their priorities.',
+    insightLine: 'Efficiency and sustainability are converging priorities.',
+    insightLabel: 'Market context',
+    footer: 'Lead with operational impact.',
     tags: [
       { label: 'Industry', value: 'Manufacturing' },
     ],
-    timeEstimate: '~5 min',
+    timeEstimate: '~6 min',
     lastUpdated: currentWeek,
     weekStart: week3,
     linkedPlaylistId: 'industry-news',
     primaryAction: 'play',
     icon: 'newspaper',
     gradient: 'from-amber-500/20 to-amber-500/5',
-    logos: ['gartner'],
+    logos: ['mckinsey', 'gartner'],
+    get listeningHighlights() { return defaultListeningHighlights(this.previewBullets); },
+    get execSummary() { return defaultExecSummary(this); }
   },
   {
     id: 'objection-handling-w3',
     title: 'Objection Handling',
-    subtitle: 'Stakeholder alignment',
+    subtitle: 'Technical evaluation pushback',
     previewBullets: [
-      '"IT needs to approve this first."',
-      '"We need buy-in from the board."',
-      '"Our procurement process takes 6 months."',
+      '"Your solution is too complex for our team."',
+      '"We need more integration options."',
+      '"Security review will take months."',
     ],
-    insightLine: 'Map the stakeholders, sequence the conversations.',
+    insightLine: 'Simplicity wins—lead with ease of deployment.',
     insightLabel: 'Framework',
-    footer: 'Navigate the org chart strategically.',
+    footer: 'Reduce friction at every step.',
     tags: [
       { label: 'Type', value: 'Objection Handling' },
     ],
@@ -600,151 +887,176 @@ export const focusCards: FocusCard[] = [
     primaryAction: 'play',
     icon: 'message-circle',
     gradient: 'from-purple-500/20 to-purple-500/5',
+    get listeningHighlights() { return defaultListeningHighlights(this.previewBullets); },
+    get execSummary() { return defaultExecSummary(this); }
   },
   {
     id: 'personal-brand-w3',
     title: 'Personal Brand',
-    subtitle: 'Network growth review',
+    subtitle: 'Network expansion focus',
     previewBullets: [
-      '+45 new connections this month',
-      'Top referrer: industry event content',
-      'Gap: executive-level connections',
+      'Connection requests from target accounts up 25%',
+      'Thought leadership pieces gaining traction',
+      'Speaking opportunity pipeline building',
     ],
-    insightLine: 'Quality over quantity—focus on decision-makers.',
-    insightLabel: 'Focus',
-    footer: 'Build relationships that close deals.',
+    insightLine: 'Visibility is compounding—maintain momentum.',
+    insightLabel: 'Progress',
+    footer: 'Your brand is working for you.',
     tags: [
       { label: 'Type', value: 'Personal Brand' },
     ],
-    timeEstimate: '~3 min',
+    timeEstimate: '~4 min',
     lastUpdated: currentWeek,
     weekStart: week3,
     linkedPlaylistId: 'personal-brand',
     primaryAction: 'play',
     icon: 'user-circle',
     gradient: 'from-violet-500/20 to-violet-500/5',
+    get listeningHighlights() { return defaultListeningHighlights(this.previewBullets); },
+    get execSummary() { return defaultExecSummary(this); }
   },
   {
     id: 'book-briefings-w3',
     title: 'Book Briefings',
-    subtitle: 'Sales methodology deep dive',
+    subtitle: 'Relationship selling',
     previewBullets: [
-      'SPIN Selling refresher',
-      'Challenger Sale key tactics',
-      'Value-based selling frameworks',
+      'The Trusted Advisor: building credibility',
+      'Let\'s Get Real: authentic conversations',
+      'Fanatical Prospecting: consistent outreach',
     ],
-    insightLine: 'Apply one technique this week and track the response.',
+    insightLine: 'Trust is earned through consistency and honesty.',
     insightLabel: 'Action',
-    footer: 'Classic frameworks, modern applications.',
+    footer: 'Be the advisor, not the vendor.',
     tags: [
       { label: 'Type', value: 'Learning' },
     ],
-    timeEstimate: '~12 min',
+    timeEstimate: '~10 min',
     lastUpdated: currentWeek,
     weekStart: week3,
     linkedPlaylistId: 'book-briefings',
     primaryAction: 'open-playlist',
     icon: 'book-open',
     gradient: 'from-rose-500/20 to-rose-500/5',
+    get listeningHighlights() { return defaultListeningHighlights(this.previewBullets); },
+    get execSummary() { return defaultExecSummary(this); }
   },
 ];
 
-// Create mock episodes for each focus card
+// Episode data for audio playback
 export const focusEpisodes: Record<string, Episode> = {
   'top-focus-sulzer': {
-    id: 'focus-sulzer-1',
-    title: 'Top Focus — Sulzer: This Week',
+    id: 'focus-sulzer-ep',
     playlistId: 'top-accounts',
+    title: 'Top Focus — Sulzer Weekly Briefing',
+    speaker: 'Intelligence Team',
+    speakerRole: 'Account Strategy',
     duration: 360,
-    speaker: 'Strategy Team',
-    speakerRole: 'Account Intelligence',
-    date: new Date().toISOString().split('T')[0],
+    date: new Date().toISOString(),
+    tags: ['account', 'sulzer', 'manufacturing'],
     takeaways: [
-      'Employer brand signal (Top Employer 2025) → execution capacity',
-      'Services/rentals expansion continues',
-      'Order intake baseline frames investment appetite',
-    ],
-    tags: ['sulzer', 'manufacturing', 'account'],
-    plays: 234,
+      'Top Employer certification signals execution capacity',
+      'Services expansion creates attach opportunities',
+      'Lead with deployment excellence, not features'
+    ]
   },
   'competitive-radar': {
-    id: 'focus-competitive-1',
-    title: 'Competitive Radar: This Week',
+    id: 'focus-competitive-ep',
     playlistId: 'competitive',
-    duration: 360,
+    title: 'Competitive Radar — Weekly Update',
     speaker: 'Market Intelligence',
-    speakerRole: 'Competitive Analysis',
-    date: new Date().toISOString().split('T')[0],
+    speakerRole: 'Competitive Strategy',
+    duration: 360,
+    date: new Date().toISOString(),
+    tags: ['competitive', 'strategy'],
     takeaways: [
-      'Sovereign cloud messaging rising as procurement filter',
-      'Buyers expect faster pilots + clearer ROI',
-      'Platform cadence becoming a comparison point',
-    ],
-    tags: ['competitive', 'market', 'strategy'],
-    plays: 456,
+      'Sovereignty is becoming a procurement filter',
+      'Speed to pilot is now an expectation',
+      'Lead with your controls story proactively'
+    ]
   },
   'industry-news-manufacturing': {
-    id: 'focus-industry-1',
-    title: 'Industry News — Manufacturing: Applied to Sulzer',
+    id: 'focus-industry-ep',
     playlistId: 'industry-news',
+    title: 'Industry News — Manufacturing Weekly',
+    speaker: 'Industry Research',
+    speakerRole: 'Market Analysis',
     duration: 360,
-    speaker: 'Industry Insights',
-    speakerRole: 'Research Team',
-    date: new Date().toISOString().split('T')[0],
+    date: new Date().toISOString(),
+    tags: ['industry', 'manufacturing'],
     takeaways: [
-      'Resilience + risk shape investment decisions',
-      'Energy affordability constrains transformation',
-      'Services are a margin lever',
-    ],
-    tags: ['manufacturing', 'industry', 'sulzer'],
-    plays: 321,
-  },
-  'objection-handling': {
-    id: 'focus-objection-1',
-    title: 'Objection Handling: This Month',
-    playlistId: 'objection-handling',
-    duration: 360,
-    speaker: 'Sales Enablement',
-    speakerRole: 'Training Team',
-    date: new Date().toISOString().split('T')[0],
-    takeaways: [
-      'ACRN Framework: Acknowledge → Clarify → Reframe → Next step',
-      'Ready-to-use sovereignty response',
-      'Cost mode objection handling',
-    ],
-    tags: ['objections', 'sales', 'training'],
-    plays: 567,
-  },
-  'personal-brand-daniel': {
-    id: 'focus-brand-1',
-    title: 'Personal Brand — Daniel Schaffhauser',
-    playlistId: 'personal-brand',
-    duration: 220,
-    speaker: 'Brand Coach',
-    speakerRole: 'Executive Presence',
-    date: new Date().toISOString().split('T')[0],
-    takeaways: [
-      'Tier: Practitioner (cross-channel: light)',
-      'Add signature POV + 2 micro-case posts',
-      'Get one external validation signal',
-    ],
-    tags: ['brand', 'linkedin', 'personal'],
-    plays: 189,
+      'Resilience now filters investment decisions',
+      'Services revenue is strategic priority',
+      'Frame around execution certainty'
+    ]
   },
   'book-briefings': {
-    id: 'focus-books-1',
-    title: 'Book Briefings: This Week',
+    id: 'focus-books-ep',
     playlistId: 'book-briefings',
-    duration: 720,
+    title: 'Book Briefings — Atomic Habits Applied',
     speaker: 'Learning Team',
-    speakerRole: 'L&D',
-    date: new Date().toISOString().split('T')[0],
+    speakerRole: 'Professional Development',
+    duration: 600,
+    date: new Date().toISOString(),
+    tags: ['learning', 'books'],
     takeaways: [
-      'Execution discipline tactics',
-      'Cost clarity frameworks',
-      'Services growth playbook',
-    ],
-    tags: ['books', 'learning', 'growth'],
-    plays: 412,
+      '1% improvements compound over time',
+      'Stack habits onto existing routines',
+      'Consistency beats intensity'
+    ]
   },
+  'objection-handling-w0': {
+    id: 'focus-objection-ep-w0',
+    playlistId: 'objection-handling',
+    title: 'Objection Handling — This Week',
+    speaker: 'Sales Enablement',
+    speakerRole: 'Training',
+    duration: 300,
+    date: new Date().toISOString(),
+    tags: ['objection', 'talk-track'],
+    takeaways: [
+      'Use ACRN framework consistently',
+      'Understand the concern behind the objection',
+      'Prepare industry-specific proof points'
+    ]
+  },
+  'personal-brand-w0': {
+    id: 'focus-brand-ep-w0',
+    playlistId: 'personal-brand',
+    title: 'Personal Brand — Weekly Pulse',
+    speaker: 'Marketing',
+    speakerRole: 'Brand Strategy',
+    duration: 180,
+    date: new Date().toISOString(),
+    tags: ['brand', 'linkedin'],
+    takeaways: [
+      'Consistency beats perfection',
+      'Engage with prospect content',
+      'Share industry perspectives'
+    ]
+  }
 };
+
+// Add episodes for other weeks (use same base data with different IDs)
+['top-focus-sulzer-w1', 'top-focus-sulzer-w2', 'top-focus-sulzer-w3'].forEach((id, idx) => {
+  focusEpisodes[id] = { ...focusEpisodes['top-focus-sulzer'], id: `focus-sulzer-ep-w${idx + 1}` };
+});
+
+['competitive-radar-w1', 'competitive-radar-w2', 'competitive-radar-w3'].forEach((id, idx) => {
+  focusEpisodes[id] = { ...focusEpisodes['competitive-radar'], id: `focus-competitive-ep-w${idx + 1}` };
+});
+
+['industry-news-w1', 'industry-news-w2', 'industry-news-w3'].forEach((id, idx) => {
+  focusEpisodes[id] = { ...focusEpisodes['industry-news-manufacturing'], id: `focus-industry-ep-w${idx + 1}` };
+});
+
+['book-briefings-w1', 'book-briefings-w2', 'book-briefings-w3'].forEach((id, idx) => {
+  focusEpisodes[id] = { ...focusEpisodes['book-briefings'], id: `focus-books-ep-w${idx + 1}` };
+});
+
+['objection-handling-w1', 'objection-handling-w2', 'objection-handling-w3'].forEach((id, idx) => {
+  focusEpisodes[id] = { ...focusEpisodes['objection-handling-w0'], id: `focus-objection-ep-w${idx + 1}` };
+});
+
+['personal-brand-w1', 'personal-brand-w2', 'personal-brand-w3'].forEach((id, idx) => {
+  focusEpisodes[id] = { ...focusEpisodes['personal-brand-w0'], id: `focus-brand-ep-w${idx + 1}` };
+});

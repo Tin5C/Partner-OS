@@ -132,7 +132,8 @@ export default function EpisodeDetail() {
             variant="outline" 
             className="w-full mt-3"
           >
-            Play episode
+            <Headphones className="w-4 h-4 mr-2" />
+            Listen Briefing
           </Button>
         </section>
 

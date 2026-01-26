@@ -130,13 +130,13 @@ export function FocusCardComponent({ card, onListen, onRead, className }: FocusC
             onListen();
           }}
           className={cn(
-            'flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium',
+            'flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-[11px] font-medium',
             'bg-primary text-primary-foreground',
             'hover:bg-primary/90 active:scale-[0.98] transition-all duration-150'
           )}
         >
-          <Headphones className="w-3.5 h-3.5" />
-          Listen
+          <Headphones className="w-3.5 h-3.5 flex-shrink-0" />
+          <span className="truncate">Listen Briefing</span>
         </button>
         <button
           onClick={(e) => {
@@ -144,13 +144,13 @@ export function FocusCardComponent({ card, onListen, onRead, className }: FocusC
             onRead();
           }}
           className={cn(
-            'flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium',
+            'flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-[11px] font-medium',
             'bg-secondary text-secondary-foreground',
             'hover:bg-secondary/80 active:scale-[0.98] transition-all duration-150'
           )}
         >
-          <FileText className="w-3.5 h-3.5" />
-          Read
+          <FileText className="w-3.5 h-3.5 flex-shrink-0" />
+          <span className="truncate">Exec Summary</span>
         </button>
       </div>
     </div>

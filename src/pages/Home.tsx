@@ -3,8 +3,9 @@ import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { AudioPlayer } from '@/components/AudioPlayer';
 import { FocusCardComponent } from '@/components/FocusCard';
-import { PreviewDrawer } from '@/components/PreviewDrawer';
-import { ReadDrawer } from '@/components/ReadDrawer';
+import { ListenBriefingView } from '@/components/ListenBriefingView';
+import { ExecSummaryView } from '@/components/ExecSummaryView';
+import { ProjectionMode } from '@/components/ProjectionMode';
 import { EpisodeRow } from '@/components/EpisodeRow';
 import { StoriesRail } from '@/components/StoriesRail';
 import { WeekPicker } from '@/components/WeekPicker';
@@ -19,7 +20,8 @@ export default function Home() {
   const { currentEpisode, play } = usePlayer();
   const [selectedCard, setSelectedCard] = useState<FocusCard | null>(null);
   const [listenDrawerOpen, setListenDrawerOpen] = useState(false);
-  const [readDrawerOpen, setReadDrawerOpen] = useState(false);
+  const [execSummaryOpen, setExecSummaryOpen] = useState(false);
+  const [projectionOpen, setProjectionOpen] = useState(false);
 
   // Week selection state
   const {
@@ -47,9 +49,33 @@ export default function Home() {
     setListenDrawerOpen(true);
   };
 
-  const handleReadClick = (card: FocusCard) => {
+  const handleExecSummaryClick = (card: FocusCard) => {
     setSelectedCard(card);
-    setReadDrawerOpen(true);
+    setExecSummaryOpen(true);
+  };
+
+  const handleOpenExecSummaryFromListen = () => {
+    setListenDrawerOpen(false);
+    setTimeout(() => setExecSummaryOpen(true), 100);
+  };
+
+  const handleOpenListenFromExecSummary = () => {
+    setExecSummaryOpen(false);
+    setTimeout(() => {
+      if (selectedCard) {
+        const episode = focusEpisodes[selectedCard.id];
+        if (episode) {
+          play(episode);
+        }
+      }
+      setListenDrawerOpen(true);
+    }, 100);
+  };
+
+  const handleOpenProjection = () => {
+    setListenDrawerOpen(false);
+    setExecSummaryOpen(false);
+    setTimeout(() => setProjectionOpen(true), 100);
   };
 
   return (
@@ -106,7 +132,7 @@ export default function Home() {
                   key={card.id}
                   card={card}
                   onListen={() => handleListenClick(card)}
-                  onRead={() => handleReadClick(card)}
+                  onRead={() => handleExecSummaryClick(card)}
                 />
               ))
             ) : (
@@ -116,18 +142,29 @@ export default function Home() {
         </section>
       </main>
 
-      {/* Listen Drawer (audio-focused) */}
-      <PreviewDrawer
+      {/* Listen Briefing View */}
+      <ListenBriefingView
         card={selectedCard}
         open={listenDrawerOpen}
         onOpenChange={setListenDrawerOpen}
+        onOpenExecSummary={handleOpenExecSummaryFromListen}
+        onOpenProjection={handleOpenProjection}
       />
 
-      {/* Read Drawer (reading-focused) */}
-      <ReadDrawer
+      {/* Exec Summary View */}
+      <ExecSummaryView
         card={selectedCard}
-        open={readDrawerOpen}
-        onOpenChange={setReadDrawerOpen}
+        open={execSummaryOpen}
+        onOpenChange={setExecSummaryOpen}
+        onOpenListenBriefing={handleOpenListenFromExecSummary}
+        onOpenProjection={handleOpenProjection}
+      />
+
+      {/* Projection Mode */}
+      <ProjectionMode
+        card={selectedCard}
+        open={projectionOpen}
+        onOpenChange={setProjectionOpen}
       />
 
       <AudioPlayer />
