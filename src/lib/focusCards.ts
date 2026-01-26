@@ -35,12 +35,20 @@ function getMondayOfWeek(date: Date): Date {
   return d;
 }
 
+// Format date as YYYY-MM-DD in local timezone (NOT UTC)
+function formatLocalDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 // Helper to get Monday of N weeks ago
 function getWeekStartOffset(weeksBack: number): string {
   const today = new Date();
   const monday = getMondayOfWeek(today);
   monday.setDate(monday.getDate() - weeksBack * 7);
-  return monday.toISOString().split('T')[0];
+  return formatLocalDate(monday);
 }
 
 // Current week (week 0) and past weeks

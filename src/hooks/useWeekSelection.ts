@@ -36,12 +36,20 @@ export function getSundayOfWeek(monday: Date): Date {
   return sunday;
 }
 
+// Format date as YYYY-MM-DD in local timezone (NOT UTC)
+export function formatLocalDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 // Check if a date falls within a given week (Monday to Sunday)
-// Uses string comparison to avoid timezone issues
+// Uses local timezone to avoid UTC conversion issues
 export function isDateInWeek(dateStr: string, weekStart: Date): boolean {
-  const weekStartStr = weekStart.toISOString().split('T')[0];
+  const weekStartStr = formatLocalDate(weekStart);
   const weekEnd = getSundayOfWeek(weekStart);
-  const weekEndStr = weekEnd.toISOString().split('T')[0];
+  const weekEndStr = formatLocalDate(weekEnd);
   
   // Compare as strings (YYYY-MM-DD format)
   return dateStr >= weekStartStr && dateStr <= weekEndStr;
