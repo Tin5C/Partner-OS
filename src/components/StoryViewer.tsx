@@ -385,7 +385,7 @@ export function StoryViewer({
             </div>
           ) : (
             <div className="p-3 rounded-lg bg-muted/30 text-center">
-              <span className="text-sm text-muted-foreground">Read highlights</span>
+              <span className="text-sm text-muted-foreground">View Exec Summary</span>
             </div>
           )}
 

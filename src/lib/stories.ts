@@ -28,7 +28,7 @@ export interface StoryItem {
   one_liner: string; // max 110 chars - what changed
   why_it_matters: string; // max 140 chars - business implication
   talk_track: string; // one sentence a seller can say
-  cta_label: string; // always "Listen"
+  cta_label: string; // "Listen Briefing" or "Exec Summary"
   duration_sec: number; // 30-90 seconds
   media_type: MediaType;
   topic_tags: string[]; // 1-3 tags
