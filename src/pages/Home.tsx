@@ -190,14 +190,14 @@ export default function Home() {
 
               {/* IMPROVE GROUP */}
               {groupedCards.improve.length > 0 && (
-                <div>
+                <div className="flex flex-col items-center">
                   <FocusGroupLabel 
                     id="group-improve"
                     label="Improve" 
                     variant="secondary"
                     className="mb-4"
                   />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl">
                     {groupedCards.improve.map((card) => (
                       <FocusCardComponent
                         key={card.id}
@@ -217,14 +217,14 @@ export default function Home() {
 
               {/* REPUTATION GROUP */}
               {groupedCards.reputation.length > 0 && (
-                <div>
+                <div className="flex flex-col items-center">
                   <FocusGroupLabel 
                     id="group-reputation"
                     label="Reputation" 
                     variant="tertiary"
                     className="mb-4"
                   />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl">
                     {groupedCards.reputation.map((card) => (
                       <FocusCardComponent
                         key={card.id}
