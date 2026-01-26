@@ -14,6 +14,7 @@ export interface FocusCard {
   tags: { label: string; value: string }[];
   timeEstimate: string;
   lastUpdated: string;
+  weekStart: string; // ISO date string for the Monday of this card's week
   audioUrl?: string;
   linkedPlaylistId?: string;
   linkedEpisode?: Episode;
@@ -24,9 +25,34 @@ export interface FocusCard {
   logos?: string[]; // Array of logo identifiers for this card
 }
 
+// Helper to get Monday of current week
+function getMondayOfWeek(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  d.setDate(diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+// Helper to get Monday of N weeks ago
+function getWeekStartOffset(weeksBack: number): string {
+  const today = new Date();
+  const monday = getMondayOfWeek(today);
+  monday.setDate(monday.getDate() - weeksBack * 7);
+  return monday.toISOString().split('T')[0];
+}
+
+// Current week (week 0) and past weeks
+const week0 = getWeekStartOffset(0); // Current week
+const week1 = getWeekStartOffset(1); // 1 week ago
+const week2 = getWeekStartOffset(2); // 2 weeks ago
+const week3 = getWeekStartOffset(3); // 3 weeks ago
+
 const currentWeek = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
 export const focusCards: FocusCard[] = [
+  // Week 0 (current week) cards
   {
     id: 'top-focus-sulzer',
     title: 'Top Focus — Sulzer',
@@ -48,6 +74,7 @@ export const focusCards: FocusCard[] = [
     ],
     timeEstimate: '~6 min',
     lastUpdated: currentWeek,
+    weekStart: week0,
     linkedPlaylistId: 'top-accounts',
     primaryAction: 'play',
     secondaryAction: { label: 'Open playlist', action: 'open-playlist' },
@@ -74,6 +101,7 @@ export const focusCards: FocusCard[] = [
     ],
     timeEstimate: '~6 min',
     lastUpdated: currentWeek,
+    weekStart: week0,
     linkedPlaylistId: 'competitive',
     primaryAction: 'play',
     secondaryAction: { label: 'Open playlist', action: 'open-playlist' },
@@ -100,6 +128,7 @@ export const focusCards: FocusCard[] = [
     ],
     timeEstimate: '~6 min',
     lastUpdated: currentWeek,
+    weekStart: week0,
     linkedPlaylistId: 'industry-news',
     primaryAction: 'play',
     secondaryAction: { label: 'Open playlist', action: 'open-playlist' },
@@ -107,6 +136,33 @@ export const focusCards: FocusCard[] = [
     gradient: 'from-amber-500/20 to-amber-500/5',
     logos: ['mckinsey', 'gartner'],
   },
+  {
+    id: 'book-briefings',
+    title: 'Book Briefings',
+    subtitle: 'Micro-learning for this week',
+    previewBullets: [
+      'Execution discipline',
+      'Cost clarity',
+      'Services growth',
+      'Procurement trust',
+    ],
+    insightLine: "5 short episodes → 3 takeaways each → one 'apply this week' action.",
+    insightLabel: 'Format',
+    footer: 'Listen, then use the tactic in your next account conversation.',
+    tags: [
+      { label: 'Type', value: 'Learning' },
+    ],
+    timeEstimate: '~10–15 min',
+    lastUpdated: currentWeek,
+    weekStart: week0,
+    linkedPlaylistId: 'book-briefings',
+    primaryAction: 'open-playlist',
+    secondaryAction: { label: 'Continue listening', action: 'continue-listening' },
+    icon: 'book-open',
+    gradient: 'from-rose-500/20 to-rose-500/5',
+  },
+
+  // Week 1 (1 week ago) cards
   {
     id: 'objection-handling',
     title: 'Objection Handling',
@@ -127,6 +183,7 @@ export const focusCards: FocusCard[] = [
     ],
     timeEstimate: '~6 min',
     lastUpdated: currentWeek,
+    weekStart: week1,
     linkedPlaylistId: 'objection-handling',
     primaryAction: 'play',
     secondaryAction: { label: 'Open playlist', action: 'open-playlist' },
@@ -150,6 +207,7 @@ export const focusCards: FocusCard[] = [
     ],
     timeEstimate: '~3–4 min',
     lastUpdated: currentWeek,
+    weekStart: week1,
     linkedPlaylistId: 'personal-brand',
     primaryAction: 'play',
     secondaryAction: { label: 'View scorecard', action: 'view-scorecard' },
@@ -157,28 +215,128 @@ export const focusCards: FocusCard[] = [
     gradient: 'from-violet-500/20 to-violet-500/5',
   },
   {
-    id: 'book-briefings',
-    title: 'Book Briefings',
-    subtitle: 'Micro-learning for this week',
+    id: 'competitive-radar-w1',
+    title: 'Competitive Radar',
+    subtitle: "Last week's market shifts",
     previewBullets: [
-      'Execution discipline',
-      'Cost clarity',
-      'Services growth',
-      'Procurement trust',
+      'New pricing tiers announced by major competitor',
+      'Industry analysts shifting narrative on cloud adoption',
+      'Enterprise deal velocity metrics updated',
     ],
-    insightLine: "5 short episodes → 3 takeaways each → one 'apply this week' action.",
-    insightLabel: 'Format',
-    footer: 'Listen, then use the tactic in your next account conversation.',
+    insightLine: 'Position against complexity—simplicity wins in procurement.',
+    insightLabel: 'How to think',
+    footer: 'Listen for competitive positioning angles.',
+    tags: [
+      { label: 'Type', value: 'Competitive' },
+    ],
+    timeEstimate: '~5 min',
+    lastUpdated: currentWeek,
+    weekStart: week1,
+    linkedPlaylistId: 'competitive',
+    primaryAction: 'play',
+    icon: 'radar',
+    gradient: 'from-red-500/20 to-red-500/5',
+    logos: ['aws', 'azure'],
+  },
+
+  // Week 2 (2 weeks ago) cards
+  {
+    id: 'top-focus-sulzer-w2',
+    title: 'Top Focus — Sulzer',
+    subtitle: 'Q4 review highlights',
+    previewBullets: [
+      'Q4 earnings beat expectations by 3%',
+      'New regional expansion announced',
+      'Leadership changes in operations division',
+    ],
+    insightLine: 'Growth trajectory remains strong—execution is the differentiator.',
+    insightLabel: 'Why it matters',
+    footer: 'Review Q4 talking points before next call.',
+    tags: [
+      { label: 'Focus', value: 'Sulzer' },
+      { label: 'Type', value: 'Account Update' },
+    ],
+    timeEstimate: '~7 min',
+    lastUpdated: currentWeek,
+    weekStart: week2,
+    linkedPlaylistId: 'top-accounts',
+    primaryAction: 'play',
+    icon: 'building-2',
+    gradient: 'from-blue-500/20 to-blue-500/5',
+    logos: ['sulzer'],
+  },
+  {
+    id: 'industry-news-w2',
+    title: 'Industry News — Manufacturing',
+    subtitle: 'Sector-wide trends',
+    previewBullets: [
+      'Supply chain normalization continues',
+      'Labor market pressures easing',
+      'Investment in automation accelerating',
+    ],
+    insightLine: 'Cost optimization is the near-term priority for most buyers.',
+    insightLabel: 'Market context',
+    footer: 'Use these trends to frame value conversations.',
+    tags: [
+      { label: 'Industry', value: 'Manufacturing' },
+    ],
+    timeEstimate: '~5 min',
+    lastUpdated: currentWeek,
+    weekStart: week2,
+    linkedPlaylistId: 'industry-news',
+    primaryAction: 'play',
+    icon: 'newspaper',
+    gradient: 'from-amber-500/20 to-amber-500/5',
+    logos: ['mckinsey'],
+  },
+
+  // Week 3 (3 weeks ago) cards
+  {
+    id: 'book-briefings-w3',
+    title: 'Book Briefings',
+    subtitle: 'Sales methodology deep dive',
+    previewBullets: [
+      'SPIN Selling refresher',
+      'Challenger Sale key tactics',
+      'Value-based selling frameworks',
+    ],
+    insightLine: "Apply one technique this week and track the response.",
+    insightLabel: 'Action',
+    footer: 'Classic frameworks, modern applications.',
     tags: [
       { label: 'Type', value: 'Learning' },
     ],
-    timeEstimate: '~10–15 min',
+    timeEstimate: '~12 min',
     lastUpdated: currentWeek,
+    weekStart: week3,
     linkedPlaylistId: 'book-briefings',
     primaryAction: 'open-playlist',
-    secondaryAction: { label: 'Continue listening', action: 'continue-listening' },
     icon: 'book-open',
     gradient: 'from-rose-500/20 to-rose-500/5',
+  },
+  {
+    id: 'competitive-radar-w3',
+    title: 'Competitive Radar',
+    subtitle: 'Monthly summary',
+    previewBullets: [
+      'Market share shifts documented',
+      'Competitive win/loss analysis complete',
+      'New battlecards published',
+    ],
+    insightLine: 'Review battlecards before major pitches.',
+    insightLabel: 'Action',
+    footer: 'Stay sharp on competitive positioning.',
+    tags: [
+      { label: 'Type', value: 'Competitive' },
+    ],
+    timeEstimate: '~8 min',
+    lastUpdated: currentWeek,
+    weekStart: week3,
+    linkedPlaylistId: 'competitive',
+    primaryAction: 'play',
+    icon: 'radar',
+    gradient: 'from-red-500/20 to-red-500/5',
+    logos: ['gcp', 'azure'],
   },
 ];
 
