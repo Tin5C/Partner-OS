@@ -51,7 +51,7 @@ export function BottomNav() {
 
   return (
     <nav className={cn(
-      'fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border safe-bottom',
+      'fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-sm border-t border-border safe-bottom shadow-card',
       'md:hidden',
       currentEpisode && 'bottom-[72px]'
     )}>
@@ -64,7 +64,7 @@ export function BottomNav() {
               <Sheet key={item.label} open={createOpen} onOpenChange={setCreateOpen}>
                 <SheetTrigger asChild>
                   <button className="flex flex-col items-center justify-center gap-1 px-4 py-2">
-                    <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center -mt-4 shadow-lg">
+                    <div className="w-11 h-11 rounded-xl bg-primary text-primary-foreground flex items-center justify-center -mt-4 shadow-card">
                       <item.icon className="w-5 h-5" />
                     </div>
                     <span className="text-2xs font-medium text-muted-foreground">
@@ -72,9 +72,9 @@ export function BottomNav() {
                     </span>
                   </button>
                 </SheetTrigger>
-                <SheetContent side="bottom" className="rounded-t-3xl">
+                <SheetContent side="bottom" className="rounded-t-3xl border-t border-border shadow-card-hover">
                   <SheetHeader>
-                    <SheetTitle className="text-left">Create</SheetTitle>
+                    <SheetTitle className="text-left text-section">Create</SheetTitle>
                   </SheetHeader>
                   <div className="grid gap-3 mt-4 pb-safe-bottom">
                     {createOptions.map((option) => (
@@ -84,12 +84,12 @@ export function BottomNav() {
                           setCreateOpen(false);
                           navigate(option.path);
                         }}
-                        className="flex items-start gap-3 p-4 rounded-xl bg-muted text-left hover:bg-muted/80 transition-colors"
+                        className="flex items-start gap-3 p-4 rounded-2xl bg-secondary text-left hover:bg-secondary/80 hover:shadow-card transition-all duration-200 border border-border/50"
                       >
                         <span className="text-2xl">{option.icon}</span>
                         <div>
-                          <h3 className="font-medium">{option.title}</h3>
-                          <p className="text-sm text-muted-foreground">{option.description}</p>
+                          <h3 className="font-semibold text-body">{option.title}</h3>
+                          <p className="text-caption text-muted-foreground">{option.description}</p>
                         </div>
                       </button>
                     ))}
@@ -104,8 +104,8 @@ export function BottomNav() {
               key={item.path}
               onClick={() => navigate(item.path)}
               className={cn(
-                'flex flex-col items-center justify-center gap-1 px-4 py-2 transition-colors',
-                isActive ? 'text-primary' : 'text-muted-foreground'
+                'flex flex-col items-center justify-center gap-1 px-4 py-2 transition-all duration-200',
+                isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
               )}
             >
               <item.icon className={cn('w-5 h-5', isActive && 'stroke-[2.5]')} />

@@ -47,8 +47,8 @@ export function Header({
 
   return (
     <header className={cn(
-      'sticky top-0 z-30 bg-background/95 backdrop-blur-sm safe-top',
-      'px-4 pt-4 pb-2',
+      'sticky top-0 z-30 bg-gradient-header safe-top',
+      'px-5 pt-6 pb-4',
       className
     )}>
       <div className="flex items-center justify-between gap-4">
@@ -56,21 +56,21 @@ export function Header({
           {showGreeting && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-full">
+                <button className="flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-full">
                   <img 
                     src={userAvatar} 
                     alt={user?.name || 'User'} 
-                    className="w-11 h-11 rounded-full object-cover ring-2 ring-primary/20 hover:ring-primary/40 transition-all cursor-pointer"
+                    className="w-12 h-12 rounded-full object-cover ring-2 ring-border hover:ring-primary/40 transition-all shadow-card"
                   />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48">
-                <DropdownMenuItem onClick={handleSwitchUser}>
+              <DropdownMenuContent align="start" className="w-48 rounded-xl shadow-card-hover">
+                <DropdownMenuItem onClick={handleSwitchUser} className="rounded-lg">
                   <Users className="w-4 h-4 mr-2" />
                   Switch user
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
+                <DropdownMenuItem onClick={handleLogout} className="rounded-lg">
                   <LogOut className="w-4 h-4 mr-2" />
                   Log out
                 </DropdownMenuItem>
@@ -80,22 +80,22 @@ export function Header({
           <div className="min-w-0">
             {showGreeting ? (
               <div>
-                <p className="text-sm text-muted-foreground">{getGreeting()}</p>
-                <h1 className="text-xl font-bold truncate">{user?.name}</h1>
+                <p className="text-caption text-muted-foreground">{getGreeting()}</p>
+                <h1 className="text-title truncate">{user?.name}</h1>
               </div>
             ) : title ? (
-              <h1 className="text-xl font-bold truncate">{title}</h1>
+              <h1 className="text-title truncate">{title}</h1>
             ) : null}
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {showSearch && (
             <button
               onClick={() => navigate('/search')}
-              className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
+              className="w-11 h-11 rounded-xl bg-card border border-border flex items-center justify-center hover:bg-secondary hover:shadow-card transition-all duration-200 shadow-chip"
             >
-              <Search className="w-5 h-5" />
+              <Search className="w-5 h-5 text-muted-foreground" />
             </button>
           )}
           
@@ -103,19 +103,19 @@ export function Header({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
+                  className="w-11 h-11 rounded-xl bg-card border border-border flex items-center justify-center hover:bg-secondary hover:shadow-card transition-all duration-200 shadow-chip"
                   title="Account options"
                 >
-                  <LogOut className="w-5 h-5" />
+                  <LogOut className="w-5 h-5 text-muted-foreground" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={handleSwitchUser}>
+              <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-card-hover">
+                <DropdownMenuItem onClick={handleSwitchUser} className="rounded-lg">
                   <Users className="w-4 h-4 mr-2" />
                   Switch user
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
+                <DropdownMenuItem onClick={handleLogout} className="rounded-lg">
                   <LogOut className="w-4 h-4 mr-2" />
                   Log out
                 </DropdownMenuItem>

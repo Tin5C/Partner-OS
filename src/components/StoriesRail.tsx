@@ -55,18 +55,18 @@ export function StoriesRail() {
   }
 
   return (
-    <section className="space-y-3">
+    <section className="space-y-4">
       {/* Header */}
       <div>
-        <h2 className="font-semibold text-lg">Today's Highlights</h2>
-        <p className="text-sm text-muted-foreground">
+        <h2 className="text-section text-foreground">Today's Highlights</h2>
+        <p className="text-caption text-muted-foreground">
           Quick signals you can use in customer conversations.
         </p>
       </div>
 
       {/* Horizontal scroll rail */}
-      <div className="relative -mx-4">
-        <div className="flex gap-3 overflow-x-auto px-4 pb-2 scrollbar-hide">
+      <div className="relative -mx-5">
+        <div className="flex gap-4 overflow-x-auto px-5 pb-2 scrollbar-hide">
           {stories.map((story) => (
             <StoryTile
               key={story.id}
