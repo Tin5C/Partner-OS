@@ -104,27 +104,27 @@ export function ListenBriefingView({
   };
 
   const content = (
-    <div className="flex flex-col h-full bg-gradient-to-b from-background to-muted/20">
+    <div className="flex flex-col h-full bg-gradient-header">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border/50">
+      <div className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm border-b border-border shadow-soft">
         <div className={cn(
           "flex items-center justify-between gap-3",
-          isMobile ? "px-4 py-3" : "px-6 py-4"
+          isMobile ? "px-5 py-4" : "px-6 py-4"
         )}>
           <div className="flex items-center gap-3 min-w-0 flex-1">
             {isMobile && (
               <button
                 onClick={() => onOpenChange(false)}
-                className="p-2 -ml-2 rounded-lg hover:bg-muted transition-colors"
+                className="p-2 -ml-2 rounded-xl hover:bg-secondary transition-colors"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
             )}
             <div className="min-w-0">
-              <p className="text-xs text-primary font-medium uppercase tracking-wider">Listen Briefing</p>
+              <p className="text-xs text-primary font-semibold uppercase tracking-wider">Listen Briefing</p>
               <h1 className={cn(
-                "font-semibold truncate",
-                isMobile ? "text-base" : "text-lg"
+                "font-semibold truncate text-foreground",
+                isMobile ? "text-body" : "text-section"
               )}>
                 {card.title}
               </h1>
@@ -134,10 +134,10 @@ export function ListenBriefingView({
           <div className="flex items-center gap-2">
             {onOpenProjection && (
               <Button
-                variant="ghost"
+                variant="outline"
                 size="icon"
                 onClick={onOpenProjection}
-                className="h-9 w-9"
+                className="h-10 w-10"
                 aria-label="Project"
               >
                 <Maximize2 className="w-4 h-4" />
@@ -145,10 +145,10 @@ export function ListenBriefingView({
             )}
             {!isMobile && (
               <Button
-                variant="ghost"
+                variant="outline"
                 size="icon"
                 onClick={() => onOpenChange(false)}
-                className="h-9 w-9"
+                className="h-10 w-10"
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -159,20 +159,20 @@ export function ListenBriefingView({
 
       {/* Main Player Area */}
       <div className={cn(
-        "flex-shrink-0 border-b border-border/30",
-        isMobile ? "px-4 py-6" : "px-8 py-8"
+        "flex-shrink-0 border-b border-border bg-card",
+        isMobile ? "px-5 py-8" : "px-8 py-8"
       )}>
         {/* Album Art / Visual Placeholder */}
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center mb-8">
           <div className={cn(
-            "rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shadow-lg",
-            isMobile ? "w-48 h-48" : "w-56 h-56"
+            "rounded-3xl bg-gradient-to-br from-primary/15 via-primary/10 to-secondary flex items-center justify-center shadow-card-hover",
+            isMobile ? "w-52 h-52" : "w-60 h-60"
           )}>
             <button
               onClick={handlePlay}
               className={cn(
-                "rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-xl",
-                "hover:scale-105 active:scale-95 transition-transform",
+                "rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-card-hover",
+                "hover:scale-105 active:scale-95 transition-all duration-200",
                 isMobile ? "w-20 h-20" : "w-24 h-24"
               )}
             >
@@ -186,19 +186,19 @@ export function ListenBriefingView({
         </div>
 
         {/* Title & Meta */}
-        <div className="text-center mb-6">
+        <div className="text-center mb-8">
           <h2 className={cn(
-            "font-semibold",
-            isMobile ? "text-lg" : "text-xl"
+            "font-semibold text-foreground",
+            isMobile ? "text-section" : "text-title"
           )}>{card.title}</h2>
-          <p className="text-sm text-muted-foreground mt-1">{card.subtitle}</p>
-          <p className="text-xs text-muted-foreground mt-2">{card.timeEstimate}</p>
+          <p className="text-caption text-muted-foreground mt-2">{card.subtitle}</p>
+          <p className="text-xs text-muted-foreground mt-2 px-3 py-1 rounded-full bg-secondary inline-block">{card.timeEstimate}</p>
         </div>
 
         {/* Progress Bar */}
-        <div className="space-y-2 mb-4">
+        <div className="space-y-2 mb-6">
           <div 
-            className="h-2 bg-muted rounded-full cursor-pointer overflow-hidden"
+            className="h-2.5 bg-secondary rounded-full cursor-pointer overflow-hidden shadow-soft"
             onClick={handleProgressClick}
           >
             <div 
@@ -206,7 +206,7 @@ export function ListenBriefingView({
               style={{ width: `${isCurrentCard ? progress : 0}%` }}
             />
           </div>
-          <div className="flex justify-between text-xs text-muted-foreground">
+          <div className="flex justify-between text-caption text-muted-foreground">
             <span>{formatDuration(currentTime)}</span>
             <span>-{formatDuration(remainingTime)}</span>
           </div>
@@ -216,22 +216,22 @@ export function ListenBriefingView({
         <div className="flex items-center justify-center gap-4">
           <button
             onClick={cycleSpeed}
-            className="px-3 py-1.5 rounded-lg bg-muted text-sm font-medium hover:bg-muted/80 transition-colors min-w-[3.5rem]"
+            className="px-4 py-2 rounded-xl bg-secondary text-caption font-semibold hover:bg-secondary/80 transition-all duration-200 min-w-[4rem] shadow-chip"
           >
             {playbackSpeed}x
           </button>
           
           <button
             onClick={() => skip(-15)}
-            className="w-12 h-12 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors relative"
+            className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-all duration-200 relative shadow-chip"
           >
             <RotateCcw className="w-5 h-5" />
-            <span className="absolute text-[10px] font-medium">15</span>
+            <span className="absolute text-[10px] font-semibold">15</span>
           </button>
           
           <button
             onClick={handlePlay}
-            className="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition-opacity shadow-lg"
+            className="w-16 h-16 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-all duration-200 shadow-card-hover"
           >
             {isCardPlaying ? (
               <Pause className="w-7 h-7" />
@@ -242,38 +242,38 @@ export function ListenBriefingView({
           
           <button
             onClick={() => skip(15)}
-            className="w-12 h-12 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors relative"
+            className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-all duration-200 relative shadow-chip"
           >
             <RotateCw className="w-5 h-5" />
-            <span className="absolute text-[10px] font-medium">15</span>
+            <span className="absolute text-[10px] font-semibold">15</span>
           </button>
 
-          <div className="w-[3.5rem]" /> {/* Spacer for symmetry */}
+          <div className="w-[4rem]" /> {/* Spacer for symmetry */}
         </div>
       </div>
 
       {/* Follow Along Highlights */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto bg-background">
         <div className={cn(
           "space-y-1",
-          isMobile ? "px-4 py-4" : "px-8 py-6"
+          isMobile ? "px-5 py-6" : "px-8 py-6"
         )}>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-5">
             Follow Along
           </p>
           
-          <div ref={highlightsRef} className="space-y-3">
+          <div ref={highlightsRef} className="space-y-4">
             {highlights.length > 0 ? (
               highlights.map((highlight, idx) => (
                 <div
                   key={highlight.id}
                   className={cn(
-                    "p-4 rounded-xl transition-all duration-300 cursor-pointer",
+                    "p-5 rounded-2xl transition-all duration-300 cursor-pointer border",
                     idx === currentHighlightIndex
-                      ? "bg-primary/10 border-2 border-primary/30 shadow-sm"
+                      ? "bg-primary/5 border-primary/30 shadow-card"
                       : idx < currentHighlightIndex
-                      ? "bg-muted/30 opacity-60"
-                      : "bg-muted/50 hover:bg-muted/70"
+                      ? "bg-muted/30 border-transparent opacity-60"
+                      : "bg-card border-border hover:border-primary/20 hover:shadow-card"
                   )}
                   onClick={() => {
                     if (episode) {
@@ -285,12 +285,12 @@ export function ListenBriefingView({
                 >
                   <p className={cn(
                     "leading-relaxed",
-                    isMobile ? "text-base" : "text-lg",
+                    isMobile ? "text-body" : "text-section",
                     idx === currentHighlightIndex ? "text-foreground font-medium" : "text-muted-foreground"
                   )}>
                     {highlight.text}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-2">
+                  <p className="text-xs text-muted-foreground mt-3">
                     {formatDuration(highlight.startTime)}
                   </p>
                 </div>
@@ -299,11 +299,11 @@ export function ListenBriefingView({
               card.previewBullets.map((bullet, idx) => (
                 <div
                   key={idx}
-                  className="p-4 rounded-xl bg-muted/50"
+                  className="p-5 rounded-2xl bg-card border border-border shadow-soft"
                 >
                   <p className={cn(
                     "text-muted-foreground leading-relaxed",
-                    isMobile ? "text-base" : "text-lg"
+                    isMobile ? "text-body" : "text-section"
                   )}>
                     {bullet}
                   </p>
@@ -316,12 +316,12 @@ export function ListenBriefingView({
 
       {/* Footer Action */}
       <div className={cn(
-        "sticky bottom-0 border-t border-border/50 bg-background/95 backdrop-blur-sm",
-        isMobile ? "px-4 py-4 safe-bottom" : "px-8 py-4"
+        "sticky bottom-0 border-t border-border bg-card/95 backdrop-blur-sm shadow-soft",
+        isMobile ? "px-5 py-4 safe-bottom" : "px-8 py-4"
       )}>
         <Button 
           variant="outline" 
-          className="w-full"
+          className="w-full h-12 rounded-xl"
           onClick={onOpenExecSummary}
         >
           <FileText className="w-4 h-4 mr-2" />

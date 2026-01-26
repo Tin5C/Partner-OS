@@ -73,6 +73,9 @@ export default {
         },
       },
       borderRadius: {
+        "2xl": "1rem",
+        "3xl": "1.25rem",
+        "4xl": "1.5rem",
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
@@ -82,6 +85,10 @@ export default {
       },
       fontSize: {
         '2xs': ['0.625rem', { lineHeight: '0.875rem' }],
+        'title': ['1.75rem', { lineHeight: '2.25rem', fontWeight: '700' }],
+        'section': ['1.25rem', { lineHeight: '1.75rem', fontWeight: '600' }],
+        'body': ['0.9375rem', { lineHeight: '1.5rem' }],
+        'caption': ['0.8125rem', { lineHeight: '1.25rem' }],
       },
       spacing: {
         '18': '4.5rem',
@@ -105,16 +112,23 @@ export default {
           from: { opacity: "0", transform: "translateY(100%)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
+        "lift": {
+          from: { transform: "translateY(0)" },
+          to: { transform: "translateY(-2px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.3s ease-out forwards",
         "slide-up": "slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "lift": "lift 0.2s ease-out forwards",
       },
       boxShadow: {
-        'card': '0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04)',
-        'card-hover': '0 4px 12px 0 rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.04)',
+        'soft': '0 1px 3px 0 rgb(0 0 0 / 0.03), 0 1px 2px -1px rgb(0 0 0 / 0.02)',
+        'card': '0 2px 8px 0 rgb(0 0 0 / 0.04), 0 1px 3px -1px rgb(0 0 0 / 0.02)',
+        'card-hover': '0 8px 24px 0 rgb(0 0 0 / 0.08), 0 4px 8px -2px rgb(0 0 0 / 0.04)',
+        'chip': '0 1px 2px 0 rgb(0 0 0 / 0.04)',
         'player': '0 -4px 24px 0 rgb(0 0 0 / 0.12)',
       },
     },

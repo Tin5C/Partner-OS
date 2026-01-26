@@ -82,14 +82,14 @@ export default function Home() {
     <div className="min-h-screen bg-background pb-32">
       <Header showGreeting showSearch />
 
-      <main className="px-4 space-y-6 stagger-children">
+      <main className="px-5 space-y-8 stagger-children">
         {/* Stories Rail - Today's Highlights */}
         <StoriesRail />
 
         {/* Continue Listening */}
         {continueListening && !currentEpisode && (
-          <section>
-            <h2 className="font-semibold text-lg mb-3">Continue Listening</h2>
+          <section className="p-4 rounded-2xl bg-card border border-border shadow-card">
+            <h2 className="text-section mb-3">Continue Listening</h2>
             <EpisodeRow 
               episode={continueListening} 
               showProgress 
@@ -101,15 +101,15 @@ export default function Home() {
         {/* Focus Cards Grid - Command Center */}
         <section>
           {/* Section Header */}
-          <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center gap-4 mb-4">
             <img 
               src={userAvatar} 
               alt="Your focus" 
-              className="w-8 h-8 rounded-full object-cover ring-2 ring-primary/10"
+              className="w-10 h-10 rounded-xl object-cover ring-2 ring-border shadow-soft"
             />
             <div>
-              <h2 className="font-semibold text-base leading-tight">Your Focus</h2>
-              <p className="text-xs text-muted-foreground">What needs attention</p>
+              <h2 className="text-section text-foreground">Your Focus</h2>
+              <p className="text-caption text-muted-foreground">What needs attention</p>
             </div>
           </div>
 
@@ -121,11 +121,11 @@ export default function Home() {
             canGoNext={canGoNext}
             onPrevious={goToPreviousWeek}
             onNext={goToNextWeek}
-            className="mb-4"
+            className="mb-5"
           />
 
           {/* Focus Cards Grid */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {filteredCards.length > 0 ? (
               filteredCards.map((card) => (
                 <FocusCardComponent

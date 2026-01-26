@@ -21,13 +21,16 @@ export function Tag({
     <span
       onClick={onClick}
       className={cn(
-        'inline-flex items-center font-medium transition-colors',
-        size === 'sm' && 'px-2 py-0.5 text-xs rounded-md',
-        size === 'md' && 'px-3 py-1 text-sm rounded-lg',
-        variant === 'default' && 'bg-tag text-tag-foreground',
-        variant === 'outline' && 'border border-border text-muted-foreground',
-        variant === 'active' && 'bg-primary text-primary-foreground',
-        isClickable && 'cursor-pointer hover:opacity-80',
+        'inline-flex items-center font-medium transition-all duration-200',
+        // Pill shape with rounded-full
+        size === 'sm' && 'px-3 py-1 text-xs rounded-full',
+        size === 'md' && 'px-4 py-1.5 text-sm rounded-full',
+        // Default - light background with thin border
+        variant === 'default' && 'bg-card text-muted-foreground border border-border shadow-chip',
+        variant === 'outline' && 'border border-border text-muted-foreground bg-transparent',
+        variant === 'active' && 'bg-primary text-primary-foreground shadow-soft',
+        // Hover states
+        isClickable && 'cursor-pointer hover:shadow-card hover:-translate-y-0.5',
         className
       )}
     >

@@ -23,7 +23,7 @@ export function WeekPicker({
   return (
     <div
       className={cn(
-        'flex items-center justify-between gap-2 p-2 rounded-lg bg-muted/50 border border-border/50',
+        'flex items-center justify-between gap-3 p-3 rounded-2xl bg-card border border-border shadow-card',
         className
       )}
     >
@@ -33,11 +33,11 @@ export function WeekPicker({
         disabled={!canGoPrevious}
         aria-label="Previous week"
         className={cn(
-          'flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-150',
-          'focus:outline-none focus:ring-2 focus:ring-primary/50',
+          'flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200',
+          'focus:outline-none focus:ring-2 focus:ring-primary/30',
           canGoPrevious
-            ? 'hover:bg-muted active:scale-95 text-foreground'
-            : 'text-muted-foreground/40 cursor-not-allowed'
+            ? 'hover:bg-secondary hover:shadow-chip active:scale-95 text-foreground'
+            : 'text-muted-foreground/30 cursor-not-allowed'
         )}
       >
         <ChevronLeft className="w-5 h-5" />
@@ -45,8 +45,8 @@ export function WeekPicker({
 
       {/* Week Label */}
       <div className="flex-1 text-center min-w-0">
-        <p className="text-sm font-semibold text-foreground truncate">{weekLabel}</p>
-        <p className="text-xs text-muted-foreground">{weekRange}</p>
+        <p className="text-body font-semibold text-foreground truncate">{weekLabel}</p>
+        <p className="text-caption text-muted-foreground">{weekRange}</p>
       </div>
 
       {/* Next Week Button */}
@@ -55,11 +55,11 @@ export function WeekPicker({
         disabled={!canGoNext}
         aria-label="Next week"
         className={cn(
-          'flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-150',
-          'focus:outline-none focus:ring-2 focus:ring-primary/50',
+          'flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200',
+          'focus:outline-none focus:ring-2 focus:ring-primary/30',
           canGoNext
-            ? 'hover:bg-muted active:scale-95 text-foreground'
-            : 'text-muted-foreground/40 cursor-not-allowed'
+            ? 'hover:bg-secondary hover:shadow-chip active:scale-95 text-foreground'
+            : 'text-muted-foreground/30 cursor-not-allowed'
         )}
       >
         <ChevronRight className="w-5 h-5" />

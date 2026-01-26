@@ -252,14 +252,14 @@ export const stories: StoryItem[] = [
   },
 ];
 
-// Type colors for pills/badges
+// Type colors for pills/badges - updated for new design system
 export const storyTypeColors: Record<StoryType, string> = {
-  competitor: "bg-orange-500/20 text-orange-400 border-orange-500/30",
-  startup: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-  expert: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-  account: "bg-violet-500/20 text-violet-400 border-violet-500/30",
-  lead: "bg-amber-500/20 text-amber-400 border-amber-500/30",
-  event: "bg-purple-500/20 text-purple-400 border-purple-500/30",
+  competitor: "bg-orange-100/80 text-orange-700 border-orange-200 dark:bg-orange-950/50 dark:text-orange-300 dark:border-orange-800",
+  startup: "bg-emerald-100/80 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800",
+  expert: "bg-blue-100/80 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800",
+  account: "bg-violet-100/80 text-violet-700 border-violet-200 dark:bg-violet-950/50 dark:text-violet-300 dark:border-violet-800",
+  lead: "bg-amber-100/80 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800",
+  event: "bg-purple-100/80 text-purple-700 border-purple-200 dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-800",
 };
 
 export const storyTypeLabels: Record<StoryType, string> = {

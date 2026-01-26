@@ -137,27 +137,27 @@ export function ExecSummaryView({
   const metaLine = [card.timeEstimate, typeTag, focusTag || industryTag].filter(Boolean).join(' • ');
 
   const stickyHeader = (
-    <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
+    <div className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm border-b border-border shadow-soft">
       <div className={cn(
         "flex items-center justify-between gap-4",
-        isMobile ? "px-4 py-3" : "px-8 py-4"
+        isMobile ? "px-5 py-4" : "px-8 py-4"
       )}>
         {/* Left: Title + Meta */}
         <div className="flex items-center gap-3 min-w-0 flex-1">
           {isMobile && (
             <button
               onClick={handleClose}
-              className="p-2 -ml-2 rounded-lg hover:bg-muted transition-colors"
+              className="p-2 -ml-2 rounded-xl hover:bg-secondary transition-colors"
               aria-label="Close"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
           )}
           <div className="min-w-0">
-            <p className="text-xs text-primary font-medium uppercase tracking-wider">Exec Summary</p>
+            <p className="text-xs text-primary font-semibold uppercase tracking-wider">Exec Summary</p>
             <h1 className={cn(
-              "font-semibold truncate",
-              isMobile ? "text-base" : "text-lg"
+              "font-semibold truncate text-foreground",
+              isMobile ? "text-body" : "text-section"
             )}>
               {card.title}
             </h1>
@@ -171,36 +171,36 @@ export function ExecSummaryView({
             variant="outline"
             size="sm"
             onClick={handleListen}
-            className="h-8 px-3"
+            className="h-9 px-4 rounded-xl"
           >
             <Headphones className="w-4 h-4 mr-1.5" />
             Listen Briefing
           </Button>
           
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon"
             onClick={handleSave}
-            className={cn("h-9 w-9", saved && "text-primary")}
+            className={cn("h-10 w-10 rounded-xl", saved && "text-primary border-primary/30")}
             aria-label={saved ? "Remove from saved" : "Save for later"}
           >
             <Bookmark className={cn("w-4 h-4", saved && "fill-current")} />
           </Button>
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon"
             onClick={handleShare}
-            className="h-9 w-9"
+            className="h-10 w-10 rounded-xl"
             aria-label="Share"
           >
             <Share2 className="w-4 h-4" />
           </Button>
           {onOpenProjection && (
             <Button
-              variant="ghost"
+              variant="outline"
               size="icon"
               onClick={onOpenProjection}
-              className="h-9 w-9"
+              className="h-10 w-10 rounded-xl"
               aria-label="Project"
             >
               <Maximize2 className="w-4 h-4" />
@@ -208,10 +208,10 @@ export function ExecSummaryView({
           )}
           {!isMobile && (
             <Button
-              variant="ghost"
+              variant="outline"
               size="icon"
               onClick={handleClose}
-              className="h-9 w-9"
+              className="h-10 w-10 rounded-xl"
               aria-label="Close"
             >
               <X className="w-4 h-4" />
@@ -226,22 +226,22 @@ export function ExecSummaryView({
     <div 
       ref={contentRef}
       className={cn(
-        "flex-1 overflow-y-auto",
-        isMobile ? "px-5 py-6" : "px-8 py-8"
+        "flex-1 overflow-y-auto bg-gradient-header",
+        isMobile ? "px-5 py-8" : "px-8 py-8"
       )}
     >
       {/* Constrained content column for readability */}
-      <div className="max-w-[680px] mx-auto space-y-8">
+      <div className="max-w-[680px] mx-auto space-y-6">
         
         {/* TL;DR */}
         {execSummary?.tldr && (
-          <section className="bg-primary/5 border border-primary/20 rounded-2xl p-6">
-            <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-3">
+          <section className="bg-primary/5 border border-primary/20 rounded-3xl p-6 shadow-soft">
+            <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-4">
               TL;DR
             </p>
             <p className={cn(
               "text-foreground font-medium leading-relaxed",
-              isMobile ? "text-lg" : "text-xl"
+              isMobile ? "text-section" : "text-title"
             )} style={{ lineHeight: '1.6' }}>
               {execSummary.tldr}
             </p>
@@ -250,18 +250,18 @@ export function ExecSummaryView({
 
         {/* What Changed */}
         {execSummary?.whatChanged && execSummary.whatChanged.length > 0 && (
-          <section className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
+          <section className="bg-card border border-border rounded-3xl p-6 shadow-card">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-5">
               What Changed
             </p>
-            <ul className="space-y-3">
+            <ul className="space-y-4">
               {execSummary.whatChanged.map((item, idx) => (
-                <li key={idx} className="flex items-start gap-3">
-                  <span className="w-2 h-2 rounded-full bg-amber-500 mt-2.5 flex-shrink-0" />
+                <li key={idx} className="flex items-start gap-4">
+                  <span className="w-2.5 h-2.5 rounded-full bg-accent mt-2 flex-shrink-0" />
                   <span 
                     className={cn(
                       "text-foreground",
-                      isMobile ? "text-base" : "text-[17px]"
+                      isMobile ? "text-body" : "text-section"
                     )}
                     style={{ lineHeight: '1.65' }}
                   >
@@ -275,18 +275,18 @@ export function ExecSummaryView({
 
         {/* Why It Matters */}
         {execSummary?.whyItMatters && execSummary.whyItMatters.length > 0 && (
-          <section className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
+          <section className="bg-card border border-border rounded-3xl p-6 shadow-card">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-5">
               Why It Matters
             </p>
-            <ul className="space-y-3">
+            <ul className="space-y-4">
               {execSummary.whyItMatters.map((item, idx) => (
-                <li key={idx} className="flex items-start gap-3">
-                  <span className="w-2 h-2 rounded-full bg-primary mt-2.5 flex-shrink-0" />
+                <li key={idx} className="flex items-start gap-4">
+                  <span className="w-2.5 h-2.5 rounded-full bg-primary mt-2 flex-shrink-0" />
                   <span 
                     className={cn(
                       "text-foreground",
-                      isMobile ? "text-base" : "text-[17px]"
+                      isMobile ? "text-body" : "text-section"
                     )}
                     style={{ lineHeight: '1.65' }}
                   >
@@ -300,21 +300,21 @@ export function ExecSummaryView({
 
         {/* Risks (optional) */}
         {execSummary?.risks && execSummary.risks.length > 0 && (
-          <section className="bg-destructive/5 border border-destructive/20 rounded-2xl p-6">
-            <div className="flex items-center gap-2 mb-4">
+          <section className="bg-destructive/5 border border-destructive/20 rounded-3xl p-6 shadow-soft">
+            <div className="flex items-center gap-2 mb-5">
               <AlertTriangle className="w-4 h-4 text-destructive" />
               <p className="text-xs font-semibold text-destructive uppercase tracking-wider">
                 Risks
               </p>
             </div>
-            <ul className="space-y-3">
+            <ul className="space-y-4">
               {execSummary.risks.map((item, idx) => (
-                <li key={idx} className="flex items-start gap-3">
-                  <span className="w-2 h-2 rounded-full bg-destructive mt-2.5 flex-shrink-0" />
+                <li key={idx} className="flex items-start gap-4">
+                  <span className="w-2.5 h-2.5 rounded-full bg-destructive mt-2 flex-shrink-0" />
                   <span 
                     className={cn(
                       "text-foreground",
-                      isMobile ? "text-base" : "text-[17px]"
+                      isMobile ? "text-body" : "text-section"
                     )}
                     style={{ lineHeight: '1.65' }}
                   >
@@ -328,16 +328,16 @@ export function ExecSummaryView({
 
         {/* Next Best Actions */}
         {execSummary?.nextBestActions && execSummary.nextBestActions.length > 0 && (
-          <section className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
+          <section className="bg-card border border-border rounded-3xl p-6 shadow-card">
+            <div className="flex items-center justify-between mb-5">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Next Best Actions
               </p>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={handleCopyActions}
-                className="h-8 px-3"
+                className="h-9 px-4 rounded-xl"
               >
                 {copiedActions ? (
                   <>
@@ -352,16 +352,16 @@ export function ExecSummaryView({
                 )}
               </Button>
             </div>
-            <ul className="space-y-4">
+            <ul className="space-y-5">
               {execSummary.nextBestActions.map((item, idx) => (
-                <li key={idx} className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-lg bg-primary/10 text-primary text-sm font-semibold flex items-center justify-center flex-shrink-0 mt-0.5">
+                <li key={idx} className="flex items-start gap-4">
+                  <div className="w-7 h-7 rounded-xl bg-primary/10 text-primary text-sm font-semibold flex items-center justify-center flex-shrink-0 mt-0.5">
                     {idx + 1}
                   </div>
                   <span 
                     className={cn(
                       "text-foreground",
-                      isMobile ? "text-base" : "text-[17px]"
+                      isMobile ? "text-body" : "text-section"
                     )}
                     style={{ lineHeight: '1.65' }}
                   >
@@ -375,16 +375,16 @@ export function ExecSummaryView({
 
         {/* Questions to Ask */}
         {execSummary?.questionsToAsk && execSummary.questionsToAsk.length > 0 && (
-          <section className="bg-secondary/30 border border-secondary rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-4">
+          <section className="bg-secondary/50 border border-secondary rounded-3xl p-6 shadow-soft">
+            <div className="flex items-center justify-between mb-5">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Questions to Ask
               </p>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={handleCopyQuestions}
-                className="h-8 px-3"
+                className="h-9 px-4 rounded-xl"
               >
                 {copiedQuestions ? (
                   <>
@@ -399,14 +399,14 @@ export function ExecSummaryView({
                 )}
               </Button>
             </div>
-            <ul className="space-y-4">
+            <ul className="space-y-5">
               {execSummary.questionsToAsk.map((item, idx) => (
-                <li key={idx} className="flex items-start gap-3">
-                  <span className="text-primary font-medium flex-shrink-0">Q{idx + 1}:</span>
+                <li key={idx} className="flex items-start gap-4">
+                  <span className="text-primary font-semibold flex-shrink-0">Q{idx + 1}:</span>
                   <span 
                     className={cn(
                       "text-foreground italic",
-                      isMobile ? "text-base" : "text-[17px]"
+                      isMobile ? "text-body" : "text-section"
                     )}
                     style={{ lineHeight: '1.65' }}
                   >
@@ -422,8 +422,8 @@ export function ExecSummaryView({
         {execSummary?.sources && execSummary.sources.length > 0 && (
           <Collapsible open={sourcesOpen} onOpenChange={setSourcesOpen}>
             <CollapsibleTrigger asChild>
-              <button className="w-full flex items-center justify-between p-4 rounded-xl bg-muted/50 hover:bg-muted/70 transition-colors">
-                <span className="text-sm font-medium text-muted-foreground">
+              <button className="w-full flex items-center justify-between p-4 rounded-2xl bg-card border border-border hover:bg-secondary/50 transition-all duration-200 shadow-chip">
+                <span className="text-caption font-semibold text-muted-foreground">
                   Sources ({execSummary.sources.length})
                 </span>
                 {sourcesOpen ? (
@@ -434,9 +434,9 @@ export function ExecSummaryView({
               </button>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <ul className="mt-3 space-y-2 pl-4">
+              <ul className="mt-4 space-y-3 pl-5">
                 {execSummary.sources.map((source, idx) => (
-                  <li key={idx} className="text-sm text-muted-foreground">
+                  <li key={idx} className="text-caption text-muted-foreground">
                     • {source.title}
                   </li>
                 ))}
@@ -446,18 +446,18 @@ export function ExecSummaryView({
         )}
 
         {/* Metadata */}
-        <section className="pt-4 border-t border-border/50">
+        <section className="pt-6 border-t border-border">
           <div className="flex flex-wrap gap-2">
             {card.tags.map((tag, idx) => (
               <span 
                 key={idx}
-                className="px-2.5 py-1 rounded-lg bg-muted text-xs text-muted-foreground"
+                className="px-3 py-1.5 rounded-full bg-card border border-border text-xs text-muted-foreground shadow-chip"
               >
                 {tag.label}: {tag.value}
               </span>
             ))}
           </div>
-          <p className="text-xs text-muted-foreground mt-4">
+          <p className="text-xs text-muted-foreground mt-5">
             Last updated: {card.lastUpdated}
           </p>
         </section>
