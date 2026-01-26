@@ -4,21 +4,33 @@ import { BottomNav } from '@/components/BottomNav';
 import { AudioPlayer } from '@/components/AudioPlayer';
 import { FocusCardComponent } from '@/components/FocusCard';
 import { PreviewDrawer } from '@/components/PreviewDrawer';
+import { ReadDrawer } from '@/components/ReadDrawer';
 import { EpisodeRow } from '@/components/EpisodeRow';
 import { StoriesRail } from '@/components/StoriesRail';
-import { focusCards, FocusCard } from '@/lib/focusCards';
+import { focusCards, FocusCard, focusEpisodes } from '@/lib/focusCards';
 import { continueListening } from '@/lib/data';
 import { usePlayer } from '@/contexts/PlayerContext';
 import userAvatar from '@/assets/user-avatar.jpg';
 
 export default function Home() {
-  const { currentEpisode } = usePlayer();
+  const { currentEpisode, play } = usePlayer();
   const [selectedCard, setSelectedCard] = useState<FocusCard | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [listenDrawerOpen, setListenDrawerOpen] = useState(false);
+  const [readDrawerOpen, setReadDrawerOpen] = useState(false);
 
-  const handleCardClick = (card: FocusCard) => {
+  const handleListenClick = (card: FocusCard) => {
     setSelectedCard(card);
-    setDrawerOpen(true);
+    // Start playing immediately
+    const episode = focusEpisodes[card.id];
+    if (episode) {
+      play(episode);
+    }
+    setListenDrawerOpen(true);
+  };
+
+  const handleReadClick = (card: FocusCard) => {
+    setSelectedCard(card);
+    setReadDrawerOpen(true);
   };
 
   return (
@@ -59,19 +71,26 @@ export default function Home() {
               <FocusCardComponent
                 key={card.id}
                 card={card}
-                onListen={() => handleCardClick(card)}
-                onRead={() => handleCardClick(card)}
+                onListen={() => handleListenClick(card)}
+                onRead={() => handleReadClick(card)}
               />
             ))}
           </div>
         </section>
       </main>
 
-      {/* Preview Drawer */}
+      {/* Listen Drawer (audio-focused) */}
       <PreviewDrawer
         card={selectedCard}
-        open={drawerOpen}
-        onOpenChange={setDrawerOpen}
+        open={listenDrawerOpen}
+        onOpenChange={setListenDrawerOpen}
+      />
+
+      {/* Read Drawer (reading-focused) */}
+      <ReadDrawer
+        card={selectedCard}
+        open={readDrawerOpen}
+        onOpenChange={setReadDrawerOpen}
       />
 
       <AudioPlayer />
