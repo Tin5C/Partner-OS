@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CalendarSearch } from 'lucide-react';
+import { CalendarSearch, User } from 'lucide-react';
 import { useExperience, useExperiencePacks } from '@/contexts/ExperienceContext';
 import { TenantHeader } from '@/components/TenantHeader';
 import { BottomNav } from '@/components/BottomNav';
@@ -10,7 +10,10 @@ import { Separator } from '@/components/ui/separator';
 import { PackSection, WeekNavigator, ReadPanel, ListenPlayer } from '@/components/shared';
 import { AccountPrepCard } from '@/components/AccountPrepCard';
 import { EventsCard, EventsPanel } from '@/components/events';
+import { ProfileBanner, ProfilePanel } from '@/components/profile';
+import { SkillOfWeekCard } from '@/components/skills';
 import { useWeekSelection, formatLocalDate } from '@/hooks/useWeekSelection';
+import { useProfile } from '@/hooks/useProfile';
 import { getTenantContent, PackContent } from '@/config/contentModel';
 import { cn } from '@/lib/utils';
 
@@ -75,6 +78,10 @@ export default function ExperiencePage() {
   
   const packs = useExperiencePacks();
   const navigate = useNavigate();
+  
+  // Profile state
+  const { profile, completeness, saveFullProfile } = useProfile();
+  const [profilePanelOpen, setProfilePanelOpen] = useState(false);
   
   const { 
     weekLabel, 
@@ -157,6 +164,9 @@ export default function ExperiencePage() {
     if (packId === 'events') {
       return <EventsCard tenantSlug={tenantSlug} />;
     }
+    if (packId === 'skill-of-week') {
+      return <SkillOfWeekCard onOpenProfile={() => setProfilePanelOpen(true)} />;
+    }
     return null;
   };
 
@@ -170,9 +180,31 @@ export default function ExperiencePage() {
     <div className="min-h-screen bg-background pb-24">
       <TenantHeader showGreeting showSearch />
 
-      <main className="px-5 space-y-8">
+      <main className="px-5 space-y-6">
+        {/* Profile Banner + Edit Link */}
+        <div className="flex items-start gap-3 flex-col sm:flex-row sm:items-center sm:justify-between">
+          <ProfileBanner
+            completeness={completeness}
+            onOpenProfile={() => setProfilePanelOpen(true)}
+            className="w-full sm:flex-1"
+          />
+          {completeness === 100 && (
+            <button
+              onClick={() => setProfilePanelOpen(true)}
+              className={cn(
+                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium',
+                'bg-card border border-border text-muted-foreground',
+                'hover:border-primary/50 hover:text-foreground transition-all duration-200'
+              )}
+            >
+              <User className="w-3.5 h-3.5" />
+              Edit profile
+            </button>
+          )}
+        </div>
+
         {/* Shortcut Buttons */}
-        <div className="flex items-center gap-2 -mb-4">
+        <div className="flex items-center gap-2 -mb-2">
           <button
             onClick={() => setEventsPanelOpen(true)}
             className={cn(
@@ -184,6 +216,19 @@ export default function ExperiencePage() {
             <CalendarSearch className="w-3.5 h-3.5" />
             Find Events
           </button>
+          {completeness < 100 && (
+            <button
+              onClick={() => setProfilePanelOpen(true)}
+              className={cn(
+                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium',
+                'bg-card border border-border text-muted-foreground',
+                'hover:border-primary/50 hover:text-foreground transition-all duration-200'
+              )}
+            >
+              <User className="w-3.5 h-3.5" />
+              Edit profile
+            </button>
+          )}
         </div>
 
         {/* Stories Rail */}
@@ -274,6 +319,14 @@ export default function ExperiencePage() {
         open={eventsPanelOpen}
         onOpenChange={setEventsPanelOpen}
         tenantSlug={tenantSlug}
+      />
+
+      {/* Profile Panel */}
+      <ProfilePanel
+        open={profilePanelOpen}
+        onOpenChange={setProfilePanelOpen}
+        profile={profile}
+        onSave={saveFullProfile}
       />
     </div>
   );
