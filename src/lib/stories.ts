@@ -16,9 +16,9 @@ import startupVisionQaVideo from '@/assets/stories/startup-vision-qa.mp4';
 import startupEnergyVideo from '@/assets/stories/startup-energy.mp4';
 import startupMaintenanceVideo from '@/assets/stories/startup-maintenance.mp4';
 
-export type StoryType = "competitor" | "startup" | "expert" | "account" | "lead" | "event";
+export type StoryType = "competitor" | "startup" | "customer" | "industry" | "expert" | "account" | "lead" | "event";
 export type ListenedState = "unseen" | "seen" | "listened";
-export type MediaType = "audio" | "video";
+export type MediaType = "image" | "video" | "audio";
 
 export interface StoryItem {
   id: string;
@@ -32,9 +32,18 @@ export interface StoryItem {
   duration_sec: number; // 30-90 seconds
   media_type: MediaType;
   topic_tags: string[]; // 1-3 tags
+
+  // Cover rendering fields (new)
+  companyName: string; // Used for monogram fallback
+  personName?: string; // Optional - for customer stories
+  logoUrl?: string; // Optional - company logo for competitor/startup
+  personImageUrl?: string; // Optional - portrait for customer stories
+  coverImageUrl?: string; // Optional - fallback cover image
+
+  // Audio/media fields
   audio_title: string;
   audio_script: string; // 70-140 words
-  imageUrl?: string;
+  imageUrl?: string; // Legacy - will be deprecated in favor of coverImageUrl
   videoUrl?: string;
   audioUrl?: string;
   relatedEpisodeId?: string;
@@ -59,9 +68,11 @@ export const stories: StoryItem[] = [
     duration_sec: 45,
     media_type: "audio",
     topic_tags: ["Sovereignty", "Security", "DACH"],
+    companyName: "AWS",
+    logoUrl: "https://upload.wikimedia.org/wikipedia/commons/9/93/Amazon_Web_Services_Logo.svg",
     audio_title: "Competitor Pushes Sovereignty Hard",
     audio_script: "A major competitor is now leading with data sovereignty in every DACH sales pitch. They're positioning workload boundaries and local controls as table stakes. Procurement teams are using this as an early filter—if you can't answer sovereignty questions clearly, you don't make the shortlist. Here's how to use it: Lead with your own controls story. Ask the customer: 'What's your current stance on workload boundaries and data residency?' This positions you as informed, not reactive.",
-    imageUrl: competitorSovereignty,
+    coverImageUrl: competitorSovereignty,
     relatedEpisodeId: "ep-competitive-radar",
     publishedAt: "2026-01-22",
     sourceName: "Field Intel"
@@ -78,9 +89,11 @@ export const stories: StoryItem[] = [
     duration_sec: 40,
     media_type: "audio",
     topic_tags: ["Pricing", "Commercial"],
+    companyName: "Salesforce",
+    logoUrl: "https://upload.wikimedia.org/wikipedia/commons/f/f9/Salesforce.com_logo.svg",
     audio_title: "Competitor Simplifies Pricing Tiers",
     audio_script: "A key competitor just consolidated their pricing from 5 tiers to 3, bundling support and SLAs into each tier by default. This matters because buyers are increasingly frustrated with complex commercial terms—they want predictability. Commercial friction is a silent deal killer. Use this: Emphasize your own pricing clarity. Ask: 'How do you typically structure vendor agreements—do you prefer bundled or à la carte?' This surfaces their buying preference early.",
-    imageUrl: competitorPackaging,
+    coverImageUrl: competitorPackaging,
     relatedEpisodeId: "ep-competitive-radar",
     publishedAt: "2026-01-22",
     sourceName: "Field Intel"
@@ -97,11 +110,13 @@ export const stories: StoryItem[] = [
     talk_track: "Vision QA is gaining traction because it hits scrap and rework costs directly. What's your baseline for quality costs?",
     cta_label: "Listen",
     duration_sec: 50,
-    media_type: "audio",
+    media_type: "video",
     topic_tags: ["Manufacturing", "Quality", "Vision QA"],
+    companyName: "Landing AI",
+    logoUrl: "https://images.crunchbase.com/image/upload/c_pad,h_256,w_256,f_auto,q_auto:eco,dpr_1/v1476357668/q4oy6thwq5wj5yrzxmk8.png",
     audio_title: "Vision QA Startups Winning Pilots",
     audio_script: "Three vision QA startups expanded from factory pilots to full deployments this quarter. They're winning because quality improvements have clear ROI—scrap and rework reduction are measurable. Even under cost pressure, these projects get funded. Here's how to use it: Tie your conversation to quality cost baselines. Ask: 'What's your current baseline for scrap and rework costs?' This opens a discussion about measurable outcomes, not features.",
-    imageUrl: startupVisionQa,
+    coverImageUrl: startupVisionQa,
     videoUrl: startupVisionQaVideo,
     relatedEpisodeId: "ep-industry-news-manufacturing",
     publishedAt: "2026-01-22",
@@ -117,11 +132,12 @@ export const stories: StoryItem[] = [
     talk_track: "Energy optimization is top of mind for ops leaders. What's your current approach to energy cost visibility?",
     cta_label: "Listen",
     duration_sec: 45,
-    media_type: "audio",
+    media_type: "video",
     topic_tags: ["Energy", "Manufacturing", "Sustainability"],
+    companyName: "Turntide",
     audio_title: "Energy Optimization Tools Expand",
     audio_script: "Industrial energy startups are seeing 40% more pilot requests since Q4. Plants are looking for tools that address energy volatility and reporting burden. Energy remains a board-level constraint—projects with quick payback get priority. Use this: Position around fast value realization. Ask: 'What's your current approach to energy cost visibility across sites?' This surfaces whether they're reactive or proactive on energy.",
-    imageUrl: startupEnergy,
+    coverImageUrl: startupEnergy,
     videoUrl: startupEnergyVideo,
     relatedEpisodeId: "ep-industry-news-manufacturing",
     publishedAt: "2026-01-22",
@@ -137,11 +153,12 @@ export const stories: StoryItem[] = [
     talk_track: "Maintenance vendors are selling outcomes now. Are you evaluating partners based on uptime guarantees?",
     cta_label: "Listen",
     duration_sec: 55,
-    media_type: "audio",
+    media_type: "video",
     topic_tags: ["Maintenance", "Manufacturing", "IoT"],
+    companyName: "Augury",
     audio_title: "Predictive Maintenance Goes Outcome",
     audio_script: "Predictive maintenance vendors are shifting from selling software to selling outcomes—uptime guarantees, spares planning, service contracts. This matters because maintenance is moving from cost center to margin lever. Buyers want to pay for results. Here's how to use it: Connect to installed base value. Ask: 'Are you evaluating maintenance partners based on uptime guarantees or software features?' This reveals their maturity level.",
-    imageUrl: startupMaintenance,
+    coverImageUrl: startupMaintenance,
     videoUrl: startupMaintenanceVideo,
     relatedEpisodeId: "ep-industry-news-manufacturing",
     publishedAt: "2026-01-22",
@@ -161,9 +178,12 @@ export const stories: StoryItem[] = [
     duration_sec: 50,
     media_type: "audio",
     topic_tags: ["Execution", "Risk", "Enterprise"],
+    companyName: "McKinsey",
+    personName: "Sarah Chen",
+    personImageUrl: expertExecution,
     audio_title: "Execution Risk Is the New Cost",
     audio_script: "A leading industry analyst said: 'Execution risk is the new cost.' CFOs now view implementation risk as equal to or greater than project cost. This reframes buyer hesitation—it's not about price, it's about fear of failure. Use this: Position around delivery certainty. Ask: 'What gives your team confidence in a vendor's ability to deliver?' This opens a conversation about proof points, references, and methodology.",
-    imageUrl: expertExecution,
+    coverImageUrl: expertExecution,
     relatedEpisodeId: "ep-industry-news-manufacturing",
     publishedAt: "2026-01-22",
     sourceName: "McKinsey Quarterly"
@@ -180,19 +200,22 @@ export const stories: StoryItem[] = [
     duration_sec: 45,
     media_type: "audio",
     topic_tags: ["ROI", "Value", "Pilots"],
+    companyName: "Gartner",
+    personName: "Michael Torres",
+    personImageUrl: expertRoi,
     audio_title: "ROI Proof Required in 90 Days",
     audio_script: "Gartner reports that enterprises now expect measurable ROI proof within 90 days of any pilot. Long-horizon value stories don't work—buyers need early wins to justify expanding the project. Here's how to use it: Shape discovery around measurable outcomes. Ask: 'What metric would need to move in 12 weeks for this to be a win for you?' This forces specificity and reveals true success criteria.",
-    imageUrl: expertRoi,
+    coverImageUrl: expertRoi,
     relatedEpisodeId: "ep-competitive-radar",
     publishedAt: "2026-01-22",
     sourceName: "Gartner Research"
   },
 
-  // ACCOUNT STORY
+  // ACCOUNT/CUSTOMER STORY
   {
     id: "story-008",
-    type: "account",
-    badge: "Account",
+    type: "customer",
+    badge: "Customer",
     headline: "First National Bank: CTO Transition",
     one_liner: "First National Bank announces new CTO starting Q2—comes from cloud-native fintech background.",
     why_it_matters: "New technology leadership often triggers vendor reviews and modernization initiatives.",
@@ -201,19 +224,22 @@ export const stories: StoryItem[] = [
     duration_sec: 40,
     media_type: "audio",
     topic_tags: ["Banking", "Leadership", "Account Intel"],
+    companyName: "First National Bank",
+    personName: "Elena Rodriguez",
+    personImageUrl: accountFnbCto,
     audio_title: "First National Bank: CTO Transition",
     audio_script: "First National Bank just announced a new CTO starting Q2. She comes from a cloud-native fintech background, which signals potential modernization priorities. New technology leadership often triggers vendor reviews within 6 months. Use this: Reach out to your contacts there. Ask: 'I saw the CTO announcement—are you expecting any shifts in technology priorities as the new leadership settles in?' This shows you're informed and opens the door.",
-    imageUrl: accountFnbCto,
+    coverImageUrl: accountFnbCto,
     relatedEpisodeId: "ep-account-briefing",
     publishedAt: "2026-01-22",
     sourceName: "LinkedIn / Press Release"
   },
 
-  // LEAD STORY
+  // LEAD/INDUSTRY STORY
   {
     id: "story-009",
-    type: "lead",
-    badge: "Lead",
+    type: "industry",
+    badge: "Industry",
     headline: "Cost Reduction Intent Signals Up",
     one_liner: "Intent data shows 25% increase in cost reduction content consumption among DACH industrials.",
     why_it_matters: "Customers actively researching cost reduction are open to fast-value conversations.",
@@ -222,9 +248,10 @@ export const stories: StoryItem[] = [
     duration_sec: 45,
     media_type: "audio",
     topic_tags: ["Intent", "Cost", "DACH"],
+    companyName: "DACH Industrials",
     audio_title: "Cost Reduction Intent Signals Up",
     audio_script: "Intent data shows a 25% increase in cost reduction content consumption among DACH industrial companies. These customers are actively researching—which means they're open to conversations about fast value. Here's how to use it: Open with a value baseline. Ask: 'We're seeing a lot of industrials prioritizing cost reduction right now. What's driving the urgency in your organization?' This validates the signal and opens discovery.",
-    imageUrl: leadsCost,
+    coverImageUrl: leadsCost,
     relatedEpisodeId: "ep-objection-handling",
     publishedAt: "2026-01-22",
     sourceName: "Bombora Intent Data"
@@ -243,9 +270,10 @@ export const stories: StoryItem[] = [
     duration_sec: 35,
     media_type: "audio",
     topic_tags: ["Automation", "Events", "Manufacturing"],
+    companyName: "Hannover Messe",
     audio_title: "Automation Summit This Month",
     audio_script: "The major automation summit in Munich is this month. Expect announcements on AI integration roadmaps from most major players. This matters because events generate industry talking points—knowing what's hype vs. real helps you sound credible. Use this: Reference the event in conversations. Ask: 'The automation summit is coming up—what are you hoping to learn, or skeptical about?' This positions you as plugged in.",
-    imageUrl: eventAutomation,
+    coverImageUrl: eventAutomation,
     relatedEpisodeId: "ep-industry-news-manufacturing",
     publishedAt: "2026-01-22",
     sourceName: "Event Calendar"
@@ -256,6 +284,8 @@ export const stories: StoryItem[] = [
 export const storyTypeColors: Record<StoryType, string> = {
   competitor: "bg-orange-100/80 text-orange-700 border-orange-200 dark:bg-orange-950/50 dark:text-orange-300 dark:border-orange-800",
   startup: "bg-emerald-100/80 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800",
+  customer: "bg-violet-100/80 text-violet-700 border-violet-200 dark:bg-violet-950/50 dark:text-violet-300 dark:border-violet-800",
+  industry: "bg-amber-100/80 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800",
   expert: "bg-blue-100/80 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800",
   account: "bg-violet-100/80 text-violet-700 border-violet-200 dark:bg-violet-950/50 dark:text-violet-300 dark:border-violet-800",
   lead: "bg-amber-100/80 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800",
@@ -265,8 +295,22 @@ export const storyTypeColors: Record<StoryType, string> = {
 export const storyTypeLabels: Record<StoryType, string> = {
   competitor: "Competitor",
   startup: "Startup",
+  customer: "Customer",
+  industry: "Industry",
   expert: "Expert",
   account: "Account",
   lead: "Lead",
   event: "Event",
+};
+
+// Monogram gradient backgrounds by story type
+export const storyTypeGradients: Record<StoryType, string> = {
+  competitor: "from-orange-400 to-orange-600",
+  startup: "from-emerald-400 to-emerald-600",
+  customer: "from-violet-400 to-violet-600",
+  industry: "from-amber-400 to-amber-600",
+  expert: "from-blue-400 to-blue-600",
+  account: "from-violet-400 to-violet-600",
+  lead: "from-amber-400 to-amber-600",
+  event: "from-purple-400 to-purple-600",
 };
