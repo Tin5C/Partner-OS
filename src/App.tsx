@@ -4,9 +4,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { TenantProvider, useTenant } from "@/contexts/TenantContext";
 import { PlayerProvider } from "@/contexts/PlayerContext";
+import { TenantAccessGate } from "@/components/TenantAccessGate";
 
 // Pages
+import TenantSelector from "./pages/TenantSelector";
+import TenantHome from "./pages/TenantHome";
 import AccessGate from "./pages/AccessGate";
 import Home from "./pages/Home";
 import PlaylistsIndex from "./pages/PlaylistsIndex";
@@ -22,7 +26,8 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-function ProtectedRoute({ children, adminOnly = false }: { children: React.ReactNode; adminOnly?: boolean }) {
+// Protected route for legacy auth flow
+function LegacyProtectedRoute({ children, adminOnly = false }: { children: React.ReactNode; adminOnly?: boolean }) {
   const { isAuthenticated, isAdmin } = useAuth();
 
   if (!isAuthenticated) {
@@ -36,96 +41,161 @@ function ProtectedRoute({ children, adminOnly = false }: { children: React.React
   return <>{children}</>;
 }
 
+// Tenant-protected content wrapper
+function TenantProtectedContent({ children }: { children: React.ReactNode }) {
+  return (
+    <TenantProvider>
+      <TenantAccessGate>
+        {children}
+      </TenantAccessGate>
+    </TenantProvider>
+  );
+}
+
 function AppRoutes() {
   const { isAuthenticated } = useAuth();
 
   return (
     <Routes>
-      <Route 
-        path="/gate" 
-        element={isAuthenticated ? <Navigate to="/" replace /> : <AccessGate />} 
+      {/* NEW: Multi-tenant routes */}
+      {/* Root = Tenant selector */}
+      <Route path="/" element={<TenantSelector />} />
+      
+      {/* Partner portal routes */}
+      <Route
+        path="/p/:partnerSlug"
+        element={
+          <TenantProtectedContent>
+            <TenantHome />
+          </TenantProtectedContent>
+        }
       />
       <Route
-        path="/"
+        path="/p/:partnerSlug/*"
         element={
-          <ProtectedRoute>
+          <TenantProtectedContent>
+            <TenantSubRoutes />
+          </TenantProtectedContent>
+        }
+      />
+      
+      {/* Internal user portal routes */}
+      <Route
+        path="/u/:userSlug"
+        element={
+          <TenantProtectedContent>
+            <TenantHome />
+          </TenantProtectedContent>
+        }
+      />
+      <Route
+        path="/u/:userSlug/*"
+        element={
+          <TenantProtectedContent>
+            <TenantSubRoutes />
+          </TenantProtectedContent>
+        }
+      />
+
+      {/* LEGACY: Old auth gate for backwards compatibility */}
+      <Route 
+        path="/gate" 
+        element={isAuthenticated ? <Navigate to="/legacy" replace /> : <AccessGate />} 
+      />
+      <Route
+        path="/legacy"
+        element={
+          <LegacyProtectedRoute>
             <Home />
-          </ProtectedRoute>
+          </LegacyProtectedRoute>
         }
       />
       <Route
         path="/playlists"
         element={
-          <ProtectedRoute>
+          <LegacyProtectedRoute>
             <PlaylistsIndex />
-          </ProtectedRoute>
+          </LegacyProtectedRoute>
         }
       />
       <Route
         path="/playlist/:id"
         element={
-          <ProtectedRoute>
+          <LegacyProtectedRoute>
             <PlaylistDetail />
-          </ProtectedRoute>
+          </LegacyProtectedRoute>
         }
       />
       <Route
         path="/episode/:id"
         element={
-          <ProtectedRoute>
+          <LegacyProtectedRoute>
             <EpisodeDetail />
-          </ProtectedRoute>
+          </LegacyProtectedRoute>
         }
       />
       <Route
         path="/search"
         element={
-          <ProtectedRoute>
+          <LegacyProtectedRoute>
             <Search />
-          </ProtectedRoute>
+          </LegacyProtectedRoute>
         }
       />
       <Route
         path="/create/win-wire"
         element={
-          <ProtectedRoute>
+          <LegacyProtectedRoute>
             <WinWireCreator />
-          </ProtectedRoute>
+          </LegacyProtectedRoute>
         }
       />
       <Route
         path="/win-wire/preview"
         element={
-          <ProtectedRoute>
+          <LegacyProtectedRoute>
             <WinWirePreview />
-          </ProtectedRoute>
+          </LegacyProtectedRoute>
         }
       />
       <Route
         path="/create/learnings"
         element={
-          <ProtectedRoute>
+          <LegacyProtectedRoute>
             <MonthlyLearnings />
-          </ProtectedRoute>
+          </LegacyProtectedRoute>
         }
       />
       <Route
         path="/create/request"
         element={
-          <ProtectedRoute>
+          <LegacyProtectedRoute>
             <RequestBriefing />
-          </ProtectedRoute>
+          </LegacyProtectedRoute>
         }
       />
       <Route
         path="/admin"
         element={
-          <ProtectedRoute adminOnly>
+          <LegacyProtectedRoute adminOnly>
             <AdminDashboard />
-          </ProtectedRoute>
+          </LegacyProtectedRoute>
         }
       />
       <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
+// Sub-routes within tenant context
+function TenantSubRoutes() {
+  return (
+    <Routes>
+      <Route path="playlists" element={<PlaylistsIndex />} />
+      <Route path="playlist/:id" element={<PlaylistDetail />} />
+      <Route path="episode/:id" element={<EpisodeDetail />} />
+      <Route path="search" element={<Search />} />
+      <Route path="*" element={<Navigate to=".." replace />} />
     </Routes>
   );
 }
