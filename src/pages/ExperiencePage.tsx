@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { CalendarSearch } from 'lucide-react';
 import { useExperience, useExperiencePacks } from '@/contexts/ExperienceContext';
 import { TenantHeader } from '@/components/TenantHeader';
 import { BottomNav } from '@/components/BottomNav';
@@ -8,8 +9,10 @@ import { JumpNav } from '@/components/JumpNav';
 import { Separator } from '@/components/ui/separator';
 import { PackSection, WeekNavigator, ReadPanel, ListenPlayer } from '@/components/shared';
 import { AccountPrepCard } from '@/components/AccountPrepCard';
+import { EventsCard, EventsPanel } from '@/components/events';
 import { useWeekSelection, formatLocalDate } from '@/hooks/useWeekSelection';
 import { getTenantContent, PackContent } from '@/config/contentModel';
+import { cn } from '@/lib/utils';
 
 // Access Gate Component
 function AccessGate({ onUnlock }: { onUnlock: (password: string) => boolean }) {
@@ -89,6 +92,7 @@ export default function ExperiencePage() {
   const [selectedPackId, setSelectedPackId] = useState<string | null>(null);
   const [selectedPackContent, setSelectedPackContent] = useState<PackContent | null>(null);
   const [selectedPackTitle, setSelectedPackTitle] = useState('');
+  const [eventsPanelOpen, setEventsPanelOpen] = useState(false);
 
   // If not unlocked, show access gate
   if (!isUnlocked) {
@@ -150,6 +154,9 @@ export default function ExperiencePage() {
     if (packId === 'account-prep') {
       return <AccountPrepCard />;
     }
+    if (packId === 'events') {
+      return <EventsCard tenantSlug={tenantSlug} />;
+    }
     return null;
   };
 
@@ -164,6 +171,21 @@ export default function ExperiencePage() {
       <TenantHeader showGreeting showSearch />
 
       <main className="px-5 space-y-8">
+        {/* Shortcut Buttons */}
+        <div className="flex items-center gap-2 -mb-4">
+          <button
+            onClick={() => setEventsPanelOpen(true)}
+            className={cn(
+              'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium',
+              'bg-card border border-border text-muted-foreground',
+              'hover:border-primary/50 hover:text-foreground transition-all duration-200'
+            )}
+          >
+            <CalendarSearch className="w-3.5 h-3.5" />
+            Find Events
+          </button>
+        </div>
+
         {/* Stories Rail */}
         {experienceConfig.features.stories && (
           <StoriesRail />
@@ -245,6 +267,13 @@ export default function ExperiencePage() {
           setListenPlayerOpen(false);
           setReadPanelOpen(true);
         }}
+      />
+
+      {/* Events Panel (shortcut button) */}
+      <EventsPanel
+        open={eventsPanelOpen}
+        onOpenChange={setEventsPanelOpen}
+        tenantSlug={tenantSlug}
       />
     </div>
   );
