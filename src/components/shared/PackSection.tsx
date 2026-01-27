@@ -32,7 +32,7 @@ export function PackSection({
   };
 
   return (
-    <div className={cn(section.centered && 'flex flex-col items-center', className)}>
+    <div className={className}>
       {/* Section Header */}
       <div id={`group-${section.id}`} className="mb-4">
         <div className="flex items-center gap-2">
@@ -50,11 +50,8 @@ export function PackSection({
         </div>
       </div>
 
-      {/* Cards Grid */}
-      <div className={cn(
-        'grid grid-cols-1 sm:grid-cols-2 gap-4',
-        section.centered && 'w-full max-w-2xl'
-      )}>
+      {/* Cards Grid - always left-aligned */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 justify-items-start">
         {packs.map((pack) => {
           // Check if there's a custom card renderer for this pack
           const customCard = renderCustomCard?.(pack.id);

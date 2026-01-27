@@ -177,14 +177,14 @@ export default function TenantHome() {
 
             {/* IMPROVE GROUP */}
             {groupedCards.improve.length > 0 && (
-              <div className="flex flex-col items-center">
+              <div>
                 <FocusGroupLabel 
                   id="group-improve"
                   label="Improve" 
                   variant="secondary"
                   className="mb-4"
                 />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {groupedCards.improve.map((card) => (
                     <FocusCardComponent
                       key={card.id}
@@ -203,14 +203,14 @@ export default function TenantHome() {
 
             {/* REPUTATION GROUP */}
             {groupedCards.reputation.length > 0 && (
-              <div className="flex flex-col items-center">
+              <div>
                 <FocusGroupLabel 
                   id="group-reputation"
                   label="Reputation" 
                   variant="tertiary"
                   className="mb-4"
                 />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {groupedCards.reputation.map((card) => (
                     <FocusCardComponent
                       key={card.id}
