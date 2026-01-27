@@ -1,6 +1,6 @@
 import { Search, ArrowLeftRight, Building2, User } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useTenant } from '@/contexts/TenantContext';
+import { useNavigate } from 'react-router-dom';
+import { useExperience } from '@/contexts/ExperienceContext';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -23,8 +23,7 @@ export function TenantHeader({
   className 
 }: TenantHeaderProps) {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { tenant, tenantType, switchTenant } = useTenant();
+  const { audience, tenantSlug, tenantConfig } = useExperience();
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -34,20 +33,16 @@ export function TenantHeader({
   };
 
   const handleSwitch = () => {
-    switchTenant();
+    // Clear session and go to selector
     navigate('/');
   };
 
-  const TenantIcon = tenantType === 'partner' ? Building2 : User;
+  const TenantIcon = audience === 'partner' ? Building2 : User;
+  const displayName = tenantConfig?.displayName || tenantSlug;
 
-  // Construct search path based on tenant route
+  // Construct search path based on audience route
   const getSearchPath = () => {
-    if (tenantType === 'partner' && tenant) {
-      return `/p/${tenant.slug}/search`;
-    } else if (tenantType === 'internal' && tenant) {
-      return `/u/${tenant.slug}/search`;
-    }
-    return '/search';
+    return `/${audience}/${tenantSlug}/search`;
   };
 
   return (
@@ -69,17 +64,17 @@ export function TenantHeader({
             {showGreeting ? (
               <div>
                 <p className="text-caption text-muted-foreground">{getGreeting()}</p>
-                <h1 className="text-title truncate">{tenant?.displayName}</h1>
+                <h1 className="text-title truncate">{displayName}</h1>
               </div>
             ) : title ? (
               <div>
-                <p className="text-caption text-muted-foreground truncate">{tenant?.displayName}</p>
+                <p className="text-caption text-muted-foreground truncate">{displayName}</p>
                 <h1 className="text-title truncate">{title}</h1>
               </div>
             ) : (
               <div>
-                <p className="text-caption text-muted-foreground capitalize">{tenantType} Portal</p>
-                <h1 className="text-title truncate">{tenant?.displayName}</h1>
+                <p className="text-caption text-muted-foreground capitalize">{audience} Portal</p>
+                <h1 className="text-title truncate">{displayName}</h1>
               </div>
             )}
           </div>
