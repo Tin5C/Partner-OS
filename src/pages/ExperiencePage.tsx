@@ -261,15 +261,15 @@ export default function ExperiencePage() {
             </div>
           )}
 
-          {/* Sections */}
-          <div className="space-y-8 mt-6">
+          {/* Sections - Enterprise layout with generous spacing */}
+          <div className="mt-8 space-y-10">
             {experienceConfig.sections
               .filter((section) => (packs[section.id]?.length || 0) > 0)
               .map((section, idx, filteredSections) => {
                 const sectionPacks = packs[section.id] || [];
 
                 return (
-                  <div key={section.id}>
+                  <div key={section.id} className="animate-fade-in" style={{ animationDelay: `${idx * 50}ms` }}>
                     <PackSection
                       section={section}
                       packs={sectionPacks}
@@ -278,7 +278,7 @@ export default function ExperiencePage() {
                       renderCustomCard={renderCustomCard}
                     />
                     {idx < filteredSections.length - 1 && (
-                      <Separator className="my-6" />
+                      <Separator className="mt-10 opacity-50" />
                     )}
                   </div>
                 );
