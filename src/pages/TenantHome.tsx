@@ -9,10 +9,11 @@ import { JumpNav } from '@/components/JumpNav';
 import { WeekPicker } from '@/components/WeekPicker';
 import { Separator } from '@/components/ui/separator';
 import { PreviewDrawer } from '@/components/PreviewDrawer';
+import { AccountPrepCard } from '@/components/AccountPrepCard';
 import { focusCards, FocusCard } from '@/lib/focusCards';
 import { useWeekSelection, formatLocalDate } from '@/hooks/useWeekSelection';
 
-// Card order for Core group
+// Card order for Core group (Account Prep is 5th, handled separately)
 const CORE_ORDER = ['Top Focus', 'Competitive Radar', 'Industry Signals', 'Objection Handling'];
 
 function sortCoreCards(cards: FocusCard[]): FocusCard[] {
@@ -144,7 +145,7 @@ export default function TenantHome() {
 
           <div className="space-y-8 mt-6">
             {/* CORE GROUP */}
-            {groupedCards.core.length > 0 && (
+            {(groupedCards.core.length > 0 || tenant.packs.preMeetingPrep) && (
               <div>
                 <FocusGroupLabel 
                   id="group-core"
@@ -162,6 +163,10 @@ export default function TenantHome() {
                       onRead={() => handleCardRead(card)}
                     />
                   ))}
+                  {/* Account Prep Card - 5th in EXECUTE group */}
+                  {tenant.packs.preMeetingPrep && (
+                    <AccountPrepCard />
+                  )}
                 </div>
               </div>
             )}
