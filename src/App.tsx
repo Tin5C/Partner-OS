@@ -4,13 +4,15 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { TenantProvider, useTenant } from "@/contexts/TenantContext";
+import { TenantProvider } from "@/contexts/TenantContext";
 import { PlayerProvider } from "@/contexts/PlayerContext";
+import { ExperienceProvider } from "@/contexts/ExperienceContext";
 import { TenantAccessGate } from "@/components/TenantAccessGate";
 
 // Pages
 import TenantSelector from "./pages/TenantSelector";
 import TenantHome from "./pages/TenantHome";
+import ExperiencePage from "./pages/ExperiencePage";
 import AccessGate from "./pages/AccessGate";
 import Home from "./pages/Home";
 import PlaylistsIndex from "./pages/PlaylistsIndex";
@@ -52,16 +54,35 @@ function TenantProtectedContent({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Experience-protected content wrapper (new unified approach)
+function ExperienceProtectedContent() {
+  return (
+    <ExperienceProvider>
+      <ExperiencePage />
+    </ExperienceProvider>
+  );
+}
+
 function AppRoutes() {
   const { isAuthenticated } = useAuth();
 
   return (
     <Routes>
-      {/* NEW: Multi-tenant routes */}
       {/* Root = Tenant selector */}
       <Route path="/" element={<TenantSelector />} />
       
-      {/* Partner portal routes */}
+      {/* NEW: Unified audience-based routes (seller/partner) */}
+      {/* These share the same page template, differing only by config */}
+      <Route
+        path="/seller/:tenantSlug"
+        element={<ExperienceProtectedContent />}
+      />
+      <Route
+        path="/partner/:tenantSlug"
+        element={<ExperienceProtectedContent />}
+      />
+      
+      {/* LEGACY: Partner portal routes (redirect to new format) */}
       <Route
         path="/p/:partnerSlug"
         element={
@@ -79,7 +100,7 @@ function AppRoutes() {
         }
       />
       
-      {/* Internal user portal routes */}
+      {/* LEGACY: Internal user portal routes (redirect to new format) */}
       <Route
         path="/u/:userSlug"
         element={

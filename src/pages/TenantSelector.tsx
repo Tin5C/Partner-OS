@@ -22,13 +22,15 @@ export default function TenantSelector() {
 
   const handlePartnerContinue = () => {
     if (selectedPartner) {
-      navigate(`/p/${selectedPartner}`);
+      // Use new unified route format
+      navigate(`/partner/${selectedPartner}`);
     }
   };
 
   const handleInternalContinue = () => {
     if (selectedUser) {
-      navigate(`/u/${selectedUser}`);
+      // Use new unified route format
+      navigate(`/seller/${selectedUser}`);
     }
   };
 
