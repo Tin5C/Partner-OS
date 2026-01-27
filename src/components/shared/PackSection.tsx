@@ -19,44 +19,58 @@ export function PackSection({
   renderCustomCard,
   className,
 }: PackSectionProps) {
-  const variantStyles = {
-    primary: 'text-foreground',
-    secondary: 'text-foreground',
-    tertiary: 'text-foreground',
+  // Visual distinction by section variant
+  const sectionStyles = {
+    primary: {
+      badge: 'bg-primary/10 text-primary border border-primary/20',
+      container: '',
+    },
+    secondary: {
+      badge: 'bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800',
+      container: '',
+    },
+    tertiary: {
+      badge: 'bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800',
+      container: '',
+    },
   };
 
-  const variantBadgeStyles = {
-    primary: 'bg-primary/10 text-primary',
-    secondary: 'bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300',
-    tertiary: 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300',
-  };
+  const styles = sectionStyles[section.variant];
 
   return (
-    <div className={className}>
-      {/* Section Header */}
-      <div id={`group-${section.id}`} className="mb-4">
-        <div className="flex items-center gap-2">
+    <section className={cn('relative', className)}>
+      {/* Section Header - Enterprise styling */}
+      <header id={`group-${section.id}`} className="mb-5">
+        <div className="flex items-baseline gap-3">
           <span className={cn(
-            'px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide',
-            variantBadgeStyles[section.variant]
+            'inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider',
+            styles.badge
           )}>
             {section.title}
           </span>
           {section.description && (
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm text-muted-foreground font-medium">
               {section.description}
             </span>
           )}
         </div>
-      </div>
+      </header>
 
-      {/* Cards Grid - always left-aligned */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 justify-items-start">
+      {/* Cards Grid - Enterprise 2-column with consistent sizing */}
+      <div className={cn(
+        'grid gap-4',
+        'grid-cols-1 sm:grid-cols-2 lg:grid-cols-2',
+        'justify-items-stretch'
+      )}>
         {packs.map((pack) => {
           // Check if there's a custom card renderer for this pack
           const customCard = renderCustomCard?.(pack.id);
           if (customCard) {
-            return <div key={pack.id}>{customCard}</div>;
+            return (
+              <div key={pack.id} className="w-full">
+                {customCard}
+              </div>
+            );
           }
 
           return (
@@ -65,10 +79,11 @@ export function PackSection({
               pack={pack}
               onPrimaryAction={() => onPackPrimaryAction(pack.id)}
               onSecondaryAction={() => onPackSecondaryAction(pack.id)}
+              className="w-full"
             />
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }
