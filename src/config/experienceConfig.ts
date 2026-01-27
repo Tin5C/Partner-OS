@@ -103,6 +103,17 @@ const basePackDefinitions: Record<string, PackDefinition> = {
     primaryCTA: { label: 'Listen Briefing', action: 'listen' },
     secondaryCTA: { label: 'Exec Summary', action: 'read' },
   },
+  'events': {
+    id: 'events',
+    title: 'Events',
+    subtitle: 'Discover relevant events near you',
+    duration: '',
+    tags: ['Networking', 'Learning'],
+    icon: 'calendar-search',
+    primaryCTA: { label: 'Find Events', action: 'open' },
+    secondaryCTA: { label: 'Find Events', action: 'open' },
+    isWizard: true, // Opens a panel instead of standard listen/read
+  },
   'market-presence': {
     id: 'market-presence',
     title: 'Market Presence',
@@ -129,7 +140,7 @@ export const sellerConfig: ExperienceConfig = {
     {
       id: 'improve',
       title: 'Improve',
-      packs: ['skill-of-week'],
+      packs: ['skill-of-week', 'events'],
       variant: 'secondary',
     },
     {
@@ -161,7 +172,7 @@ export const partnerConfig: ExperienceConfig = {
     {
       id: 'improve',
       title: 'Improve',
-      packs: ['skill-of-week'],
+      packs: ['skill-of-week', 'events'],
       variant: 'secondary',
     },
   ],
