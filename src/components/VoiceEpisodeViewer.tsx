@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { useState, useCallback, useRef } from 'react';
 import { X, ChevronLeft, ChevronRight, Play, Mic, ExternalLink } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';

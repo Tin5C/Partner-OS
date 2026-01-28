@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { useState } from 'react';
 import { Mic } from 'lucide-react';
 import { UnifiedStoryItem } from '@/lib/unifiedStories';
