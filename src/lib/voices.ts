@@ -90,6 +90,19 @@ export const voices: Voice[] = [
     cadenceLabel: 'Drops Tue/Thu',
     episodes: [
       {
+        id: 'voice-zia-ep-0',
+        publishedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), // 4 hours ago
+        hookTitle: "Why Azure OpenAI wins in manufacturing",
+        mediaType: 'video',
+        coverUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=600&h=400&fit=crop',
+        videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
+        hook: 'Quick take on why manufacturing customers keep choosing Azure OpenAI over the competition.',
+        takeaway: 'Data residency, integrated security, and the Teams/Power Platform ecosystem are deal-closers for ops-heavy orgs.',
+        nextMove: "Ask: 'Where does your production data live today—and what security requirements govern AI access?'",
+        durationLabel: '30s video',
+        tagLabel: 'Azure AI'
+      },
+      {
         id: 'voice-zia-ep-1',
         publishedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
         hookTitle: "Azure's new GPU allocation strategy",
