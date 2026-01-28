@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { TrendingUp, Calendar, ChevronRight, Clock, User, Link2, Linkedin, Globe, FileText, Mic, Users, Upload } from 'lucide-react';
+import { TrendingUp, Calendar, ChevronRight, Clock, Linkedin, Globe, FileText, Mic, Users, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePresenceSources } from '@/hooks/usePresenceSources';
+import { Progress } from '@/components/ui/progress';
 
 interface CompactCardProps {
   icon: React.ReactNode;
@@ -79,23 +80,26 @@ export function GrowthPresenceSection({
 }: GrowthPresenceSectionProps) {
   const { connectedCount, sources } = usePresenceSources();
 
-  // Source icons for the Sources card
+  // Source icons for the Sources row
   const sourceIcons = [
-    { icon: <Linkedin className="w-3.5 h-3.5" />, type: 'linkedin' },
-    { icon: <Globe className="w-3.5 h-3.5" />, type: 'website' },
-    { icon: <FileText className="w-3.5 h-3.5" />, type: 'newsletter' },
-    { icon: <Mic className="w-3.5 h-3.5" />, type: 'podcast' },
-    { icon: <Users className="w-3.5 h-3.5" />, type: 'speaker' },
-    { icon: <Upload className="w-3.5 h-3.5" />, type: 'pdf' },
+    { icon: <Linkedin className="w-3.5 h-3.5" />, type: 'linkedin', label: 'LinkedIn' },
+    { icon: <Globe className="w-3.5 h-3.5" />, type: 'website', label: 'Website' },
+    { icon: <FileText className="w-3.5 h-3.5" />, type: 'newsletter', label: 'Newsletter' },
+    { icon: <Mic className="w-3.5 h-3.5" />, type: 'podcast', label: 'Podcast' },
+    { icon: <Users className="w-3.5 h-3.5" />, type: 'speaker', label: 'Speaker page' },
+    { icon: <Upload className="w-3.5 h-3.5" />, type: 'pdf', label: 'PDF' },
   ];
 
   const getSourceConnected = (type: string) => sources.find(s => s.type === type)?.connected;
+
+  // Mock score for display
+  const mockScore = 62;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Growth Section */}
       <section className="space-y-3">
-        <div>
+        <div className="flex items-baseline gap-2">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             Growth
           </h2>
@@ -120,119 +124,100 @@ export function GrowthPresenceSection({
 
       {/* Reputation & Visibility Section */}
       <section className="space-y-3">
-        <div>
+        <div className="flex items-baseline gap-2">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             Reputation & Visibility
           </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <span className="text-xs text-muted-foreground">
             How buyers are likely to perceive you — and how to improve it.
-          </p>
+          </span>
         </div>
         
-        <div className="space-y-2">
-          {/* Card 1: Buyer Perception Snapshot (Insight) */}
-          <button
-            onClick={onScorecardClick}
-            className={cn(
-              "flex items-start gap-3 p-4 rounded-xl text-left w-full",
-              "bg-card border border-border",
-              "shadow-[0_1px_2px_rgba(0,0,0,0.03)]",
-              "hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)]",
-              "hover:border-border/80",
-              "transition-all duration-200"
-            )}
-          >
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-muted/50">
-              <User className="w-4 h-4 text-muted-foreground" />
+        {/* Unified Module Card */}
+        <div className={cn(
+          "rounded-xl bg-card border border-border",
+          "shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
+        )}>
+          {/* Row A — Insight */}
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-sm font-medium text-foreground">Buyer Perception Snapshot</h4>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <h4 className="text-sm font-medium text-foreground">Buyer Perception Snapshot</h4>
-              </div>
-              
-              {/* Tier, Score, Confidence row */}
-              <div className="flex items-center gap-3 mt-2">
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
-                  Tier 1
-                </span>
-                <span className="text-sm font-semibold text-foreground">62/100</span>
-                <span className="text-[10px] text-muted-foreground">
-                  {connectedCount > 0 ? 'With added sources' : 'Public signals only'}
-                </span>
-              </div>
-              
-              <p className="text-xs text-muted-foreground mt-1.5">
-                Based on public signals and available sources.
-              </p>
-              
-              {/* Actions row */}
-              <div className="flex items-center gap-3 mt-2">
-                <span className="text-xs font-medium text-primary">Review snapshot</span>
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSourcesClick?.();
-                  }}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Improve accuracy
-                </button>
-              </div>
-            </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1" />
-          </button>
-
-          {/* Card 2: Improve Signal Quality (Action) */}
-          <button
-            onClick={onSourcesClick}
-            className={cn(
-              "flex items-start gap-3 p-4 rounded-xl text-left w-full",
-              "bg-card border border-border",
-              "shadow-[0_1px_2px_rgba(0,0,0,0.03)]",
-              "hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)]",
-              "hover:border-border/80",
-              "transition-all duration-200"
-            )}
-          >
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-muted/50">
-              <Link2 className="w-4 h-4 text-muted-foreground" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <h4 className="text-sm font-medium text-foreground">Improve Signal Quality</h4>
-                {connectedCount > 0 && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
-                    {connectedCount} connected
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Add sources to increase accuracy and strengthen credibility.
-              </p>
-              
-              {/* Source icons row */}
-              <div className="flex items-center gap-2 mt-2">
-                {sourceIcons.map((s, idx) => (
-                  <span 
-                    key={idx} 
-                    className={cn(
-                      "transition-colors",
-                      getSourceConnected(s.type) 
-                        ? "text-primary" 
-                        : "text-muted-foreground/60"
-                    )}
-                  >
-                    {s.icon}
-                  </span>
-                ))}
-              </div>
-              
-              <span className="inline-block text-xs font-medium text-primary mt-2">
-                Add sources
+            
+            {/* Tier, Score, Confidence inline */}
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                Tier 1
+              </span>
+              <span className="text-sm font-semibold text-foreground">{mockScore}/100</span>
+              <span className="text-[10px] text-muted-foreground">
+                {connectedCount > 0 ? 'With added sources' : 'Public signals only'}
               </span>
             </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1" />
-          </button>
+            
+            {/* Progress bar */}
+            <Progress value={mockScore} className="h-1.5 mb-3" />
+            
+            {/* Action links */}
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={onScorecardClick}
+                className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+              >
+                Review snapshot
+              </button>
+              <button 
+                onClick={onSourcesClick}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Improve accuracy
+              </button>
+            </div>
+          </div>
+          
+          {/* Divider */}
+          <div className="border-t border-border" />
+          
+          {/* Row B — Action */}
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-1">
+              <h4 className="text-sm font-medium text-foreground">Improve Signal Quality</h4>
+              {connectedCount > 0 && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                  {connectedCount} connected
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground mb-2">
+              Add sources to increase accuracy and strengthen credibility.
+            </p>
+            
+            {/* Source icons inline */}
+            <div className="flex items-center gap-3 mb-2">
+              {sourceIcons.map((s, idx) => (
+                <span 
+                  key={idx} 
+                  className={cn(
+                    "transition-colors",
+                    getSourceConnected(s.type) 
+                      ? "text-primary" 
+                      : "text-muted-foreground/50"
+                  )}
+                  title={s.label}
+                >
+                  {s.icon}
+                </span>
+              ))}
+            </div>
+            
+            {/* Action link */}
+            <button 
+              onClick={onSourcesClick}
+              className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+            >
+              Add sources
+            </button>
+          </div>
         </div>
       </section>
     </div>
