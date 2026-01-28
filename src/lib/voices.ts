@@ -2,6 +2,8 @@
 // Internal thought-leaders / SMEs with episodic content
 
 import ziaAvatar from '@/assets/voices/zia.jpg';
+import ziaStoryVideo from '@/assets/voices/zia_story.mp4';
+
 export interface VoiceEpisode {
   id: string;
   publishedAt: string; // ISO date string
@@ -91,113 +93,17 @@ export const voices: Voice[] = [
     cadenceLabel: 'Drops Tue/Thu',
     episodes: [
       {
-        id: 'voice-zia-ep-0',
+        id: 'voice-zia-ep-1',
         publishedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), // 4 hours ago
         hookTitle: "Why Azure OpenAI wins in manufacturing",
         mediaType: 'video',
-        coverUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=600&h=400&fit=crop',
-        videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
+        coverUrl: ziaAvatar,
+        videoUrl: ziaStoryVideo,
         hook: 'Quick take on why manufacturing customers keep choosing Azure OpenAI over the competition.',
         takeaway: 'Data residency, integrated security, and the Teams/Power Platform ecosystem are deal-closers for ops-heavy orgs.',
         nextMove: "Ask: 'Where does your production data live today—and what security requirements govern AI access?'",
         durationLabel: '30s video',
         tagLabel: 'Azure AI'
-      },
-      {
-        id: 'voice-zia-ep-1',
-        publishedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-        hookTitle: "Azure's new GPU allocation strategy",
-        mediaType: 'image',
-        coverUrl: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=400&fit=crop',
-        hook: 'Microsoft just shifted how they allocate GPU capacity to enterprise customers.',
-        takeaway: 'Priority access now requires a 12-month commit—this changes the conversation for Q1 renewals.',
-        nextMove: "Ask: 'How are you planning your AI compute needs for the next year?'",
-        durationLabel: '25s read',
-        tagLabel: 'Azure AI'
-      },
-      {
-        id: 'voice-zia-ep-2',
-        publishedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-        hookTitle: "GCP's Gemini price drop impact",
-        mediaType: 'image',
-        coverUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=400&fit=crop',
-        hook: "Google cut Gemini API pricing by 40%—here's what it means for multi-cloud deals.",
-        takeaway: 'Customers comparing Azure OpenAI now have a strong cost argument for GCP.',
-        nextMove: 'Do: Update your competitive deck with the new pricing comparison.',
-        durationLabel: '30s read',
-        tagLabel: 'GCP'
-      },
-      {
-        id: 'voice-zia-ep-3',
-        publishedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-        hookTitle: "AWS Bedrock's enterprise push",
-        mediaType: 'image',
-        coverUrl: 'https://images.unsplash.com/photo-639322537228-f710d846310a?w=600&h=400&fit=crop',
-        hook: 'Amazon is offering 6-month free trials of Bedrock to steal enterprise AI workloads.',
-        takeaway: 'This aggressive move targets customers evaluating Azure AI—know your counter.',
-        nextMove: "Ask: 'What's your current timeline for evaluating AI platforms?'",
-        durationLabel: '20s read',
-        tagLabel: 'AWS'
-      },
-      {
-        id: 'voice-zia-ep-4',
-        publishedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-        hookTitle: "NVIDIA's H200 availability update",
-        mediaType: 'image',
-        coverUrl: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&h=400&fit=crop',
-        hook: 'H200 GPUs are now shipping in volume—this changes the capacity conversation.',
-        takeaway: 'Customers waiting for next-gen hardware can now commit to larger AI initiatives.',
-        nextMove: 'Do: Reach out to accounts that delayed decisions due to hardware constraints.',
-        durationLabel: '35s read',
-        tagLabel: 'Infrastructure'
-      },
-      {
-        id: 'voice-zia-ep-5',
-        publishedAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
-        hookTitle: 'Open source LLMs gaining enterprise traction',
-        mediaType: 'image',
-        coverUrl: 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=600&h=400&fit=crop',
-        hook: "Llama 3 and Mistral are now showing up in enterprise RFPs—here's how to position.",
-        takeaway: 'Frame the conversation around total cost of ownership, not just model licensing.',
-        nextMove: "Ask: 'Beyond the model, what support and security requirements do you have?'",
-        durationLabel: '40s read',
-        tagLabel: 'Strategy'
-      },
-      {
-        id: 'voice-zia-ep-6',
-        publishedAt: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString(),
-        hookTitle: 'Sovereign cloud requirements in EMEA',
-        mediaType: 'image',
-        coverUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=400&fit=crop',
-        hook: 'New EU regulations are making sovereign cloud a must-have for financial services.',
-        takeaway: 'Position our local datacenter presence as a key differentiator.',
-        nextMove: 'Do: Map your EMEA accounts against the new compliance requirements.',
-        durationLabel: '30s read',
-        tagLabel: 'Compliance'
-      },
-      {
-        id: 'voice-zia-ep-7',
-        publishedAt: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString(),
-        hookTitle: 'Q4 cloud spending trends',
-        mediaType: 'image',
-        coverUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop',
-        hook: 'Enterprise cloud budgets are shifting from infrastructure to AI services.',
-        takeaway: 'Lead with AI value propositions rather than compute cost savings.',
-        nextMove: "Ask: 'How is your AI roadmap influencing your cloud budget for next year?'",
-        durationLabel: '45s read',
-        tagLabel: 'Trends'
-      },
-      {
-        id: 'voice-zia-ep-8',
-        publishedAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
-        hookTitle: 'The rise of inference-optimized hardware',
-        mediaType: 'image',
-        coverUrl: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&h=400&fit=crop',
-        hook: 'New inference chips are 3x more cost-effective than training GPUs for production.',
-        takeaway: 'Help customers think beyond training—production inference is where costs compound.',
-        nextMove: "Do: Review your top accounts' AI production roadmaps.",
-        durationLabel: '35s read',
-        tagLabel: 'Infrastructure'
       }
     ]
   },
