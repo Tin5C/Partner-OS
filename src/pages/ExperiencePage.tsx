@@ -12,11 +12,10 @@ import {
 } from '@/components/home';
 import { EventsPanel } from '@/components/events';
 import { ProfilePanel, QuickSetupModal } from '@/components/profile';
-import { PresenceSetupModal } from '@/components/presence';
+import { ScorecardModal, SourcesModal } from '@/components/presence';
 import { ReadPanel, ListenPlayer } from '@/components/shared';
 import { SkillExecSummaryPanel } from '@/components/skills';
 import { useProfile } from '@/hooks/useProfile';
-import { usePresence } from '@/hooks/usePresence';
 import { getTenantContent, PackContent } from '@/config/contentModel';
 import { cn } from '@/lib/utils';
 
@@ -85,9 +84,9 @@ export default function ExperiencePage() {
   const [profilePanelOpen, setProfilePanelOpen] = useState(false);
   const [quickSetupOpen, setQuickSetupOpen] = useState(false);
 
-  // Presence state
-  const { presence, saveFullPresence } = usePresence();
-  const [presenceSetupOpen, setPresenceSetupOpen] = useState(false);
+  // Scorecard and Sources modals
+  const [scorecardOpen, setScorecardOpen] = useState(false);
+  const [sourcesOpen, setSourcesOpen] = useState(false);
 
   // Show quick setup on first run
   useEffect(() => {
@@ -195,8 +194,8 @@ export default function ExperiencePage() {
         <GrowthPresenceSection
           onSkillClick={() => setSkillPanelOpen(true)}
           onEventsClick={() => setEventsPanelOpen(true)}
-          onPresenceSetup={() => setPresenceSetupOpen(true)}
-          onPresenceEdit={() => setPresenceSetupOpen(true)}
+          onScorecardClick={() => setScorecardOpen(true)}
+          onSourcesClick={() => setSourcesOpen(true)}
         />
       </main>
 
@@ -257,13 +256,16 @@ export default function ExperiencePage() {
         onSkip={completeOnboarding}
       />
 
-      {/* Presence Setup Modal */}
-      <PresenceSetupModal
-        open={presenceSetupOpen}
-        onOpenChange={setPresenceSetupOpen}
-        presence={presence}
-        onSave={saveFullPresence}
-        onSkip={() => setPresenceSetupOpen(false)}
+      {/* Scorecard Modal */}
+      <ScorecardModal
+        open={scorecardOpen}
+        onOpenChange={setScorecardOpen}
+      />
+
+      {/* Sources Modal */}
+      <SourcesModal
+        open={sourcesOpen}
+        onOpenChange={setSourcesOpen}
       />
     </div>
   );
