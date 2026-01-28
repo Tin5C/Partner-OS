@@ -1,9 +1,6 @@
 import * as React from 'react';
-import { TrendingUp, Calendar, ChevronRight, Clock } from 'lucide-react';
+import { TrendingUp, Calendar, ChevronRight, Clock, User, Link2, Linkedin, Globe, FileText, Mic, Users, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { PresenceEmptyState, PresenceDashboard } from '@/components/presence';
-import { usePresence } from '@/hooks/usePresence';
-import { PresenceData } from '@/lib/presenceConfig';
 
 interface CompactCardProps {
   icon: React.ReactNode;
@@ -63,30 +60,25 @@ function CompactCard({ icon, title, description, duration, isNew, onClick }: Com
 interface GrowthPresenceSectionProps {
   onSkillClick?: () => void;
   onEventsClick?: () => void;
-  onPresenceSetup?: () => void;
-  onPresenceEdit?: () => void;
+  onScorecardClick?: () => void;
+  onSourcesClick?: () => void;
 }
 
 export function GrowthPresenceSection({ 
   onSkillClick, 
   onEventsClick, 
-  onPresenceSetup,
-  onPresenceEdit,
+  onScorecardClick,
+  onSourcesClick,
 }: GrowthPresenceSectionProps) {
-  const { presence, isConfigured, isLoaded, removeSource } = usePresence();
-
-  // Local state to handle setup modal trigger
-  const handleSetupClick = () => {
-    onPresenceSetup?.();
-  };
-
-  const handleSkipClick = () => {
-    // Just dismiss - don't force setup
-  };
-
-  const handleEditClick = () => {
-    onPresenceEdit?.();
-  };
+  // Source icons for the Sources card
+  const sourceIcons = [
+    { icon: <Linkedin className="w-3.5 h-3.5" />, label: 'LinkedIn' },
+    { icon: <Globe className="w-3.5 h-3.5" />, label: 'Website' },
+    { icon: <FileText className="w-3.5 h-3.5" />, label: 'Newsletter' },
+    { icon: <Mic className="w-3.5 h-3.5" />, label: 'Podcast' },
+    { icon: <Users className="w-3.5 h-3.5" />, label: 'Speaker' },
+    { icon: <Upload className="w-3.5 h-3.5" />, label: 'PDF' },
+  ];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -126,22 +118,52 @@ export function GrowthPresenceSection({
           </p>
         </div>
         
-        {isLoaded && (
-          <>
-            {isConfigured && presence ? (
-              <PresenceDashboard
-                presence={presence}
-                onEdit={handleEditClick}
-                onRemoveSource={removeSource}
-              />
-            ) : (
-              <PresenceEmptyState
-                onSetup={handleSetupClick}
-                onSkip={handleSkipClick}
-              />
+        <div className="space-y-2">
+          {/* Personal Brand Scorecard Card */}
+          <CompactCard
+            icon={<User className="w-4 h-4 text-muted-foreground" />}
+            title="Personal Brand Scorecard"
+            description="Baseline your presence: clarity, credibility, consistency, and findability."
+            duration="~2 min · Mock data"
+            onClick={onScorecardClick}
+          />
+
+          {/* Sources Card */}
+          <button
+            onClick={onSourcesClick}
+            className={cn(
+              "flex items-start gap-3 p-4 rounded-xl text-left w-full",
+              "bg-card border border-border",
+              "shadow-[0_1px_2px_rgba(0,0,0,0.03)]",
+              "hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)]",
+              "hover:border-border/80",
+              "transition-all duration-200"
             )}
-          </>
-        )}
+          >
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-muted/50">
+              <Link2 className="w-4 h-4 text-muted-foreground" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-medium text-foreground">Sources (MVP)</h4>
+              <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                Add sources to personalize the scan (UI only in MVP).
+              </p>
+              {/* Source icons row */}
+              <div className="flex items-center gap-2 mt-2">
+                {sourceIcons.map((s, idx) => (
+                  <span 
+                    key={idx} 
+                    className="text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                    title={s.label}
+                  >
+                    {s.icon}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1" />
+          </button>
+        </div>
       </section>
     </div>
   );
