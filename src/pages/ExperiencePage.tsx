@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useExperience } from '@/contexts/ExperienceContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { TenantHeader } from '@/components/TenantHeader';
 import { BottomNav } from '@/components/BottomNav';
 import { 
@@ -10,7 +11,7 @@ import {
   GrowthPresenceSection 
 } from '@/components/home';
 import { EventsPanel } from '@/components/events';
-import { ProfilePanel } from '@/components/profile';
+import { ProfilePanel, QuickSetupModal } from '@/components/profile';
 import { ReadPanel, ListenPlayer } from '@/components/shared';
 import { SkillExecSummaryPanel } from '@/components/skills';
 import { useProfile } from '@/hooks/useProfile';
@@ -75,10 +76,19 @@ export default function ExperiencePage() {
   } = useExperience();
   
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   // Profile state
-  const { profile, completeness, saveFullProfile } = useProfile();
+  const { profile, needsOnboarding, saveFullProfile, completeOnboarding } = useProfile();
   const [profilePanelOpen, setProfilePanelOpen] = useState(false);
+  const [quickSetupOpen, setQuickSetupOpen] = useState(false);
+
+  // Show quick setup on first run
+  useEffect(() => {
+    if (needsOnboarding && isUnlocked) {
+      setQuickSetupOpen(true);
+    }
+  }, [needsOnboarding, isUnlocked]);
   
   // Panel states
   const [readPanelOpen, setReadPanelOpen] = useState(false);
@@ -225,6 +235,19 @@ export default function ExperiencePage() {
       <SkillExecSummaryPanel
         open={skillPanelOpen}
         onOpenChange={setSkillPanelOpen}
+      />
+
+      {/* Quick Setup Modal (first-run onboarding) */}
+      <QuickSetupModal
+        open={quickSetupOpen}
+        onOpenChange={setQuickSetupOpen}
+        profile={profile}
+        userName={user?.name}
+        onSave={(p) => {
+          saveFullProfile(p);
+          completeOnboarding();
+        }}
+        onSkip={completeOnboarding}
       />
     </div>
   );
