@@ -1,18 +1,18 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CalendarSearch, User } from 'lucide-react';
-import { useExperience, useExperiencePacks } from '@/contexts/ExperienceContext';
+import { useExperience } from '@/contexts/ExperienceContext';
 import { TenantHeader } from '@/components/TenantHeader';
 import { BottomNav } from '@/components/BottomNav';
-import { StoriesRail } from '@/components/StoriesRail';
-import { JumpNav } from '@/components/JumpNav';
-import { Separator } from '@/components/ui/separator';
-import { PackSection, WeekNavigator, ReadPanel, ListenPlayer } from '@/components/shared';
-import { AccountPrepCard } from '@/components/AccountPrepCard';
-import { EventsCard, EventsPanel } from '@/components/events';
-import { ProfileBanner, ProfilePanel } from '@/components/profile';
-import { SkillOfWeekCard } from '@/components/skills';
-import { useWeekSelection, formatLocalDate } from '@/hooks/useWeekSelection';
+import { 
+  StoriesSection, 
+  AccountPrepSection, 
+  BriefingsSection, 
+  GrowthPresenceSection 
+} from '@/components/home';
+import { EventsPanel } from '@/components/events';
+import { ProfilePanel } from '@/components/profile';
+import { ReadPanel, ListenPlayer } from '@/components/shared';
+import { SkillExecSummaryPanel } from '@/components/skills';
 import { useProfile } from '@/hooks/useProfile';
 import { getTenantContent, PackContent } from '@/config/contentModel';
 import { cn } from '@/lib/utils';
@@ -67,39 +67,26 @@ function AccessGate({ onUnlock }: { onUnlock: (password: string) => boolean }) {
 
 export default function ExperiencePage() {
   const { 
-    audience, 
     tenantSlug, 
     tenantConfig, 
     experienceConfig, 
-    weekKey,
     isUnlocked, 
     unlock 
   } = useExperience();
   
-  const packs = useExperiencePacks();
   const navigate = useNavigate();
   
   // Profile state
   const { profile, completeness, saveFullProfile } = useProfile();
   const [profilePanelOpen, setProfilePanelOpen] = useState(false);
   
-  const { 
-    weekLabel, 
-    weekRange, 
-    canGoPrevious, 
-    canGoNext, 
-    goToPreviousWeek, 
-    goToNextWeek,
-    selectedWeekStart
-  } = useWeekSelection();
-
   // Panel states
   const [readPanelOpen, setReadPanelOpen] = useState(false);
   const [listenPlayerOpen, setListenPlayerOpen] = useState(false);
-  const [selectedPackId, setSelectedPackId] = useState<string | null>(null);
   const [selectedPackContent, setSelectedPackContent] = useState<PackContent | null>(null);
   const [selectedPackTitle, setSelectedPackTitle] = useState('');
   const [eventsPanelOpen, setEventsPanelOpen] = useState(false);
+  const [skillPanelOpen, setSkillPanelOpen] = useState(false);
 
   // If not unlocked, show access gate
   if (!isUnlocked) {
@@ -124,172 +111,81 @@ export default function ExperiencePage() {
     );
   }
 
-  const handlePackPrimaryAction = (packId: string) => {
-    const pack = experienceConfig.packDefinitions[packId];
-    if (!pack) return;
-
-    // Special handling for wizard packs
-    if (pack.isWizard) {
-      // Account prep wizard is handled by its own component
-      return;
-    }
-
-    // Get content for this pack
-    const content = getTenantContent(tenantSlug)[formatLocalDate(selectedWeekStart)]?.[packId];
-    
-    setSelectedPackId(packId);
-    setSelectedPackTitle(pack.title);
-    setSelectedPackContent(content || null);
+  // Handle briefing play
+  const handleBriefingPlay = (briefingId: string) => {
+    setSelectedPackTitle(getBriefingTitle(briefingId));
+    setSelectedPackContent({
+      listenUrl: '/audio/mock-briefing.mp3',
+      execSummary: {
+        tldr: 'Key insights for this week.',
+        whatChanged: ['Market conditions have shifted this week.'],
+        whyItMatters: ['These changes affect your positioning.'],
+        nextBestActions: ['Update your talking points.'],
+        questionsToAsk: ['What has changed for you recently?'],
+      }
+    });
     setListenPlayerOpen(true);
   };
 
-  const handlePackSecondaryAction = (packId: string) => {
-    const pack = experienceConfig.packDefinitions[packId];
-    if (!pack) return;
-
-    // Get content for this pack
-    const content = getTenantContent(tenantSlug)[formatLocalDate(selectedWeekStart)]?.[packId];
-    
-    setSelectedPackId(packId);
-    setSelectedPackTitle(pack.title);
-    setSelectedPackContent(content || null);
+  // Handle briefing open (read)
+  const handleBriefingOpen = (briefingId: string) => {
+    setSelectedPackTitle(getBriefingTitle(briefingId));
+    setSelectedPackContent({
+      listenUrl: '/audio/mock-briefing.mp3',
+      execSummary: {
+        tldr: 'Key insights for this week.',
+        whatChanged: [
+          'Market conditions have shifted this week with new competitor moves.',
+          'New developments in the regulatory landscape.',
+        ],
+        whyItMatters: [
+          'These changes affect your positioning in upcoming customer conversations.',
+          'Early awareness enables better preparation.',
+        ],
+        nextBestActions: [
+          'Review and apply insights to your next conversation.',
+          'Update your strategy based on new signals.',
+        ],
+        questionsToAsk: [
+          'What has changed for you in the past quarter?',
+          'How are you currently addressing this challenge?',
+        ],
+      }
+    });
     setReadPanelOpen(true);
   };
-
-  // Custom card renderer for special packs
-  const renderCustomCard = (packId: string) => {
-    if (packId === 'account-prep') {
-      return <AccountPrepCard />;
-    }
-    if (packId === 'events') {
-      return <EventsCard tenantSlug={tenantSlug} />;
-    }
-    if (packId === 'skill-of-week') {
-      return <SkillOfWeekCard onOpenProfile={() => setProfilePanelOpen(true)} />;
-    }
-    return null;
-  };
-
-  // Build jump nav items from sections
-  const jumpNavItems = experienceConfig.sections.map((section) => ({
-    id: `group-${section.id}`,
-    label: section.title,
-  }));
 
   return (
     <div className="min-h-screen bg-background pb-24">
       <TenantHeader showGreeting showSearch />
 
-      <main className="px-5 space-y-6">
-        {/* Profile Banner + Edit Link */}
-        <div className="flex items-start gap-3 flex-col sm:flex-row sm:items-center sm:justify-between">
-          <ProfileBanner
-            completeness={completeness}
-            onOpenProfile={() => setProfilePanelOpen(true)}
-            className="w-full sm:flex-1"
-          />
-          {completeness === 100 && (
-            <button
-              onClick={() => setProfilePanelOpen(true)}
-              className={cn(
-                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium',
-                'bg-card border border-border text-muted-foreground',
-                'hover:border-primary/50 hover:text-foreground transition-all duration-200'
-              )}
-            >
-              <User className="w-3.5 h-3.5" />
-              Edit profile
-            </button>
-          )}
-        </div>
-
-        {/* Shortcut Buttons */}
-        <div className="flex items-center gap-2 -mb-2">
-          <button
-            onClick={() => setEventsPanelOpen(true)}
-            className={cn(
-              'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium',
-              'bg-card border border-border text-muted-foreground',
-              'hover:border-primary/50 hover:text-foreground transition-all duration-200'
-            )}
-          >
-            <CalendarSearch className="w-3.5 h-3.5" />
-            Find Events
-          </button>
-          {completeness < 100 && (
-            <button
-              onClick={() => setProfilePanelOpen(true)}
-              className={cn(
-                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium',
-                'bg-card border border-border text-muted-foreground',
-                'hover:border-primary/50 hover:text-foreground transition-all duration-200'
-              )}
-            >
-              <User className="w-3.5 h-3.5" />
-              Edit profile
-            </button>
-          )}
-        </div>
-
-        {/* Stories Rail */}
+      {/* Main Content - Centered container with max-width */}
+      <main className="max-w-[1140px] mx-auto px-5 lg:px-8 space-y-10">
+        {/* Section 1: Stories (Awareness) */}
         {experienceConfig.features.stories && (
-          <StoriesRail />
+          <StoriesSection />
         )}
 
-        {/* Focus Section */}
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">This Week's Focus Pack</h2>
-          </div>
-          
-          {/* Week Navigator */}
-          {experienceConfig.features.weekNavigator && (
-            <WeekNavigator
-              weekLabel={weekLabel}
-              weekRange={weekRange}
-              canGoPrevious={canGoPrevious}
-              canGoNext={canGoNext}
-              onPrevious={goToPreviousWeek}
-              onNext={goToNextWeek}
-            />
-          )}
+        {/* Section 2: Account Prep (Centerpiece) */}
+        <AccountPrepSection />
 
-          {/* Jump Navigation */}
-          {experienceConfig.features.jumpNav && (
-            <div className="mt-4">
-              <JumpNav items={jumpNavItems} />
-            </div>
-          )}
+        {/* Section 3: Briefings (Readiness) */}
+        <BriefingsSection 
+          onPlay={handleBriefingPlay}
+          onOpen={handleBriefingOpen}
+        />
 
-          {/* Sections - Enterprise layout with generous spacing */}
-          <div className="mt-8 space-y-10">
-            {experienceConfig.sections
-              .filter((section) => (packs[section.id]?.length || 0) > 0)
-              .map((section, idx, filteredSections) => {
-                const sectionPacks = packs[section.id] || [];
-
-                return (
-                  <div key={section.id} className="animate-fade-in" style={{ animationDelay: `${idx * 50}ms` }}>
-                    <PackSection
-                      section={section}
-                      packs={sectionPacks}
-                      onPackPrimaryAction={handlePackPrimaryAction}
-                      onPackSecondaryAction={handlePackSecondaryAction}
-                      renderCustomCard={renderCustomCard}
-                    />
-                    {idx < filteredSections.length - 1 && (
-                      <Separator className="mt-10 opacity-50" />
-                    )}
-                  </div>
-                );
-              })}
-          </div>
-        </section>
+        {/* Section 4: Growth + Presence (Lower Priority) */}
+        <GrowthPresenceSection
+          onSkillClick={() => setSkillPanelOpen(true)}
+          onEventsClick={() => setEventsPanelOpen(true)}
+          onPresenceClick={() => setProfilePanelOpen(true)}
+        />
       </main>
 
       <BottomNav />
 
-      {/* Read Panel */}
+      {/* Panels */}
       <ReadPanel
         open={readPanelOpen}
         onOpenChange={setReadPanelOpen}
@@ -301,7 +197,6 @@ export default function ExperiencePage() {
         }}
       />
 
-      {/* Listen Player */}
       <ListenPlayer
         open={listenPlayerOpen}
         onOpenChange={setListenPlayerOpen}
@@ -314,20 +209,34 @@ export default function ExperiencePage() {
         }}
       />
 
-      {/* Events Panel (shortcut button) */}
       <EventsPanel
         open={eventsPanelOpen}
         onOpenChange={setEventsPanelOpen}
         tenantSlug={tenantSlug}
       />
 
-      {/* Profile Panel */}
       <ProfilePanel
         open={profilePanelOpen}
         onOpenChange={setProfilePanelOpen}
         profile={profile}
         onSave={saveFullProfile}
       />
+
+      <SkillExecSummaryPanel
+        open={skillPanelOpen}
+        onOpenChange={setSkillPanelOpen}
+      />
     </div>
   );
+}
+
+// Helper to get briefing title
+function getBriefingTitle(id: string): string {
+  const titles: Record<string, string> = {
+    'briefing-1': 'Top Focus',
+    'briefing-2': 'Competitive Radar',
+    'briefing-3': 'Industry Signals',
+    'briefing-4': 'Objection Handling',
+  };
+  return titles[id] || 'Briefing';
 }

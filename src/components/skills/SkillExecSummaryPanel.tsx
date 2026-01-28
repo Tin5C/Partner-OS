@@ -14,7 +14,7 @@ import { SkillContent } from '@/lib/skillOfWeekLogic';
 interface SkillExecSummaryPanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  content: SkillContent | null;
+  content?: SkillContent | null;
   onListenClick?: () => void;
 }
 
@@ -45,10 +45,25 @@ function CopyButton({ text }: { text: string }) {
 export function SkillExecSummaryPanel({
   open,
   onOpenChange,
-  content,
+  content: propContent,
   onListenClick,
 }: SkillExecSummaryPanelProps) {
-  if (!content) return null;
+  // Use provided content or default mock content
+  const content = propContent || {
+    skillTitle: 'Active Listening',
+    whyMattersThisWeek: [
+      'Buyers are 60% through their journey before engaging sales — strong discovery closes that gap',
+      'Your pipeline review highlighted qualification gaps in recent opportunities',
+    ],
+    tacticsToTry: [
+      'Use the "3 Whys" technique — dig three levels deep on every pain point',
+      'Ask about the cost of inaction: "What happens if you do nothing for 12 months?"',
+      'Map the buying committee early: "Who else needs to be convinced?"',
+    ],
+    exampleScript: '"Help me understand — what prompted you to take this meeting now? What changed in the last 90 days that made this a priority?"',
+    exercise: 'In your next discovery call, pause after each answer and ask "Tell me more about that" before moving to the next question.',
+  };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
