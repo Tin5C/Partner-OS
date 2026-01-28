@@ -10,9 +10,15 @@ import {
   Sparkles,
   FileText,
   ChevronRight,
-  MessageSquare,
+  ChevronDown,
   Plus,
-  Link2
+  Link2,
+  X,
+  User,
+  Mail,
+  FileEdit,
+  ListChecks,
+  Send
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -28,6 +34,13 @@ import {
 type PrepLength = '1' | '3' | '10';
 type MeetingType = 'intro' | 'discovery' | 'qbr' | 'renewal' | 'exec' | 'partner';
 
+interface Stakeholder {
+  id: string;
+  name: string;
+  role: string;
+  priority: 'primary' | 'secondary';
+}
+
 interface PrepSnapshot {
   headline: string;
   topThings: string[];
@@ -40,7 +53,7 @@ interface PrepSnapshot {
   sources: { type: string; name: string; timestamp: string }[];
 }
 
-// Mock data for generated snapshot
+// Mock data
 const mockSnapshot: PrepSnapshot = {
   headline: "Sulzer is evaluating predictive maintenance vendors — position around uptime guarantees and quick ROI proof.",
   topThings: [
@@ -120,6 +133,24 @@ const meetingTypes: { value: MeetingType; label: string }[] = [
   { value: 'partner', label: 'Partner' },
 ];
 
+const meetingGoals = [
+  'Upsell',
+  'Renewal', 
+  'Exec alignment',
+  'Partner enablement',
+  'Objection handling',
+  'Discovery',
+  'Demo',
+];
+
+const refinementChips = [
+  'Emphasize for exec audience',
+  'Likely objections',
+  'Competitor angle',
+  'What changed since last meeting',
+  'One risky question to ask',
+];
+
 export function AccountPrepSection() {
   const [selectedMeeting, setSelectedMeeting] = useState<string | null>('1');
   const [selectedAccount, setSelectedAccount] = useState<string | null>('Sulzer AG');
@@ -130,10 +161,15 @@ export function AccountPrepSection() {
   const [activeTab, setActiveTab] = useState<'text' | 'audio'>('text');
   const [isPlaying, setIsPlaying] = useState(false);
   const [sourcesOpen, setSourcesOpen] = useState(false);
-  const [followUpOpen, setFollowUpOpen] = useState(false);
-  const [followUpText, setFollowUpText] = useState('');
+  
+  // Context state
   const [contextOpen, setContextOpen] = useState(false);
-  const [contextText, setContextText] = useState('');
+  const [contextNotes, setContextNotes] = useState('');
+  const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
+  const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
+  
+  // Follow-up state
+  const [followUpText, setFollowUpText] = useState('');
 
   const handleGenerate = () => {
     setIsGenerating(true);
@@ -143,7 +179,41 @@ export function AccountPrepSection() {
     }, 1500);
   };
 
+  const handleClearContext = () => {
+    setContextNotes('');
+    setSelectedGoals([]);
+    setStakeholders([]);
+  };
+
+  const toggleGoal = (goal: string) => {
+    setSelectedGoals(prev => 
+      prev.includes(goal) 
+        ? prev.filter(g => g !== goal)
+        : [...prev, goal]
+    );
+  };
+
+  const addStakeholder = () => {
+    setStakeholders(prev => [...prev, {
+      id: Date.now().toString(),
+      name: '',
+      role: '',
+      priority: 'secondary'
+    }]);
+  };
+
+  const updateStakeholder = (id: string, field: keyof Stakeholder, value: string) => {
+    setStakeholders(prev => prev.map(s => 
+      s.id === id ? { ...s, [field]: value } : s
+    ));
+  };
+
+  const removeStakeholder = (id: string) => {
+    setStakeholders(prev => prev.filter(s => s.id !== id));
+  };
+
   const canGenerate = selectedMeeting || selectedAccount;
+  const hasContext = contextNotes || selectedGoals.length > 0 || stakeholders.length > 0;
   
   const getBulletCount = (arr: string[], length: PrepLength): string[] => {
     const counts: Record<PrepLength, number> = { '1': 3, '3': 5, '10': arr.length };
@@ -151,8 +221,6 @@ export function AccountPrepSection() {
   };
 
   const showExtendedContent = prepLength === '10';
-
-  // Check if calendar is "connected" (mock: we have meetings)
   const hasCalendar = mockMeetings.length > 0;
 
   return (
@@ -202,19 +270,17 @@ export function AccountPrepSection() {
               </div>
 
               {/* Account Selector */}
-              <div className="flex-1 lg:flex-initial lg:w-[180px]">
-                <Select value={selectedAccount || ''} onValueChange={setSelectedAccount}>
-                  <SelectTrigger className="w-full h-10 bg-background border-border">
-                    <Building2 className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
-                    <SelectValue placeholder="Select account..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border border-border z-50">
-                    {mockAccounts.map((a) => (
-                      <SelectItem key={a} value={a}>{a}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <Select value={selectedAccount || ''} onValueChange={setSelectedAccount}>
+                <SelectTrigger className="w-full lg:w-[180px] h-10 bg-background border-border">
+                  <Building2 className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
+                  <SelectValue placeholder="Select account..." />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border border-border z-50">
+                  {mockAccounts.map((a) => (
+                    <SelectItem key={a} value={a}>{a}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
               {/* Meeting Type */}
               <Select value={meetingType} onValueChange={(v) => setMeetingType(v as MeetingType)}>
@@ -272,33 +338,142 @@ export function AccountPrepSection() {
               </button>
             </div>
 
-            {/* Row 2: Context + Trust Line */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              {/* Add Context Link */}
-              <Collapsible open={contextOpen} onOpenChange={setContextOpen}>
-                <CollapsibleTrigger className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                  <Plus className="w-3.5 h-3.5" />
-                  Add context (optional)
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-3">
-                  <textarea
-                    value={contextText}
-                    onChange={(e) => setContextText(e.target.value)}
-                    placeholder="E.g., They mentioned budget constraints last call. Focus on ROI..."
-                    rows={2}
-                    className={cn(
-                      "w-full sm:w-[400px] px-3 py-2 rounded-lg text-sm",
-                      "bg-background border border-border",
-                      "placeholder:text-muted-foreground/70",
-                      "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30",
-                      "resize-none"
+            {/* Row 2: Context Toggle + Trust Line */}
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+              {/* Add Context Collapsible */}
+              <Collapsible open={contextOpen} onOpenChange={setContextOpen} className="flex-1">
+                <div className="flex items-center gap-3">
+                  <CollapsibleTrigger className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                    {contextOpen ? (
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    ) : (
+                      <Plus className="w-3.5 h-3.5" />
                     )}
-                  />
+                    Add context (optional)
+                  </CollapsibleTrigger>
+                  {hasContext && !contextOpen && (
+                    <span className="text-xs text-primary">Context added</span>
+                  )}
+                </div>
+                
+                <CollapsibleContent className="mt-4">
+                  <div className="space-y-4 p-4 rounded-xl bg-muted/20 border border-border/50">
+                    {/* Notes */}
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                        Notes
+                      </label>
+                      <textarea
+                        value={contextNotes}
+                        onChange={(e) => setContextNotes(e.target.value)}
+                        placeholder="Anything specific to cover? (e.g. renewal risk, stakeholder concern)"
+                        rows={2}
+                        className={cn(
+                          "w-full px-3 py-2 rounded-lg text-sm",
+                          "bg-background border border-border",
+                          "placeholder:text-muted-foreground/60",
+                          "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30",
+                          "resize-none"
+                        )}
+                      />
+                    </div>
+
+                    {/* Meeting Goal Chips */}
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                        Meeting goal
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {meetingGoals.map((goal) => (
+                          <button
+                            key={goal}
+                            onClick={() => toggleGoal(goal)}
+                            className={cn(
+                              "px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+                              selectedGoals.includes(goal)
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-background text-muted-foreground border border-border hover:border-primary/50 hover:text-foreground"
+                            )}
+                          >
+                            {goal}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Stakeholders */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-xs font-medium text-muted-foreground">
+                          Stakeholders
+                        </label>
+                        <button
+                          onClick={addStakeholder}
+                          className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                        >
+                          <Plus className="w-3 h-3" />
+                          Add
+                        </button>
+                      </div>
+                      
+                      {stakeholders.length === 0 ? (
+                        <p className="text-xs text-muted-foreground/60">
+                          No stakeholders added yet
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          {stakeholders.map((s) => (
+                            <div key={s.id} className="flex items-center gap-2 p-2 rounded-lg bg-background border border-border">
+                              <User className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                              <input
+                                type="text"
+                                value={s.name}
+                                onChange={(e) => updateStakeholder(s.id, 'name', e.target.value)}
+                                placeholder="Name"
+                                className="flex-1 min-w-0 text-sm bg-transparent border-none focus:outline-none placeholder:text-muted-foreground/50"
+                              />
+                              <input
+                                type="text"
+                                value={s.role}
+                                onChange={(e) => updateStakeholder(s.id, 'role', e.target.value)}
+                                placeholder="Role"
+                                className="flex-1 min-w-0 text-sm bg-transparent border-none focus:outline-none placeholder:text-muted-foreground/50"
+                              />
+                              <select
+                                value={s.priority}
+                                onChange={(e) => updateStakeholder(s.id, 'priority', e.target.value)}
+                                className="text-xs bg-muted/50 border border-border rounded px-2 py-1 focus:outline-none"
+                              >
+                                <option value="primary">Primary</option>
+                                <option value="secondary">Secondary</option>
+                              </select>
+                              <button
+                                onClick={() => removeStakeholder(s.id)}
+                                className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Clear Context */}
+                    {hasContext && (
+                      <button
+                        onClick={handleClearContext}
+                        className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        Clear context
+                      </button>
+                    )}
+                  </div>
                 </CollapsibleContent>
               </Collapsible>
 
               {/* Trust Line */}
-              <p className="text-[11px] text-muted-foreground/70">
+              <p className="text-[11px] text-muted-foreground/70 sm:text-right flex-shrink-0">
                 Built from: saved Stories, Briefings, latest news, and account context
               </p>
             </div>
@@ -308,6 +483,17 @@ export function AccountPrepSection() {
         {/* Output Area */}
         {snapshot ? (
           <div className="p-5">
+            {/* Context indicator */}
+            {hasContext && (
+              <div className="mb-4 p-3 rounded-lg bg-primary/5 border border-primary/10">
+                <p className="text-xs text-primary font-medium">
+                  Using your context: {selectedGoals.length > 0 && selectedGoals.join(', ')}
+                  {stakeholders.length > 0 && ` • ${stakeholders.length} stakeholder(s)`}
+                  {contextNotes && ' • Custom notes'}
+                </p>
+              </div>
+            )}
+
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'text' | 'audio')}>
               <TabsList className="mb-4 bg-muted/40 p-1">
                 <TabsTrigger value="text" className="gap-1.5 px-4">
@@ -328,24 +514,20 @@ export function AccountPrepSection() {
                   </p>
                 </div>
 
-                {/* Structured Sections */}
                 <SnapshotSection 
                   title="Top things to know" 
                   items={getBulletCount(snapshot.topThings, prepLength)} 
-                  bullet="•"
                 />
 
                 <SnapshotSection 
                   title="Talk track (what to say)" 
                   items={getBulletCount(snapshot.talkTrack, prepLength)} 
-                  bullet="•"
                   italic
                 />
 
                 <SnapshotSection 
                   title="Questions to ask" 
                   items={getBulletCount(snapshot.questions, prepLength)} 
-                  bullet="•"
                 />
 
                 <SnapshotSection 
@@ -362,7 +544,6 @@ export function AccountPrepSection() {
                   itemClass="font-medium"
                 />
 
-                {/* Extended Content (10 min only) */}
                 {showExtendedContent && snapshot.objections && (
                   <div>
                     <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
@@ -383,11 +564,10 @@ export function AccountPrepSection() {
                   <SnapshotSection 
                     title="90-day opportunity hypothesis" 
                     items={snapshot.hypothesis} 
-                    bullet="•"
                   />
                 )}
 
-                {/* Sources (collapsed) */}
+                {/* Sources */}
                 <Collapsible open={sourcesOpen} onOpenChange={setSourcesOpen}>
                   <CollapsibleTrigger className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
                     <ChevronRight className={cn(
@@ -414,7 +594,6 @@ export function AccountPrepSection() {
 
               <TabsContent value="audio" className="mt-0">
                 <div className="flex flex-col items-center justify-center py-10 space-y-4">
-                  {/* Audio Player */}
                   <div className="w-full max-w-md">
                     <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 border border-border/50">
                       <button
@@ -425,11 +604,7 @@ export function AccountPrepSection() {
                           "hover:bg-primary/90 transition-all"
                         )}
                       >
-                        {isPlaying ? (
-                          <Pause className="w-5 h-5" />
-                        ) : (
-                          <Play className="w-5 h-5 ml-0.5" />
-                        )}
+                        {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
                       </button>
                       <div className="flex-1">
                         <div className="h-1.5 bg-muted rounded-full overflow-hidden">
@@ -452,66 +627,67 @@ export function AccountPrepSection() {
               </TabsContent>
             </Tabs>
 
-            {/* Actions */}
-            <div className="mt-6 pt-5 border-t border-border/60 space-y-4">
-              {/* Action Buttons */}
+            {/* Actions Section */}
+            <div className="mt-6 pt-5 border-t border-border/60 space-y-5">
+              {/* Primary Actions */}
               <div className="flex flex-wrap gap-2">
                 <ActionButton icon={Bookmark} label="Save to Account" />
                 <ActionButton icon={Share2} label="Share" />
-                <ActionButton icon={Sparkles} label="Send to Copilot" />
+                <ActionButton icon={Send} label="Send to Copilot" />
               </div>
 
-              {/* Refinement Chips */}
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs text-muted-foreground">Refine:</span>
-                {['Make shorter', 'Add competitor angle', 'Focus on stakeholder', 'Draft follow-up email'].map((chip) => (
-                  <button
-                    key={chip}
-                    className={cn(
-                      "px-2.5 py-1 rounded-full text-xs font-medium",
-                      "bg-muted/50 text-muted-foreground border border-border/50",
-                      "hover:bg-muted hover:text-foreground transition-colors"
-                    )}
-                  >
-                    {chip}
-                  </button>
-                ))}
+              {/* Quick Actions */}
+              <div className="flex flex-wrap gap-2">
+                <QuickAction icon={Mail} label="Draft follow-up email" />
+                <QuickAction icon={ListChecks} label="Draft agenda" />
+                <QuickAction icon={FileEdit} label="Draft meeting recap" />
               </div>
 
-              {/* Follow-up Input */}
-              <Collapsible open={followUpOpen} onOpenChange={setFollowUpOpen}>
-                <CollapsibleTrigger className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  Ask a follow-up about this snapshot
-                  <ChevronRight className={cn(
-                    "w-3.5 h-3.5 transition-transform",
-                    followUpOpen && "rotate-90"
-                  )} />
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-3">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={followUpText}
-                      onChange={(e) => setFollowUpText(e.target.value)}
-                      placeholder="E.g., What's the competitive positioning vs AWS?"
+              {/* Refinement Section */}
+              <div className="pt-4 border-t border-border/40">
+                <p className="text-xs font-medium text-muted-foreground mb-3">Refine this prep</p>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {refinementChips.map((chip) => (
+                    <button
+                      key={chip}
                       className={cn(
-                        "flex-1 px-3 py-2 rounded-lg text-sm",
-                        "bg-background border border-border",
-                        "placeholder:text-muted-foreground/70",
-                        "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30"
+                        "px-3 py-1.5 rounded-full text-xs font-medium",
+                        "bg-muted/50 text-muted-foreground border border-border/50",
+                        "hover:bg-muted hover:text-foreground transition-colors"
                       )}
-                    />
-                    <button className={cn(
+                    >
+                      {chip}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Follow-up Input */}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={followUpText}
+                    onChange={(e) => setFollowUpText(e.target.value)}
+                    placeholder="Ask a follow-up about this snapshot..."
+                    className={cn(
+                      "flex-1 px-3 py-2 rounded-lg text-sm",
+                      "bg-background border border-border",
+                      "placeholder:text-muted-foreground/60",
+                      "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30"
+                    )}
+                  />
+                  <button 
+                    disabled={!followUpText}
+                    className={cn(
                       "px-4 py-2 rounded-lg text-sm font-medium",
                       "bg-primary text-primary-foreground",
-                      "hover:bg-primary/90 transition-colors"
-                    )}>
-                      Ask
-                    </button>
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
+                      "hover:bg-primary/90 transition-colors",
+                      "disabled:opacity-50 disabled:cursor-not-allowed"
+                    )}
+                  >
+                    Ask
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         ) : (
@@ -539,7 +715,7 @@ export function AccountPrepSection() {
   );
 }
 
-// Helper component for consistent section rendering
+// Helper Components
 function SnapshotSection({ 
   title, 
   items, 
@@ -563,7 +739,7 @@ function SnapshotSection({
       <ul className="space-y-2">
         {items.map((item, i) => (
           <li key={i} className={cn("flex gap-2.5 text-sm text-foreground", itemClass)}>
-            <span className={cn("mt-0.5 flex-shrink-0", bulletClass, !italic && "not-italic")}>{bullet}</span>
+            <span className={cn("mt-0.5 flex-shrink-0", bulletClass)}>{bullet}</span>
             <span className={italic ? "italic" : ""}>{item}</span>
           </li>
         ))}
@@ -572,7 +748,6 @@ function SnapshotSection({
   );
 }
 
-// Helper component for action buttons
 function ActionButton({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
   return (
     <button className={cn(
@@ -581,6 +756,19 @@ function ActionButton({ icon: Icon, label }: { icon: React.ElementType; label: s
       "hover:bg-muted transition-colors"
     )}>
       <Icon className="w-4 h-4" />
+      {label}
+    </button>
+  );
+}
+
+function QuickAction({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
+  return (
+    <button className={cn(
+      "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs",
+      "text-muted-foreground border border-border/40",
+      "hover:bg-muted/30 hover:text-foreground transition-colors"
+    )}>
+      <Icon className="w-3.5 h-3.5" />
       {label}
     </button>
   );
