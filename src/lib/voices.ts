@@ -1,6 +1,7 @@
 // Voice Data Model
 // Internal thought-leaders / SMEs with episodic content
 
+import ziaAvatar from '@/assets/voices/zia.jpg';
 export interface VoiceEpisode {
   id: string;
   publishedAt: string; // ISO date string
@@ -84,8 +85,8 @@ export const voices: Voice[] = [
   {
     voiceId: 'zia-ai-lead',
     voiceName: 'Zia',
-    voiceRole: 'AI Lead, Manufacturing',
-    voiceAvatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop&crop=face',
+    voiceRole: 'CVP Azure AI',
+    voiceAvatarUrl: ziaAvatar,
     promise: 'Weekly signals on AI infrastructure & hyperscaler moves',
     cadenceLabel: 'Drops Tue/Thu',
     episodes: [
