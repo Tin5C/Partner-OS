@@ -16,6 +16,7 @@ import { ScorecardModal, SourcesModal } from '@/components/presence';
 import { ReadPanel, ListenPlayer } from '@/components/shared';
 import { SkillExecSummaryPanel } from '@/components/skills';
 import { useProfile } from '@/hooks/useProfile';
+import { usePresenceSources } from '@/hooks/usePresenceSources';
 import { getTenantContent, PackContent } from '@/config/contentModel';
 import { cn } from '@/lib/utils';
 
@@ -87,6 +88,7 @@ export default function ExperiencePage() {
   // Scorecard and Sources modals
   const [scorecardOpen, setScorecardOpen] = useState(false);
   const [sourcesOpen, setSourcesOpen] = useState(false);
+  const { sources, connectedCount, connectSource, disconnectSource } = usePresenceSources();
 
   // Show quick setup on first run
   useEffect(() => {
@@ -266,6 +268,9 @@ export default function ExperiencePage() {
       <SourcesModal
         open={sourcesOpen}
         onOpenChange={setSourcesOpen}
+        sources={sources}
+        onConnect={connectSource}
+        onDisconnect={disconnectSource}
       />
     </div>
   );

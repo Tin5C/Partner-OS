@@ -13,6 +13,7 @@ export interface ScorecardInput {
 export type IdentityStatus = 'confirmed' | 'ambiguous';
 export type FindabilityVerdict = 'linkedin-contained' | 'cross-channel' | 'strong-external';
 export type TierLevel = 0 | 1 | 2 | 3;
+export type ConfidenceLevel = 'low' | 'medium' | 'high';
 
 export const TIER_NAMES: Record<TierLevel, string> = {
   0: 'Unknown',
@@ -20,6 +21,48 @@ export const TIER_NAMES: Record<TierLevel, string> = {
   2: 'Recognized voice',
   3: 'Category voice',
 };
+
+export const CONFIDENCE_LABELS: Record<ConfidenceLevel, string> = {
+  low: 'Limited data',
+  medium: 'Moderate confidence',
+  high: 'High confidence',
+};
+
+// Source types for the scanner
+export interface PersonSource {
+  id: string;
+  type: 'linkedin' | 'website' | 'newsletter' | 'podcast' | 'speaker' | 'pdf';
+  label: string;
+  value?: string;
+  connected: boolean;
+  addedAt?: string;
+}
+
+// Person data model
+export interface PersonData {
+  id: string;
+  name: string;
+  employer: string;
+  title: string;
+  region: string;
+  industry?: string;
+  productFocus?: string;
+}
+
+// Scan result with confidence
+export interface PersonBrandScan {
+  personId: string;
+  scoreTotal: number;
+  tier: TierLevel;
+  confidence: ConfidenceLevel;
+  confidencePercent: number; // 0-100
+  dimensions: DimensionScore[];
+  verdict: FindabilityVerdict;
+  evidence: EvidenceItem[];
+  improvements: ImprovementData;
+  scannedAt: string;
+  sourcesUsed: number;
+}
 
 export interface QueryResult {
   query: string;
@@ -62,6 +105,12 @@ export interface ScorecardResult {
     status: IdentityStatus;
     dataNeeded?: string;
   };
+  confidence: {
+    level: ConfidenceLevel;
+    percent: number;
+    sourcesUsed: number;
+    maxSources: number;
+  };
   findability: {
     queries: QueryResult[];
     verdict: FindabilityVerdict;
@@ -93,6 +142,12 @@ export const MOCK_PERSONA_1: ScorecardResult = {
   },
   identity: {
     status: 'confirmed',
+  },
+  confidence: {
+    level: 'medium',
+    percent: 55,
+    sourcesUsed: 1,
+    maxSources: 6,
   },
   findability: {
     queries: [
@@ -160,6 +215,12 @@ export const MOCK_PERSONA_2: ScorecardResult = {
   },
   identity: {
     status: 'confirmed',
+  },
+  confidence: {
+    level: 'high',
+    percent: 85,
+    sourcesUsed: 4,
+    maxSources: 6,
   },
   findability: {
     queries: [
