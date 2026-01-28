@@ -75,11 +75,11 @@ export function StoryTile({ story, listenedState, onClick }: StoryTileProps) {
     
     if (hasValidLogo) {
       return (
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 flex items-center justify-center p-6">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 dark:from-slate-800 dark:via-slate-850 dark:to-slate-900 flex items-center justify-center p-6">
           <img
             src={story.logoUrl}
             alt={story.companyName}
-            className="w-full h-auto max-h-16 object-contain"
+            className="w-full h-auto max-h-14 object-contain opacity-90 dark:opacity-80"
             onError={() => setLogoError(true)}
           />
         </div>
