@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { 
   Calendar, 
   Building2, 
-  ChevronDown, 
   Play, 
   Pause,
   Bookmark, 
@@ -11,7 +10,9 @@ import {
   Sparkles,
   FileText,
   ChevronRight,
-  MessageSquare
+  MessageSquare,
+  Plus,
+  Link2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -131,10 +132,11 @@ export function AccountPrepSection() {
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [followUpOpen, setFollowUpOpen] = useState(false);
   const [followUpText, setFollowUpText] = useState('');
+  const [contextOpen, setContextOpen] = useState(false);
+  const [contextText, setContextText] = useState('');
 
   const handleGenerate = () => {
     setIsGenerating(true);
-    // Simulate generation
     setTimeout(() => {
       setSnapshot(mockSnapshot);
       setIsGenerating(false);
@@ -143,13 +145,15 @@ export function AccountPrepSection() {
 
   const canGenerate = selectedMeeting || selectedAccount;
   
-  // Get bullet count based on length
   const getBulletCount = (arr: string[], length: PrepLength): string[] => {
     const counts: Record<PrepLength, number> = { '1': 3, '3': 5, '10': arr.length };
     return arr.slice(0, counts[length]);
   };
 
   const showExtendedContent = prepLength === '10';
+
+  // Check if calendar is "connected" (mock: we have meetings)
+  const hasCalendar = mockMeetings.length > 0;
 
   return (
     <section className="space-y-4">
@@ -167,117 +171,156 @@ export function AccountPrepSection() {
         "shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]"
       )}>
         {/* Controls Bar */}
-        <div className="p-4 border-b border-border/60">
-          <div className="flex flex-col lg:flex-row gap-3">
-            {/* Meeting Selector */}
-            <Select value={selectedMeeting || ''} onValueChange={setSelectedMeeting}>
-              <SelectTrigger className="w-full lg:w-[220px] h-10 bg-background">
-                <Calendar className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
-                <SelectValue placeholder="Select meeting..." />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border border-border z-50">
-                {mockMeetings.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{m.title}</span>
-                      <span className="text-xs text-muted-foreground">{m.time}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <div className="p-5 border-b border-border/60">
+          <div className="flex flex-col gap-4">
+            {/* Row 1: Selectors */}
+            <div className="flex flex-col lg:flex-row gap-3">
+              {/* Meeting Selector */}
+              <div className="flex-1 lg:flex-initial lg:w-[240px]">
+                <Select value={selectedMeeting || ''} onValueChange={setSelectedMeeting}>
+                  <SelectTrigger className="w-full h-10 bg-background border-border">
+                    <Calendar className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
+                    <SelectValue placeholder="Select meeting..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border border-border z-50">
+                    {mockMeetings.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        <div className="flex flex-col items-start">
+                          <span className="font-medium text-sm">{m.title}</span>
+                          <span className="text-xs text-muted-foreground">{m.time}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {!hasCalendar && (
+                  <p className="mt-1.5 text-xs text-muted-foreground flex items-center gap-1">
+                    <Link2 className="w-3 h-3" />
+                    Connect calendar to auto-select meetings
+                  </p>
+                )}
+              </div>
 
-            {/* Account Selector (fallback) */}
-            <Select value={selectedAccount || ''} onValueChange={setSelectedAccount}>
-              <SelectTrigger className="w-full lg:w-[180px] h-10 bg-background">
-                <Building2 className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
-                <SelectValue placeholder="Select account..." />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border border-border z-50">
-                {mockAccounts.map((a) => (
-                  <SelectItem key={a} value={a}>{a}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {/* Account Selector */}
+              <div className="flex-1 lg:flex-initial lg:w-[180px]">
+                <Select value={selectedAccount || ''} onValueChange={setSelectedAccount}>
+                  <SelectTrigger className="w-full h-10 bg-background border-border">
+                    <Building2 className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
+                    <SelectValue placeholder="Select account..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border border-border z-50">
+                    {mockAccounts.map((a) => (
+                      <SelectItem key={a} value={a}>{a}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* Meeting Type */}
-            <Select value={meetingType} onValueChange={(v) => setMeetingType(v as MeetingType)}>
-              <SelectTrigger className="w-full lg:w-[130px] h-10 bg-background">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border border-border z-50">
-                {meetingTypes.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {/* Meeting Type */}
+              <Select value={meetingType} onValueChange={(v) => setMeetingType(v as MeetingType)}>
+                <SelectTrigger className="w-full lg:w-[130px] h-10 bg-background border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border border-border z-50">
+                  {meetingTypes.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-            {/* Length Toggle */}
-            <div className="flex items-center gap-1 p-1 rounded-lg bg-muted/50 border border-border/50">
-              {(['1', '3', '10'] as PrepLength[]).map((len) => (
-                <button
-                  key={len}
-                  onClick={() => setPrepLength(len)}
-                  className={cn(
-                    "px-3 py-1.5 text-sm font-medium rounded-md transition-all",
-                    prepLength === len
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {len} min
-                </button>
-              ))}
+              {/* Length Toggle */}
+              <div className="flex items-center gap-0.5 p-1 rounded-lg bg-muted/40 border border-border/50">
+                {(['1', '3', '10'] as PrepLength[]).map((len) => (
+                  <button
+                    key={len}
+                    onClick={() => setPrepLength(len)}
+                    className={cn(
+                      "px-3.5 py-1.5 text-sm font-medium rounded-md transition-all",
+                      prepLength === len
+                        ? "bg-background text-foreground shadow-sm border border-border/50"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {len} min
+                  </button>
+                ))}
+              </div>
+
+              {/* Generate Button */}
+              <button
+                onClick={handleGenerate}
+                disabled={!canGenerate || isGenerating}
+                className={cn(
+                  "flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl",
+                  "bg-primary text-primary-foreground font-medium text-sm",
+                  "shadow-sm hover:bg-primary/90 transition-all",
+                  "disabled:opacity-50 disabled:cursor-not-allowed",
+                  "lg:ml-auto"
+                )}
+              >
+                {isGenerating ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Generate Snapshot
+                  </>
+                )}
+              </button>
             </div>
 
-            {/* Generate Button */}
-            <button
-              onClick={handleGenerate}
-              disabled={!canGenerate || isGenerating}
-              className={cn(
-                "flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl",
-                "bg-primary text-primary-foreground font-medium text-sm",
-                "shadow-sm hover:bg-primary/90 transition-all",
-                "disabled:opacity-50 disabled:cursor-not-allowed",
-                "lg:ml-auto"
-              )}
-            >
-              {isGenerating ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4" />
-                  Generate Snapshot
-                </>
-              )}
-            </button>
-          </div>
+            {/* Row 2: Context + Trust Line */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              {/* Add Context Link */}
+              <Collapsible open={contextOpen} onOpenChange={setContextOpen}>
+                <CollapsibleTrigger className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                  <Plus className="w-3.5 h-3.5" />
+                  Add context (optional)
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-3">
+                  <textarea
+                    value={contextText}
+                    onChange={(e) => setContextText(e.target.value)}
+                    placeholder="E.g., They mentioned budget constraints last call. Focus on ROI..."
+                    rows={2}
+                    className={cn(
+                      "w-full sm:w-[400px] px-3 py-2 rounded-lg text-sm",
+                      "bg-background border border-border",
+                      "placeholder:text-muted-foreground/70",
+                      "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30",
+                      "resize-none"
+                    )}
+                  />
+                </CollapsibleContent>
+              </Collapsible>
 
-          {/* Trust Line */}
-          <p className="mt-3 text-xs text-muted-foreground">
-            Built from: saved Stories + Briefings + latest news + account context
-          </p>
+              {/* Trust Line */}
+              <p className="text-[11px] text-muted-foreground/70">
+                Built from: saved Stories, Briefings, latest news, and account context
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Output Area */}
         {snapshot ? (
-          <div className="p-4">
+          <div className="p-5">
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'text' | 'audio')}>
-              <TabsList className="mb-4 bg-muted/50">
-                <TabsTrigger value="text" className="gap-1.5">
+              <TabsList className="mb-4 bg-muted/40 p-1">
+                <TabsTrigger value="text" className="gap-1.5 px-4">
                   <FileText className="w-3.5 h-3.5" />
                   Text
                 </TabsTrigger>
-                <TabsTrigger value="audio" className="gap-1.5">
+                <TabsTrigger value="audio" className="gap-1.5 px-4">
                   <Play className="w-3.5 h-3.5" />
                   Audio
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="text" className="space-y-5 mt-0">
+              <TabsContent value="text" className="space-y-6 mt-0">
                 {/* Headline */}
                 <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
                   <p className="text-sm font-medium text-foreground leading-relaxed">
@@ -285,92 +328,51 @@ export function AccountPrepSection() {
                   </p>
                 </div>
 
-                {/* Top Things to Know */}
-                <div>
-                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                    Top things to know
-                  </h4>
-                  <ul className="space-y-2">
-                    {getBulletCount(snapshot.topThings, prepLength).map((item, i) => (
-                      <li key={i} className="flex gap-2 text-sm text-foreground">
-                        <span className="text-primary mt-1">•</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                {/* Structured Sections */}
+                <SnapshotSection 
+                  title="Top things to know" 
+                  items={getBulletCount(snapshot.topThings, prepLength)} 
+                  bullet="•"
+                />
 
-                {/* Talk Track */}
-                <div>
-                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                    Talk track (what to say)
-                  </h4>
-                  <ul className="space-y-2">
-                    {getBulletCount(snapshot.talkTrack, prepLength).map((item, i) => (
-                      <li key={i} className="flex gap-2 text-sm text-foreground italic">
-                        <span className="text-primary mt-1 not-italic">•</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                <SnapshotSection 
+                  title="Talk track (what to say)" 
+                  items={getBulletCount(snapshot.talkTrack, prepLength)} 
+                  bullet="•"
+                  italic
+                />
 
-                {/* Questions to Ask */}
-                <div>
-                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                    Questions to ask
-                  </h4>
-                  <ul className="space-y-2">
-                    {getBulletCount(snapshot.questions, prepLength).map((item, i) => (
-                      <li key={i} className="flex gap-2 text-sm text-foreground">
-                        <span className="text-primary mt-1">•</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                <SnapshotSection 
+                  title="Questions to ask" 
+                  items={getBulletCount(snapshot.questions, prepLength)} 
+                  bullet="•"
+                />
 
-                {/* Risks / Landmines */}
-                <div>
-                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                    Risks / landmines
-                  </h4>
-                  <ul className="space-y-2">
-                    {getBulletCount(snapshot.risks, prepLength).map((item, i) => (
-                      <li key={i} className="flex gap-2 text-sm text-foreground">
-                        <span className="text-amber-500 mt-1">⚠</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                <SnapshotSection 
+                  title="Risks / landmines" 
+                  items={getBulletCount(snapshot.risks, prepLength)} 
+                  bullet="⚠"
+                  bulletClass="text-amber-500"
+                />
 
-                {/* Next Best Action */}
-                <div>
-                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                    Next best action
-                  </h4>
-                  <ul className="space-y-2">
-                    {snapshot.nextActions.map((item, i) => (
-                      <li key={i} className="flex gap-2 text-sm text-foreground font-medium">
-                        <span className="text-primary mt-1">→</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                <SnapshotSection 
+                  title="Next best action" 
+                  items={snapshot.nextActions} 
+                  bullet="→"
+                  itemClass="font-medium"
+                />
 
                 {/* Extended Content (10 min only) */}
                 {showExtendedContent && snapshot.objections && (
                   <div>
-                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
                       Objection handling
                     </h4>
                     <div className="space-y-3">
                       {snapshot.objections.map((obj, i) => (
                         <div key={i} className="p-3 rounded-lg bg-muted/30 border border-border/50">
-                          <p className="text-sm font-medium text-foreground mb-1">{obj.objection}</p>
-                          <p className="text-sm text-muted-foreground">{obj.response}</p>
+                          <p className="text-sm font-medium text-foreground mb-1.5">{obj.objection}</p>
+                          <p className="text-sm text-muted-foreground leading-relaxed">{obj.response}</p>
                         </div>
                       ))}
                     </div>
@@ -378,39 +380,31 @@ export function AccountPrepSection() {
                 )}
 
                 {showExtendedContent && snapshot.hypothesis && (
-                  <div>
-                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                      90-day opportunity hypothesis
-                    </h4>
-                    <ul className="space-y-2">
-                      {snapshot.hypothesis.map((item, i) => (
-                        <li key={i} className="flex gap-2 text-sm text-foreground">
-                          <span className="text-primary mt-1">•</span>
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                  <SnapshotSection 
+                    title="90-day opportunity hypothesis" 
+                    items={snapshot.hypothesis} 
+                    bullet="•"
+                  />
                 )}
 
                 {/* Sources (collapsed) */}
                 <Collapsible open={sourcesOpen} onOpenChange={setSourcesOpen}>
-                  <CollapsibleTrigger className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                  <CollapsibleTrigger className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
                     <ChevronRight className={cn(
                       "w-3.5 h-3.5 transition-transform",
                       sourcesOpen && "rotate-90"
                     )} />
                     Sources used ({snapshot.sources.length})
                   </CollapsibleTrigger>
-                  <CollapsibleContent className="mt-2">
-                    <div className="space-y-1.5 pl-4">
+                  <CollapsibleContent className="mt-2.5">
+                    <div className="space-y-2 pl-5">
                       {snapshot.sources.map((src, i) => (
                         <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span className="px-1.5 py-0.5 rounded bg-muted text-[10px] font-medium">
+                          <span className="px-1.5 py-0.5 rounded bg-muted text-[10px] font-medium uppercase tracking-wide">
                             {src.type}
                           </span>
                           <span>{src.name}</span>
-                          <span className="text-muted-foreground/60">• {src.timestamp}</span>
+                          <span className="text-muted-foreground/50">• {src.timestamp}</span>
                         </div>
                       ))}
                     </div>
@@ -419,7 +413,7 @@ export function AccountPrepSection() {
               </TabsContent>
 
               <TabsContent value="audio" className="mt-0">
-                <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                <div className="flex flex-col items-center justify-center py-10 space-y-4">
                   {/* Audio Player */}
                   <div className="w-full max-w-md">
                     <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 border border-border/50">
@@ -446,7 +440,7 @@ export function AccountPrepSection() {
                         </div>
                         <div className="flex justify-between mt-1.5 text-xs text-muted-foreground">
                           <span>{isPlaying ? '1:03' : '0:00'}</span>
-                          <span>3:00</span>
+                          <span>{prepLength === '1' ? '1:00' : prepLength === '3' ? '3:00' : '10:00'}</span>
                         </div>
                       </div>
                     </div>
@@ -459,44 +453,24 @@ export function AccountPrepSection() {
             </Tabs>
 
             {/* Actions */}
-            <div className="mt-6 pt-4 border-t border-border/60">
-              <div className="flex flex-wrap gap-2 mb-4">
-                <button className={cn(
-                  "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium",
-                  "bg-muted/50 text-foreground border border-border/50",
-                  "hover:bg-muted transition-colors"
-                )}>
-                  <Bookmark className="w-4 h-4" />
-                  Save to Account
-                </button>
-                <button className={cn(
-                  "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium",
-                  "bg-muted/50 text-foreground border border-border/50",
-                  "hover:bg-muted transition-colors"
-                )}>
-                  <Share2 className="w-4 h-4" />
-                  Share
-                </button>
-                <button className={cn(
-                  "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium",
-                  "bg-muted/50 text-foreground border border-border/50",
-                  "hover:bg-muted transition-colors"
-                )}>
-                  <Sparkles className="w-4 h-4" />
-                  Send to Copilot
-                </button>
+            <div className="mt-6 pt-5 border-t border-border/60 space-y-4">
+              {/* Action Buttons */}
+              <div className="flex flex-wrap gap-2">
+                <ActionButton icon={Bookmark} label="Save to Account" />
+                <ActionButton icon={Share2} label="Share" />
+                <ActionButton icon={Sparkles} label="Send to Copilot" />
               </div>
 
-              {/* Quick Refinement Chips */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                <span className="text-xs text-muted-foreground mr-1">Refine:</span>
+              {/* Refinement Chips */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs text-muted-foreground">Refine:</span>
                 {['Make shorter', 'Add competitor angle', 'Focus on stakeholder', 'Draft follow-up email'].map((chip) => (
                   <button
                     key={chip}
                     className={cn(
                       "px-2.5 py-1 rounded-full text-xs font-medium",
-                      "bg-secondary/50 text-secondary-foreground border border-border/50",
-                      "hover:bg-secondary transition-colors"
+                      "bg-muted/50 text-muted-foreground border border-border/50",
+                      "hover:bg-muted hover:text-foreground transition-colors"
                     )}
                   >
                     {chip}
@@ -504,7 +478,7 @@ export function AccountPrepSection() {
                 ))}
               </div>
 
-              {/* Follow-up Input (collapsed) */}
+              {/* Follow-up Input */}
               <Collapsible open={followUpOpen} onOpenChange={setFollowUpOpen}>
                 <CollapsibleTrigger className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
                   <MessageSquare className="w-3.5 h-3.5" />
@@ -514,7 +488,7 @@ export function AccountPrepSection() {
                     followUpOpen && "rotate-90"
                   )} />
                 </CollapsibleTrigger>
-                <CollapsibleContent className="mt-2">
+                <CollapsibleContent className="mt-3">
                   <div className="flex gap-2">
                     <input
                       type="text"
@@ -524,8 +498,8 @@ export function AccountPrepSection() {
                       className={cn(
                         "flex-1 px-3 py-2 rounded-lg text-sm",
                         "bg-background border border-border",
-                        "placeholder:text-muted-foreground",
-                        "focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        "placeholder:text-muted-foreground/70",
+                        "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30"
                       )}
                     />
                     <button className={cn(
@@ -542,19 +516,72 @@ export function AccountPrepSection() {
           </div>
         ) : (
           /* Empty State */
-          <div className="p-8 text-center">
-            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-muted/50 flex items-center justify-center">
+          <div className="p-10 text-center">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-muted/40 flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-muted-foreground" />
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-foreground mb-1">
               {canGenerate 
-                ? "Click \"Generate Snapshot\" to create your meeting prep"
+                ? "Ready to generate your meeting prep"
                 : "Select a meeting or account to get started"
+              }
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {canGenerate 
+                ? "Click \"Generate Snapshot\" to create a personalized briefing"
+                : "Choose from your upcoming meetings or search for an account"
               }
             </p>
           </div>
         )}
       </div>
     </section>
+  );
+}
+
+// Helper component for consistent section rendering
+function SnapshotSection({ 
+  title, 
+  items, 
+  bullet = '•',
+  bulletClass = 'text-primary',
+  itemClass = '',
+  italic = false
+}: { 
+  title: string; 
+  items: string[]; 
+  bullet?: string;
+  bulletClass?: string;
+  itemClass?: string;
+  italic?: boolean;
+}) {
+  return (
+    <div>
+      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2.5">
+        {title}
+      </h4>
+      <ul className="space-y-2">
+        {items.map((item, i) => (
+          <li key={i} className={cn("flex gap-2.5 text-sm text-foreground", itemClass)}>
+            <span className={cn("mt-0.5 flex-shrink-0", bulletClass, !italic && "not-italic")}>{bullet}</span>
+            <span className={italic ? "italic" : ""}>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+// Helper component for action buttons
+function ActionButton({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
+  return (
+    <button className={cn(
+      "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium",
+      "bg-muted/40 text-foreground border border-border/50",
+      "hover:bg-muted transition-colors"
+    )}>
+      <Icon className="w-4 h-4" />
+      {label}
+    </button>
   );
 }
