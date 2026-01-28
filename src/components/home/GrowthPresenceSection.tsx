@@ -1,6 +1,9 @@
 import * as React from 'react';
-import { TrendingUp, Calendar, Globe, ChevronRight, Clock } from 'lucide-react';
+import { TrendingUp, Calendar, ChevronRight, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PresenceEmptyState, PresenceDashboard } from '@/components/presence';
+import { usePresence } from '@/hooks/usePresence';
+import { PresenceData } from '@/lib/presenceConfig';
 
 interface CompactCardProps {
   icon: React.ReactNode;
@@ -60,14 +63,31 @@ function CompactCard({ icon, title, description, duration, isNew, onClick }: Com
 interface GrowthPresenceSectionProps {
   onSkillClick?: () => void;
   onEventsClick?: () => void;
-  onPresenceClick?: () => void;
+  onPresenceSetup?: () => void;
+  onPresenceEdit?: () => void;
 }
 
 export function GrowthPresenceSection({ 
   onSkillClick, 
   onEventsClick, 
-  onPresenceClick 
+  onPresenceSetup,
+  onPresenceEdit,
 }: GrowthPresenceSectionProps) {
+  const { presence, isConfigured, isLoaded, removeSource } = usePresence();
+
+  // Local state to handle setup modal trigger
+  const handleSetupClick = () => {
+    onPresenceSetup?.();
+  };
+
+  const handleSkipClick = () => {
+    // Just dismiss - don't force setup
+  };
+
+  const handleEditClick = () => {
+    onPresenceEdit?.();
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Growth Section */}
@@ -101,15 +121,27 @@ export function GrowthPresenceSection({
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             Presence
           </h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Track and improve your visibility signals over time. Optional.
+          </p>
         </div>
-        <div className="space-y-2">
-          <CompactCard
-            icon={<Globe className="w-4 h-4 text-muted-foreground" />}
-            title="Market Presence"
-            description="Your visibility score and improvement tips"
-            onClick={onPresenceClick}
-          />
-        </div>
+        
+        {isLoaded && (
+          <>
+            {isConfigured && presence ? (
+              <PresenceDashboard
+                presence={presence}
+                onEdit={handleEditClick}
+                onRemoveSource={removeSource}
+              />
+            ) : (
+              <PresenceEmptyState
+                onSetup={handleSetupClick}
+                onSkip={handleSkipClick}
+              />
+            )}
+          </>
+        )}
       </section>
     </div>
   );
