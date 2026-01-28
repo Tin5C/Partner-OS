@@ -118,29 +118,71 @@ export function GrowthPresenceSection({
         </div>
       </section>
 
-      {/* Presence Section */}
+      {/* Reputation & Visibility Section */}
       <section className="space-y-3">
         <div>
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            Presence
+            Reputation & Visibility
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Track and improve your visibility signals over time. Optional.
+            How buyers are likely to perceive you — and how to improve it.
           </p>
         </div>
         
         <div className="space-y-2">
-          {/* Personal Brand Scorecard Card */}
-          <CompactCard
-            icon={<User className="w-4 h-4 text-muted-foreground" />}
-            title="Personal Brand Scorecard"
-            description="Baseline your presence: clarity, credibility, consistency, and findability."
-            duration="~2 min"
-            badge="Mock data"
+          {/* Card 1: Buyer Perception Snapshot (Insight) */}
+          <button
             onClick={onScorecardClick}
-          />
+            className={cn(
+              "flex items-start gap-3 p-4 rounded-xl text-left w-full",
+              "bg-card border border-border",
+              "shadow-[0_1px_2px_rgba(0,0,0,0.03)]",
+              "hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)]",
+              "hover:border-border/80",
+              "transition-all duration-200"
+            )}
+          >
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-muted/50">
+              <User className="w-4 h-4 text-muted-foreground" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <h4 className="text-sm font-medium text-foreground">Buyer Perception Snapshot</h4>
+              </div>
+              
+              {/* Tier, Score, Confidence row */}
+              <div className="flex items-center gap-3 mt-2">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                  Tier 1
+                </span>
+                <span className="text-sm font-semibold text-foreground">62/100</span>
+                <span className="text-[10px] text-muted-foreground">
+                  {connectedCount > 0 ? 'With added sources' : 'Public signals only'}
+                </span>
+              </div>
+              
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Based on public signals and available sources.
+              </p>
+              
+              {/* Actions row */}
+              <div className="flex items-center gap-3 mt-2">
+                <span className="text-xs font-medium text-primary">Review snapshot</span>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSourcesClick?.();
+                  }}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Improve accuracy
+                </button>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1" />
+          </button>
 
-          {/* Sources Card */}
+          {/* Card 2: Improve Signal Quality (Action) */}
           <button
             onClick={onSourcesClick}
             className={cn(
@@ -157,18 +199,17 @@ export function GrowthPresenceSection({
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <h4 className="text-sm font-medium text-foreground">Sources</h4>
+                <h4 className="text-sm font-medium text-foreground">Improve Signal Quality</h4>
                 {connectedCount > 0 && (
                   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
                     {connectedCount} connected
                   </span>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                {connectedCount > 0 
-                  ? 'Add more sources to improve scan accuracy.'
-                  : 'Add sources to personalize the scan.'}
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Add sources to increase accuracy and strengthen credibility.
               </p>
+              
               {/* Source icons row */}
               <div className="flex items-center gap-2 mt-2">
                 {sourceIcons.map((s, idx) => (
@@ -178,13 +219,17 @@ export function GrowthPresenceSection({
                       "transition-colors",
                       getSourceConnected(s.type) 
                         ? "text-primary" 
-                        : "text-muted-foreground/60 hover:text-muted-foreground"
+                        : "text-muted-foreground/60"
                     )}
                   >
                     {s.icon}
                   </span>
                 ))}
               </div>
+              
+              <span className="inline-block text-xs font-medium text-primary mt-2">
+                Add sources
+              </span>
             </div>
             <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1" />
           </button>
