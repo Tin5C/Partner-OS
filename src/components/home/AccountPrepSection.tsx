@@ -12,7 +12,7 @@ import {
   ChevronRight,
   ChevronDown,
   Plus,
-  Link2,
+  Lock,
   X,
   User,
   Mail,
@@ -110,11 +110,7 @@ const mockSnapshot: PrepSnapshot = {
   ],
 };
 
-const mockMeetings = [
-  { id: '1', title: 'Sulzer - Discovery Call', time: 'Tomorrow, 2:00 PM', account: 'Sulzer AG' },
-  { id: '2', title: 'First National - QBR', time: 'Thu, 10:00 AM', account: 'First National Bank' },
-  { id: '3', title: 'BASF - Exec Review', time: 'Fri, 3:30 PM', account: 'BASF SE' },
-];
+// Calendar meetings will be integrated post-MVP
 
 const mockAccounts = [
   'Sulzer AG',
@@ -152,7 +148,6 @@ const refinementChips = [
 ];
 
 export function AccountPrepSection() {
-  const [selectedMeeting, setSelectedMeeting] = useState<string | null>('1');
   const [selectedAccount, setSelectedAccount] = useState<string | null>('Sulzer AG');
   const [meetingType, setMeetingType] = useState<MeetingType>('discovery');
   const [prepLength, setPrepLength] = useState<PrepLength>('3');
@@ -161,6 +156,7 @@ export function AccountPrepSection() {
   const [activeTab, setActiveTab] = useState<'text' | 'audio'>('text');
   const [isPlaying, setIsPlaying] = useState(false);
   const [sourcesOpen, setSourcesOpen] = useState(false);
+  const [showAccountError, setShowAccountError] = useState(false);
   
   // Context state
   const [contextOpen, setContextOpen] = useState(false);
@@ -172,6 +168,11 @@ export function AccountPrepSection() {
   const [followUpText, setFollowUpText] = useState('');
 
   const handleGenerate = () => {
+    if (!selectedAccount) {
+      setShowAccountError(true);
+      return;
+    }
+    setShowAccountError(false);
     setIsGenerating(true);
     setTimeout(() => {
       setSnapshot(mockSnapshot);
@@ -212,7 +213,7 @@ export function AccountPrepSection() {
     setStakeholders(prev => prev.filter(s => s.id !== id));
   };
 
-  const canGenerate = selectedMeeting || selectedAccount;
+  const canGenerate = !!selectedAccount;
   const hasContext = contextNotes || selectedGoals.length > 0 || stakeholders.length > 0;
   
   const getBulletCount = (arr: string[], length: PrepLength): string[] => {
@@ -221,7 +222,12 @@ export function AccountPrepSection() {
   };
 
   const showExtendedContent = prepLength === '10';
-  const hasCalendar = mockMeetings.length > 0;
+  
+  // Clear error when account is selected
+  const handleAccountChange = (value: string) => {
+    setSelectedAccount(value);
+    setShowAccountError(false);
+  };
 
   return (
     <section className="space-y-4">
@@ -243,44 +249,65 @@ export function AccountPrepSection() {
           <div className="flex flex-col gap-4">
             {/* Row 1: Selectors */}
             <div className="flex flex-col lg:flex-row gap-3">
-              {/* Meeting Selector */}
-              <div className="flex-1 lg:flex-initial lg:w-[240px]">
-                <Select value={selectedMeeting || ''} onValueChange={setSelectedMeeting}>
-                  <SelectTrigger className="w-full h-10 bg-background border-border">
-                    <Calendar className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
-                    <SelectValue placeholder="Select meeting..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border border-border z-50">
-                    {mockMeetings.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        <div className="flex flex-col items-start">
-                          <span className="font-medium text-sm">{m.title}</span>
-                          <span className="text-xs text-muted-foreground">{m.time}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {!hasCalendar && (
-                  <p className="mt-1.5 text-xs text-muted-foreground flex items-center gap-1">
-                    <Link2 className="w-3 h-3" />
-                    Connect calendar to auto-select meetings
+              {/* Meeting Selector (Disabled - Coming Soon) */}
+              <div className="flex-1 lg:flex-initial lg:w-[240px] group relative">
+                <div 
+                  className={cn(
+                    "w-full h-10 px-3 rounded-lg border border-border bg-muted/30",
+                    "flex items-center gap-2 cursor-not-allowed opacity-60"
+                  )}
+                  title="Calendar integration isn't available in MVP. Select an account to generate prep."
+                >
+                  <Calendar className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                  <span className="text-sm text-muted-foreground flex-1 truncate">Meetings (Calendar)</span>
+                  <Lock className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                  <span className="text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                    Coming soon
+                  </span>
+                </div>
+                {/* Tooltip on hover */}
+                <div className={cn(
+                  "absolute left-0 top-full mt-2 z-50 px-3 py-2 rounded-lg",
+                  "bg-popover border border-border shadow-lg",
+                  "text-xs text-muted-foreground max-w-[260px]",
+                  "opacity-0 invisible group-hover:opacity-100 group-hover:visible",
+                  "transition-all duration-200"
+                )}>
+                  Calendar integration isn't available in MVP. Select an account to generate prep.
+                </div>
+              </div>
+
+              {/* Account Selector (Required) */}
+              <div className="flex-1 lg:flex-initial">
+                <div className="flex items-center gap-2">
+                  <Select value={selectedAccount || ''} onValueChange={handleAccountChange}>
+                    <SelectTrigger className={cn(
+                      "w-full lg:w-[180px] h-10 bg-background border-border",
+                      showAccountError && "border-destructive ring-1 ring-destructive/30"
+                    )}>
+                      <Building2 className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
+                      <SelectValue placeholder="Select account..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border border-border z-50">
+                      {mockAccounts.map((a) => (
+                        <SelectItem key={a} value={a}>{a}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <button 
+                    className="flex items-center gap-1 px-2 py-1.5 text-xs text-primary hover:text-primary/80 transition-colors whitespace-nowrap"
+                    onClick={() => {/* TODO: Add account modal */}}
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Add
+                  </button>
+                </div>
+                {showAccountError && (
+                  <p className="mt-1.5 text-xs text-destructive">
+                    Select an account to generate prep.
                   </p>
                 )}
               </div>
-
-              {/* Account Selector */}
-              <Select value={selectedAccount || ''} onValueChange={setSelectedAccount}>
-                <SelectTrigger className="w-full lg:w-[180px] h-10 bg-background border-border">
-                  <Building2 className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
-                  <SelectValue placeholder="Select account..." />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border border-border z-50">
-                  {mockAccounts.map((a) => (
-                    <SelectItem key={a} value={a}>{a}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
 
               {/* Meeting Type */}
               <Select value={meetingType} onValueChange={(v) => setMeetingType(v as MeetingType)}>
