@@ -2,35 +2,38 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Linkedin, Globe, FileText, Mic, Users, Upload, Link2, X, Check } from 'lucide-react';
+import { Linkedin, Globe, FileText, Mic, Users, Upload, Link2, X, Check, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PersonSource } from '@/lib/presenceScorecardData';
 
 interface SourcesModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  sources: PersonSource[];
+  onConnect: (sourceId: string, value: string) => void;
+  onDisconnect: (sourceId: string) => void;
+  showRescanHint?: boolean;
+  onRescan?: () => void;
 }
 
-interface Source {
-  id: string;
-  type: 'linkedin' | 'website' | 'newsletter' | 'podcast' | 'speaker' | 'pdf';
-  label: string;
-  icon: React.ReactNode;
-  value?: string;
-  connected: boolean;
-}
+const SOURCE_ICONS: Record<string, React.ReactNode> = {
+  linkedin: <Linkedin className="w-4 h-4" />,
+  website: <Globe className="w-4 h-4" />,
+  newsletter: <FileText className="w-4 h-4" />,
+  podcast: <Mic className="w-4 h-4" />,
+  speaker: <Users className="w-4 h-4" />,
+  pdf: <Upload className="w-4 h-4" />,
+};
 
-const DEFAULT_SOURCES: Source[] = [
-  { id: 'linkedin', type: 'linkedin', label: 'LinkedIn', icon: <Linkedin className="w-4 h-4" />, connected: false },
-  { id: 'website', type: 'website', label: 'Personal website', icon: <Globe className="w-4 h-4" />, connected: false },
-  { id: 'newsletter', type: 'newsletter', label: 'Newsletter', icon: <FileText className="w-4 h-4" />, connected: false },
-  { id: 'podcast', type: 'podcast', label: 'Podcast', icon: <Mic className="w-4 h-4" />, connected: false },
-  { id: 'speaker', type: 'speaker', label: 'Speaker page', icon: <Users className="w-4 h-4" />, connected: false },
-  { id: 'pdf', type: 'pdf', label: 'Upload PDF', icon: <Upload className="w-4 h-4" />, connected: false },
-];
-
-export function SourcesModal({ open, onOpenChange }: SourcesModalProps) {
-  const [sources, setSources] = useState<Source[]>(DEFAULT_SOURCES);
+export function SourcesModal({ 
+  open, 
+  onOpenChange, 
+  sources, 
+  onConnect, 
+  onDisconnect,
+  showRescanHint = false,
+  onRescan,
+}: SourcesModalProps) {
   const [editingSource, setEditingSource] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState('');
 
@@ -41,21 +44,13 @@ export function SourcesModal({ open, onOpenChange }: SourcesModalProps) {
   };
 
   const handleSaveSource = (sourceId: string) => {
-    setSources(prev => prev.map(s => 
-      s.id === sourceId 
-        ? { ...s, value: inputValue, connected: !!inputValue }
-        : s
-    ));
+    onConnect(sourceId, inputValue);
     setEditingSource(null);
     setInputValue('');
   };
 
   const handleRemoveSource = (sourceId: string) => {
-    setSources(prev => prev.map(s => 
-      s.id === sourceId 
-        ? { ...s, value: undefined, connected: false }
-        : s
-    ));
+    onDisconnect(sourceId);
   };
 
   const connectedCount = sources.filter(s => s.connected).length;
@@ -66,11 +61,26 @@ export function SourcesModal({ open, onOpenChange }: SourcesModalProps) {
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">Sources</DialogTitle>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Add sources to personalize the scan (UI only in MVP).
+            Add sources to personalize the scan and improve accuracy.
           </p>
         </DialogHeader>
 
-        <div className="space-y-3 py-4">
+        {/* Rescan hint */}
+        {showRescanHint && connectedCount > 0 && (
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+            <RefreshCw className="w-4 h-4 text-primary flex-shrink-0" />
+            <p className="text-xs text-foreground flex-1">
+              Sources updated! Re-run the scan to improve confidence.
+            </p>
+            {onRescan && (
+              <Button size="sm" className="h-7 text-xs" onClick={onRescan}>
+                Re-scan
+              </Button>
+            )}
+          </div>
+        )}
+
+        <div className="space-y-3 py-2">
           {sources.map((source) => (
             <div 
               key={source.id}
@@ -84,12 +94,12 @@ export function SourcesModal({ open, onOpenChange }: SourcesModalProps) {
               {editingSource === source.id ? (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">{source.icon}</span>
+                    <span className="text-muted-foreground">{SOURCE_ICONS[source.type]}</span>
                     <span className="text-sm font-medium">{source.label}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     {source.type === 'pdf' ? (
-                      <div className="flex-1 flex items-center justify-center py-3 border border-dashed border-border rounded-lg text-xs text-muted-foreground">
+                      <div className="flex-1 flex items-center justify-center py-3 border border-dashed border-border rounded-lg text-xs text-muted-foreground cursor-pointer hover:bg-muted/30 transition-colors">
                         <Upload className="w-3.5 h-3.5 mr-1.5" />
                         Click to upload (UI only)
                       </div>
@@ -125,7 +135,7 @@ export function SourcesModal({ open, onOpenChange }: SourcesModalProps) {
                       "transition-colors",
                       source.connected ? "text-primary" : "text-muted-foreground"
                     )}>
-                      {source.icon}
+                      {SOURCE_ICONS[source.type]}
                     </span>
                     <div>
                       <span className="text-sm font-medium">{source.label}</span>
@@ -174,7 +184,7 @@ export function SourcesModal({ open, onOpenChange }: SourcesModalProps) {
 
         <div className="flex items-center justify-between pt-2 border-t border-border">
           <p className="text-[10px] text-muted-foreground">
-            {connectedCount} source{connectedCount !== 1 ? 's' : ''} connected (mock)
+            {connectedCount} source{connectedCount !== 1 ? 's' : ''} connected
           </p>
           <Button size="sm" onClick={() => onOpenChange(false)}>
             Done
