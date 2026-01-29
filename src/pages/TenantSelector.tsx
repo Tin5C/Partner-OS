@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Headphones, Building2, User, ArrowRight } from 'lucide-react';
+import { Headphones, Building2, User, ArrowRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { getPartnerList, getInternalUserList } from '@/lib/tenantConfig';
+import { cn } from '@/lib/utils';
 
 export default function TenantSelector() {
   const navigate = useNavigate();
@@ -45,6 +46,38 @@ export default function TenantSelector() {
             </div>
             <h1 className="text-2xl font-bold">Dialogue</h1>
             <p className="text-muted-foreground mt-1">Seller Enablement Audio Hub</p>
+          </div>
+
+          {/* Quick Access - New Space Routes */}
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => navigate('/internal')}
+              className={cn(
+                "flex-1 h-12 flex items-center justify-center gap-2",
+                "border-primary/20 hover:border-primary/40 hover:bg-primary/5"
+              )}
+            >
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span>Internal Space</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigate('/partner')}
+              className={cn(
+                "flex-1 h-12 flex items-center justify-center gap-2",
+                "border-emerald-500/20 hover:border-emerald-500/40 hover:bg-emerald-500/5"
+              )}
+            >
+              <Building2 className="w-4 h-4 text-emerald-600" />
+              <span>Partner Space</span>
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-xs text-muted-foreground">or select tenant</span>
+            <div className="flex-1 h-px bg-border" />
           </div>
 
           {/* Selector Card */}

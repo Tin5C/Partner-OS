@@ -13,6 +13,8 @@ import { TenantAccessGate } from "@/components/TenantAccessGate";
 import TenantSelector from "./pages/TenantSelector";
 import TenantHome from "./pages/TenantHome";
 import ExperiencePage from "./pages/ExperiencePage";
+import InternalPage from "./pages/InternalPage";
+import PartnerPage from "./pages/PartnerPage";
 import AccessGate from "./pages/AccessGate";
 import Home from "./pages/Home";
 import PlaylistsIndex from "./pages/PlaylistsIndex";
@@ -71,7 +73,11 @@ function AppRoutes() {
       {/* Root = Tenant selector */}
       <Route path="/" element={<TenantSelector />} />
       
-      {/* NEW: Unified audience-based routes (seller/partner) */}
+      {/* NEW: Space-based routes (Internal/Partner) with shared components */}
+      <Route path="/internal" element={<InternalPage />} />
+      <Route path="/partner" element={<PartnerPage />} />
+      
+      {/* LEGACY: Unified audience-based routes (seller/partner) */}
       {/* These share the same page template, differing only by config */}
       <Route
         path="/seller/:tenantSlug"

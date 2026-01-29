@@ -1,0 +1,108 @@
+// Internal Content Feed - Mock data for internal space
+// Uses unified content model types
+
+import { StoryItem, PackItem } from '@/lib/content/types';
+
+export const internalStories: StoryItem[] = [
+  // Stories are loaded dynamically from existing sources
+  // This file would contain internal-specific stories in production
+];
+
+export const internalPacks: PackItem[] = [
+  {
+    id: 'top-focus',
+    type: 'briefing',
+    title: 'Top Focus',
+    subtitle: 'Your priority accounts and key updates this week',
+    durationMin: 6,
+    durationLabel: '6 min',
+    publishedAt: new Date().toISOString(),
+    mediaType: 'audio',
+    tags: ['Account Update'],
+    sourceType: 'internal',
+    spaceVisibility: 'internal',
+    isNew: true,
+    icon: 'building-2',
+    category: 'core',
+    primaryCTA: { label: 'Listen Briefing', action: 'listen' },
+    secondaryCTA: { label: 'Exec Summary', action: 'read' },
+  },
+  {
+    id: 'competitive-radar',
+    type: 'briefing',
+    title: 'Competitive Radar',
+    subtitle: 'What competitors are doing and how to respond',
+    durationMin: 5,
+    durationLabel: '5 min',
+    publishedAt: new Date().toISOString(),
+    mediaType: 'audio',
+    tags: ['Competitive'],
+    sourceType: 'internal',
+    spaceVisibility: 'internal',
+    isNew: true,
+    icon: 'radar',
+    category: 'core',
+    primaryCTA: { label: 'Listen Briefing', action: 'listen' },
+    secondaryCTA: { label: 'Exec Summary', action: 'read' },
+  },
+  {
+    id: 'industry-signals',
+    type: 'briefing',
+    title: 'Industry Signals',
+    subtitle: 'Market trends and buyer behavior shifts',
+    durationMin: 4,
+    durationLabel: '4 min',
+    publishedAt: new Date().toISOString(),
+    mediaType: 'audio',
+    tags: ['Industry News'],
+    sourceType: 'internal',
+    spaceVisibility: 'internal',
+    isNew: false,
+    icon: 'newspaper',
+    category: 'core',
+    primaryCTA: { label: 'Listen Briefing', action: 'listen' },
+    secondaryCTA: { label: 'Exec Summary', action: 'read' },
+  },
+  {
+    id: 'objection-handling',
+    type: 'briefing',
+    title: 'Objection Handling',
+    subtitle: 'Common pushbacks and proven responses',
+    durationMin: 5,
+    durationLabel: '5 min',
+    publishedAt: new Date().toISOString(),
+    mediaType: 'audio',
+    tags: ['Objection Handling'],
+    sourceType: 'internal',
+    spaceVisibility: 'both',
+    isNew: false,
+    icon: 'message-circle',
+    category: 'core',
+    primaryCTA: { label: 'Listen Briefing', action: 'listen' },
+    secondaryCTA: { label: 'Exec Summary', action: 'read' },
+  },
+  {
+    id: 'skill-of-week',
+    type: 'skill',
+    title: 'Skill of the Week',
+    subtitle: 'Active listening techniques for discovery calls',
+    durationMin: 10,
+    durationLabel: '10 min',
+    publishedAt: new Date().toISOString(),
+    mediaType: 'text',
+    tags: ['Learning'],
+    sourceType: 'internal',
+    spaceVisibility: 'both',
+    isNew: true,
+    icon: 'book-open',
+    category: 'improve',
+    primaryCTA: { label: 'Start Learning', action: 'open' },
+    secondaryCTA: { label: 'Exec Summary', action: 'read' },
+  },
+];
+
+export const internalContentFeed = {
+  stories: internalStories,
+  packs: internalPacks,
+  events: [],
+};
