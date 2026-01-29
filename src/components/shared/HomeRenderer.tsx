@@ -231,7 +231,6 @@ export function HomeRenderer() {
             onSkillClick={() => setSkillPanelOpen(true)}
             onEventsClick={() => setEventsPanelOpen(true)}
             onScorecardClick={() => setScorecardOpen(true)}
-            onSourcesClick={() => setSourcesOpen(true)}
           />
         ) : null;
 
