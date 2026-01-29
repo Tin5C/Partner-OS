@@ -12,4 +12,5 @@ export { PackGrid } from './PackGrid';
 export type { PackGridItem } from './PackGrid';
 export { EnablementProgress } from './EnablementProgress';
 export { SpaceIndicator } from './SpaceIndicator';
+export { SpaceHeader } from './SpaceHeader';
 export { HomeRenderer } from './HomeRenderer';
