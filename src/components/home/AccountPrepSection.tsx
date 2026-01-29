@@ -1,3 +1,40 @@
+/**
+ * ======================================================================
+ * ACCOUNT PREP SECTION - SPEC & REGRESSION GUARD
+ * ======================================================================
+ * 
+ * DO NOT REPLACE THIS COMPONENT with AccountPrepCard or any simplified version.
+ * This is the SINGLE SOURCE OF TRUTH for Account Prep across all spaces.
+ * 
+ * EXPECTED UI:
+ * - Section header: "Account Prep" + subtitle "Walk into the meeting sharp..."
+ * - Controls bar with:
+ *   - Meeting selector (disabled in MVP with "Coming soon" label)
+ *   - Account selector (REQUIRED) with Add button
+ *   - Meeting type dropdown (Intro/Discovery/QBR/Renewal/Exec/Partner)
+ *   - Length toggle (1/3/10 min, default 3)
+ *   - Generate Snapshot button
+ * - Collapsible context section (Notes, Meeting goals, Stakeholders)
+ * - Trust line showing sources
+ * 
+ * EXPECTED OUTPUT (after generation):
+ * - Tabs: Text (default) | Audio
+ * - Text sections: Headline, Top things to know, Talk track, Questions,
+ *   Risks/landmines, Next actions
+ * - Extended (10 min): Objections + 90-day hypothesis
+ * - Action buttons: Save, Share, Send to Copilot
+ * - Refinement chips for quick adjustments
+ * - Follow-up input (collapsed by default)
+ * 
+ * INTEGRATION:
+ * - Used by HomeRenderer via config type 'accountPrep'
+ * - Self-contained section (includes its own header)
+ * - Mock data for MVP (swap-ready for calendar/LLM integration)
+ * 
+ * LAST UPDATED: 2026-01-29
+ * ======================================================================
+ */
+
 import * as React from 'react';
 import { useState } from 'react';
 import { 
