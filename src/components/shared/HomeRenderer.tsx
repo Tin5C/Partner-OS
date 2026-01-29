@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useSpace } from '@/contexts/SpaceContext';
-import { TenantHeader } from '@/components/TenantHeader';
+import { SpaceHeader } from '@/components/shared/SpaceHeader';
 import { BottomNav } from '@/components/BottomNav';
 import { AccountPrepCard } from '@/components/AccountPrepCard';
 import { 
@@ -266,7 +266,7 @@ export function HomeRenderer() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <TenantHeader showGreeting showSearch />
+      <SpaceHeader showGreeting showSearch />
 
       {/* Main Content - Centered container */}
       <main className="max-w-[1140px] mx-auto px-5 lg:px-8 space-y-10">
