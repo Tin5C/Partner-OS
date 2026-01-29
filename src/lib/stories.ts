@@ -76,7 +76,7 @@ export const stories: StoryItem[] = [
     videoUrl: "/assets/audio/winwire-ubs-ai-narration.mp4",
     audioUrl: "/assets/audio/ubs-success-story.mp3",
     relatedEpisodeId: "ep-success-stories",
-    publishedAt: "2026-01-28",
+    publishedAt: "2026-01-29",
     sourceName: "Customer Success"
   },
 
