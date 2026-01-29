@@ -5,8 +5,8 @@ import { useState } from 'react';
 import { useSpace } from '@/contexts/SpaceContext';
 import { SpaceHeader } from '@/components/shared/SpaceHeader';
 import { BottomNav } from '@/components/BottomNav';
-import { AccountPrepCard } from '@/components/AccountPrepCard';
-import { 
+import { AccountPrepSection } from '@/components/home/AccountPrepSection';
+import {
   StoriesRow, 
   PackGrid, 
   SectionHeader, 
@@ -206,16 +206,10 @@ export function HomeRenderer() {
         );
 
       case 'accountPrep':
+        // Uses the full AccountPrepSection centerpiece (not AccountPrepCard)
+        // AccountPrepSection includes its own header, controls, and snapshot output
         return spaceConfig.features.accountPrep ? (
-          <section key={section.id} className="space-y-4">
-            <SectionHeader 
-              title={section.title} 
-              subtitle={section.subtitle} 
-            />
-            <div className="max-w-xl">
-              <AccountPrepCard />
-            </div>
-          </section>
+          <AccountPrepSection key={section.id} />
         ) : null;
 
       case 'packGrid':
