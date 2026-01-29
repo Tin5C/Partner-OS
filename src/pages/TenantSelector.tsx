@@ -20,29 +20,39 @@ export default function TenantSelector() {
           </div>
 
           {/* Space Selection */}
-          <div className="space-y-3">
-            <Button
-              variant="outline"
-              onClick={() => navigate('/internal')}
-              className={cn(
-                "w-full h-14 flex items-center justify-center gap-3",
-                "border-primary/20 hover:border-primary/40 hover:bg-primary/5"
-              )}
-            >
-              <Sparkles className="w-5 h-5 text-primary" />
-              <span className="font-medium">Internal Space</span>
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => navigate('/partner')}
-              className={cn(
-                "w-full h-14 flex items-center justify-center gap-3",
-                "border-emerald-500/20 hover:border-emerald-500/40 hover:bg-emerald-500/5"
-              )}
-            >
-              <Building2 className="w-5 h-5 text-emerald-600" />
-              <span className="font-medium">Partner Space</span>
-            </Button>
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <Button
+                variant="outline"
+                onClick={() => navigate('/internal')}
+                className={cn(
+                  "w-full h-14 flex items-center justify-center gap-3",
+                  "border-primary/20 hover:border-primary/40 hover:bg-primary/5"
+                )}
+              >
+                <Sparkles className="w-5 h-5 text-primary" />
+                <span className="font-medium">Internal Space</span>
+              </Button>
+              <p className="text-xs text-center text-muted-foreground">
+                Password: <code className="bg-muted px-1.5 py-0.5 rounded text-foreground">internal2025</code>
+              </p>
+            </div>
+            <div className="space-y-1">
+              <Button
+                variant="outline"
+                onClick={() => navigate('/partner')}
+                className={cn(
+                  "w-full h-14 flex items-center justify-center gap-3",
+                  "border-emerald-500/20 hover:border-emerald-500/40 hover:bg-emerald-500/5"
+                )}
+              >
+                <Building2 className="w-5 h-5 text-emerald-600" />
+                <span className="font-medium">Partner Space</span>
+              </Button>
+              <p className="text-xs text-center text-muted-foreground">
+                Password: <code className="bg-muted px-1.5 py-0.5 rounded text-foreground">partner2025</code>
+              </p>
+            </div>
           </div>
 
           {/* Help text */}
