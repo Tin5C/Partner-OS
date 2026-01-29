@@ -16,7 +16,7 @@ import startupVisionQaVideo from '@/assets/stories/startup-vision-qa.mp4';
 import startupEnergyVideo from '@/assets/stories/startup-energy.mp4';
 import startupMaintenanceVideo from '@/assets/stories/startup-maintenance.mp4';
 
-export type StoryType = "competitor" | "startup" | "customer" | "industry" | "expert" | "account" | "lead" | "event";
+export type StoryType = "competitor" | "startup" | "customer" | "industry" | "expert" | "account" | "lead" | "event" | "success";
 export type ListenedState = "unseen" | "seen" | "listened";
 export type MediaType = "image" | "video" | "audio";
 
@@ -53,8 +53,33 @@ export interface StoryItem {
   sourceUrl?: string;
 }
 
-// Seed stories - Competitors first per spec
+// Seed stories - Success stories first, then Competitors per spec
 export const stories: StoryItem[] = [
+  // SUCCESS STORIES (highest priority)
+  {
+    id: "story-ubs-success",
+    type: "success",
+    badge: "Success Story",
+    headline: "UBS Transforms Client Experience",
+    one_liner: "Global wealth management leader accelerates digital transformation with AI-powered insights.",
+    why_it_matters: "Proof that enterprise-scale AI deployments deliver measurable client outcomes.",
+    talk_track: "UBS achieved significant improvements in client experience through AI. What's your current approach to AI-driven client insights?",
+    cta_label: "Watch Story",
+    duration_sec: 120,
+    media_type: "video",
+    topic_tags: ["Financial Services", "AI", "Success Story"],
+    companyName: "UBS",
+    logoUrl: "/assets/logos/ubs.png",
+    audio_title: "UBS Success Story",
+    audio_script: "UBS, a global leader in wealth management, transformed their client experience through AI-powered insights. By deploying intelligent automation across their advisory workflows, they achieved faster response times and more personalized recommendations. This success demonstrates that enterprise-scale AI deployments can deliver measurable outcomes. The key was starting with high-impact use cases and scaling based on proven results.",
+    coverImageUrl: "/assets/logos/ubs.png",
+    videoUrl: "/assets/audio/winwire-ubs-ai-narration.mp4",
+    audioUrl: "/assets/audio/ubs-success-story.mp3",
+    relatedEpisodeId: "ep-success-stories",
+    publishedAt: "2026-01-28",
+    sourceName: "Customer Success"
+  },
+
   // COMPETITOR STORIES (first)
   {
     id: "story-001",
@@ -290,6 +315,7 @@ export const storyTypeColors: Record<StoryType, string> = {
   account: "bg-violet-50/90 text-violet-700 border-violet-200 dark:bg-violet-950/60 dark:text-violet-300 dark:border-violet-700",
   lead: "bg-amber-50/90 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-700",
   event: "bg-indigo-50/90 text-indigo-700 border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-700",
+  success: "bg-emerald-50/90 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-700",
 };
 
 export const storyTypeLabels: Record<StoryType, string> = {
@@ -301,6 +327,7 @@ export const storyTypeLabels: Record<StoryType, string> = {
   account: "Account",
   lead: "Lead",
   event: "Event",
+  success: "Success Story",
 };
 
 // Monogram gradient backgrounds by story type - refined enterprise gradients
@@ -313,4 +340,5 @@ export const storyTypeGradients: Record<StoryType, string> = {
   account: "from-violet-500 to-violet-700",
   lead: "from-amber-500 to-amber-700",
   event: "from-indigo-500 to-indigo-700",
+  success: "from-emerald-500 to-emerald-700",
 };
