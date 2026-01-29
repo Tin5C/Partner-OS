@@ -134,34 +134,78 @@ export function GrowthPresenceSection({
           <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             Reputation & Visibility
           </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            How buyers are likely to perceive you.
-          </p>
         </div>
-        <div className="space-y-2">
-          {/* Buyer Perception Snapshot Card */}
-          <CompactCard
-            icon={<Eye className="w-4 h-4 text-muted-foreground" />}
-            title="Buyer Perception Snapshot"
-            description={connectedCount > 0 ? 'With added sources' : 'Public signals only'}
-            badge="Tier 1"
-            meta={
+        
+        {/* Single Unified Card */}
+        <button
+          onClick={onScorecardClick}
+          className={cn(
+            "flex flex-col p-4 rounded-xl text-left w-full",
+            "bg-card border border-border",
+            "shadow-[0_1px_2px_rgba(0,0,0,0.03)]",
+            "hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)]",
+            "hover:border-border/80",
+            "transition-all duration-200"
+          )}
+        >
+          {/* Header Row */}
+          <div className="flex items-start gap-3">
+            <div className={cn(
+              "w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0",
+              "bg-muted/50"
+            )}>
+              <Eye className="w-4 h-4 text-muted-foreground" />
+            </div>
+            <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
+                <h4 className="text-sm font-medium text-foreground">Buyer Perception Snapshot</h4>
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">
+                  Tier 1
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                How buyers are likely to perceive you.
+              </p>
+              {/* Score + Progress */}
+              <div className="flex items-center gap-2 mt-2">
                 <Progress value={mockScore} className="h-1 flex-1 max-w-[100px]" />
                 <span className="text-[10px] font-medium text-foreground">{mockScore}/100</span>
               </div>
-            }
-            onClick={onScorecardClick}
-          />
-          
-          {/* Improve Signal Quality Card */}
-          <CompactCard
-            icon={<Sparkles className="w-4 h-4 text-muted-foreground" />}
-            title="Improve Signal Quality"
-            description="Add sources to increase accuracy"
-            badge={connectedCount > 0 ? `${connectedCount} connected` : undefined}
-            meta={
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1" />
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-border/60 my-3" />
+
+          {/* Improve Signal Quality Section */}
+          <div 
+            className="flex items-start gap-3"
+            onClick={(e) => {
+              e.stopPropagation();
+              onSourcesClick?.();
+            }}
+          >
+            <div className={cn(
+              "w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0",
+              "bg-muted/50"
+            )}>
+              <Sparkles className="w-4 h-4 text-muted-foreground" />
+            </div>
+            <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
+                <h4 className="text-sm font-medium text-foreground">Improve Signal Quality</h4>
+                {connectedCount > 0 && (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">
+                    {connectedCount} connected
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Add sources to increase accuracy.
+              </p>
+              {/* Source Icons */}
+              <div className="flex items-center gap-2 mt-2">
                 {sourceIcons.map((s, idx) => (
                   <span 
                     key={idx} 
@@ -177,10 +221,10 @@ export function GrowthPresenceSection({
                   </span>
                 ))}
               </div>
-            }
-            onClick={onSourcesClick}
-          />
-        </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1" />
+          </div>
+        </button>
       </section>
     </div>
   );
