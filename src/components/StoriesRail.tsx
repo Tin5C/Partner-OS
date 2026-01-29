@@ -188,6 +188,7 @@ export function StoriesRail() {
       <div className="relative -mx-5">
         <div className="flex gap-4 overflow-x-auto px-5 pb-2 scrollbar-hide">
           {unifiedStories.map((item) => {
+            // Voice stories
             if (item.itemType === 'voice') {
               return (
                 <VoiceTile
@@ -199,7 +200,9 @@ export function StoriesRail() {
               );
             }
             
-            if (item.itemType === 'winwire' && item.winwireData) {
+            // Winwire stories
+            if (item.itemType === 'winwire') {
+              if (!item.winwireData) return null;
               return (
                 <WinwireTile
                   key={item.id}
@@ -210,8 +213,9 @@ export function StoriesRail() {
               );
             }
             
-            // Signal stories (default)
-            if (item.signalData) {
+            // Signal stories (itemType === 'signal')
+            if (item.itemType === 'signal') {
+              if (!item.signalData) return null;
               return (
                 <StoryTile
                   key={item.id}
