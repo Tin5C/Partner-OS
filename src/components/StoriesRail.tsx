@@ -1,18 +1,24 @@
 import { useState, useCallback, useEffect } from 'react';
 import { StoryTile } from './StoryTile';
 import { VoiceTile } from './VoiceTile';
+import { WinwireTile } from './WinwireTile';
 import { StoryViewer } from './StoryViewer';
 import { VoiceEpisodeViewer } from './VoiceEpisodeViewer';
 import { VoiceShowPage } from './VoiceShowPage';
-import { getUnifiedStories, getSignalPlaylist, getVoicePlaylist, UnifiedStoryItem } from '@/lib/unifiedStories';
+import { WinwireStoryViewer } from './WinwireStoryViewer';
+import { getUnifiedStories, getSignalPlaylist, getVoicePlaylist, getWinwirePlaylist, UnifiedStoryItem } from '@/lib/unifiedStories';
 import { getVoice, VoiceEpisode, Voice } from '@/lib/voices';
 import { useStoryState } from '@/hooks/useStoryState';
+import { useSpace } from '@/contexts/SpaceContext';
 
-type PlaylistContext = 'signal' | 'voice';
+type PlaylistContext = 'signal' | 'voice' | 'winwire';
 
 export function StoriesRail() {
-  // Unified stories
-  const unifiedStories = getUnifiedStories();
+  const { spaceConfig } = useSpace();
+  const currentSpace = spaceConfig.spaceType;
+  
+  // Unified stories (filtered by current space for winwire)
+  const unifiedStories = getUnifiedStories(currentSpace);
   
   // Story viewer state (for signals)
   const [signalPlaylist, setSignalPlaylist] = useState<UnifiedStoryItem[]>([]);
@@ -25,6 +31,11 @@ export function StoriesRail() {
   const [voiceEpisodes, setVoiceEpisodes] = useState<VoiceEpisode[]>([]);
   const [voiceViewerOpen, setVoiceViewerOpen] = useState(false);
   const [voiceShowPageOpen, setVoiceShowPageOpen] = useState(false);
+  
+  // Winwire viewer state
+  const [winwirePlaylist, setWinwirePlaylist] = useState<UnifiedStoryItem[]>([]);
+  const [selectedWinwireIndex, setSelectedWinwireIndex] = useState<number>(-1);
+  const [winwireViewerOpen, setWinwireViewerOpen] = useState(false);
   
   const { getState, markSeen, markListened, isSaved, toggleSave } = useStoryState();
 
@@ -50,11 +61,28 @@ export function StoriesRail() {
     markSeen(item.id);
   };
 
+  // Handle Winwire story click
+  const handleWinwireClick = (item: UnifiedStoryItem) => {
+    const playlist = getWinwirePlaylist(currentSpace);
+    setWinwirePlaylist(playlist);
+    const index = playlist.findIndex(s => s.id === item.id);
+    setSelectedWinwireIndex(index);
+    setWinwireViewerOpen(true);
+    markSeen(item.id);
+  };
+
   // Handle closing signal viewer
   const handleCloseSignalViewer = () => {
     setSignalViewerOpen(false);
     setSelectedSignalIndex(-1);
     setSignalPlaylist([]);
+  };
+  
+  // Handle closing winwire viewer
+  const handleCloseWinwireViewer = () => {
+    setWinwireViewerOpen(false);
+    setSelectedWinwireIndex(-1);
+    setWinwirePlaylist([]);
   };
 
   const handleMarkListened = (storyId: string) => {
@@ -81,6 +109,24 @@ export function StoriesRail() {
       setSelectedSignalIndex(prevIndex);
     }
   }, [selectedSignalIndex]);
+
+  // Winwire navigation
+  const handleNextWinwire = useCallback(() => {
+    if (selectedWinwireIndex < winwirePlaylist.length - 1) {
+      const nextIndex = selectedWinwireIndex + 1;
+      setSelectedWinwireIndex(nextIndex);
+      markSeen(winwirePlaylist[nextIndex].id);
+    } else {
+      handleCloseWinwireViewer();
+    }
+  }, [selectedWinwireIndex, winwirePlaylist, markSeen]);
+
+  const handlePrevWinwire = useCallback(() => {
+    if (selectedWinwireIndex > 0) {
+      const prevIndex = selectedWinwireIndex - 1;
+      setSelectedWinwireIndex(prevIndex);
+    }
+  }, [selectedWinwireIndex]);
 
   // Handle closing voice viewer
   const handleCloseVoiceViewer = () => {
@@ -120,6 +166,9 @@ export function StoriesRail() {
 
   // Get selected signal story data
   const selectedSignalItem = selectedSignalIndex >= 0 ? signalPlaylist[selectedSignalIndex] : null;
+  
+  // Get selected winwire story data
+  const selectedWinwireItem = selectedWinwireIndex >= 0 ? winwirePlaylist[selectedWinwireIndex] : null;
 
   // Don't render if no stories
   if (unifiedStories.length === 0) {
@@ -138,23 +187,43 @@ export function StoriesRail() {
       {/* Single unified row */}
       <div className="relative -mx-5">
         <div className="flex gap-4 overflow-x-auto px-5 pb-2 scrollbar-hide">
-          {unifiedStories.map((item) => (
-            item.itemType === 'voice' ? (
-              <VoiceTile
-                key={item.id}
-                item={item}
-                listenedState={getState(item.id)}
-                onClick={() => handleVoiceClick(item)}
-              />
-            ) : (
-              <StoryTile
-                key={item.id}
-                story={item.signalData!}
-                listenedState={getState(item.id)}
-                onClick={() => handleSignalClick(item)}
-              />
-            )
-          ))}
+          {unifiedStories.map((item) => {
+            if (item.itemType === 'voice') {
+              return (
+                <VoiceTile
+                  key={item.id}
+                  item={item}
+                  listenedState={getState(item.id)}
+                  onClick={() => handleVoiceClick(item)}
+                />
+              );
+            }
+            
+            if (item.itemType === 'winwire' && item.winwireData) {
+              return (
+                <WinwireTile
+                  key={item.id}
+                  story={item.winwireData}
+                  listenedState={getState(item.id)}
+                  onClick={() => handleWinwireClick(item)}
+                />
+              );
+            }
+            
+            // Signal stories (default)
+            if (item.signalData) {
+              return (
+                <StoryTile
+                  key={item.id}
+                  story={item.signalData}
+                  listenedState={getState(item.id)}
+                  onClick={() => handleSignalClick(item)}
+                />
+              );
+            }
+            
+            return null;
+          })}
         </div>
       </div>
 
@@ -174,6 +243,25 @@ export function StoriesRail() {
           hasPrev={selectedSignalIndex > 0}
           currentIndex={selectedSignalIndex}
           totalCount={signalPlaylist.length}
+        />
+      )}
+
+      {/* Winwire Story Viewer */}
+      {selectedWinwireItem?.winwireData && (
+        <WinwireStoryViewer
+          story={selectedWinwireItem.winwireData}
+          open={winwireViewerOpen}
+          onOpenChange={setWinwireViewerOpen}
+          onClose={handleCloseWinwireViewer}
+          onMarkListened={handleMarkListened}
+          isSaved={isSaved(selectedWinwireItem.id)}
+          onToggleSave={handleToggleSave}
+          onNext={handleNextWinwire}
+          onPrev={handlePrevWinwire}
+          hasNext={selectedWinwireIndex < winwirePlaylist.length - 1}
+          hasPrev={selectedWinwireIndex > 0}
+          currentIndex={selectedWinwireIndex}
+          totalCount={winwirePlaylist.length}
         />
       )}
 

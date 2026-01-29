@@ -1,10 +1,11 @@
 // Unified Stories Model
-// Merges Signal stories and Voice episodes into a single sorted list
+// Merges Signal stories, Voice episodes, and Winwire stories into a single sorted list
 
 import { stories, StoryItem as SignalStoryItem, StoryType } from './stories';
 import { voices, Voice, VoiceEpisode, getVoiceRecencyLabel } from './voices';
+import { winwireStories, WinwireStory } from './winwireStories';
 
-export type UnifiedItemType = 'signal' | 'voice';
+export type UnifiedItemType = 'signal' | 'voice' | 'winwire';
 
 export interface UnifiedStoryItem {
   id: string;
@@ -31,6 +32,9 @@ export interface UnifiedStoryItem {
   voiceData?: Voice;
   voiceEpisode?: VoiceEpisode;
   recencyLabel?: string | null;
+  
+  // Winwire-specific fields
+  winwireData?: WinwireStory;
 }
 
 // Convert Signal story to unified item
@@ -72,8 +76,23 @@ function voiceEpisodeToUnified(voice: Voice, episode: VoiceEpisode): UnifiedStor
   };
 }
 
+// Convert Winwire story to unified item
+function winwireToUnified(story: WinwireStory): UnifiedStoryItem {
+  return {
+    id: story.id,
+    itemType: 'winwire',
+    publishedAt: story.createdAt,
+    title: story.title,
+    subtitle: story.subtitle,
+    chipLabel: story.chipLabel,
+    mediaType: 'audio',
+    coverUrl: story.media.backgroundUrl,
+    winwireData: story,
+  };
+}
+
 // Get all unified stories sorted by publishedAt (newest first)
-export function getUnifiedStories(): UnifiedStoryItem[] {
+export function getUnifiedStories(space?: 'internal' | 'partner'): UnifiedStoryItem[] {
   const signalItems = stories.map(signalToUnified);
   
   // For Voice items, we add ONLY the latest episode from each Voice to the main rail
@@ -86,9 +105,26 @@ export function getUnifiedStories(): UnifiedStoryItem[] {
     return voiceEpisodeToUnified(voice, latestEpisode);
   }).filter((item): item is UnifiedStoryItem => item !== null);
   
-  return [...signalItems, ...voiceItems].sort(
+  // Filter winwire stories by space visibility if space is provided
+  const filteredWinwire = space 
+    ? winwireStories.filter(s => s.spaceVisibility.includes(space))
+    : winwireStories;
+  const winwireItems = filteredWinwire.map(winwireToUnified);
+  
+  return [...signalItems, ...voiceItems, ...winwireItems].sort(
     (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
   );
+}
+
+// Get winwire playlist for winwire context
+export function getWinwirePlaylist(space?: 'internal' | 'partner'): UnifiedStoryItem[] {
+  const filtered = space 
+    ? winwireStories.filter(s => s.spaceVisibility.includes(space))
+    : winwireStories;
+  
+  return filtered
+    .map(winwireToUnified)
+    .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 }
 
 // Get all signal stories for signal playlist context
