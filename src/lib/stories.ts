@@ -53,33 +53,8 @@ export interface StoryItem {
   sourceUrl?: string;
 }
 
-// Seed stories - Success stories first, then Competitors per spec
+// Seed stories - Competitors first per spec
 export const stories: StoryItem[] = [
-  // SUCCESS STORIES (highest priority)
-  {
-    id: "story-ubs-success",
-    type: "success",
-    badge: "Success Story",
-    headline: "UBS Transforms Client Experience",
-    one_liner: "Global wealth management leader accelerates digital transformation with AI-powered insights.",
-    why_it_matters: "Proof that enterprise-scale AI deployments deliver measurable client outcomes.",
-    talk_track: "UBS achieved significant improvements in client experience through AI. What's your current approach to AI-driven client insights?",
-    cta_label: "Watch Story",
-    duration_sec: 120,
-    media_type: "video",
-    topic_tags: ["Financial Services", "AI", "Success Story"],
-    companyName: "UBS",
-    logoUrl: "/assets/logos/ubs.png",
-    audio_title: "UBS Success Story",
-    audio_script: "UBS, a global leader in wealth management, transformed their client experience through AI-powered insights. By deploying intelligent automation across their advisory workflows, they achieved faster response times and more personalized recommendations. This success demonstrates that enterprise-scale AI deployments can deliver measurable outcomes. The key was starting with high-impact use cases and scaling based on proven results.",
-    coverImageUrl: "/assets/logos/ubs.png",
-    videoUrl: "/assets/audio/winwire-ubs-ai-narration.mp4",
-    audioUrl: "/assets/audio/ubs-success-story.mp3",
-    relatedEpisodeId: "ep-success-stories",
-    publishedAt: "2026-01-29",
-    sourceName: "Customer Success"
-  },
-
   // COMPETITOR STORIES (first)
   {
     id: "story-001",
