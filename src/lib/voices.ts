@@ -3,6 +3,7 @@
 
 import ziaAvatar from '@/assets/voices/zia.jpg';
 import ziaStoryVideo from '@/assets/voices/zia_story.mp4';
+import andrewAvatar from '@/assets/voices/andrew.jpg';
 
 export interface VoiceEpisode {
   id: string;
@@ -104,6 +105,28 @@ export const voices: Voice[] = [
         nextMove: "Ask: 'Where does your production data live today—and what security requirements govern AI access?'",
         durationLabel: '30s video',
         tagLabel: 'Azure AI'
+      }
+    ]
+  },
+  {
+    voiceId: 'andrew-partnerships',
+    voiceName: 'Andrew',
+    voiceRole: 'Partnerships Lead, Microsoft Switzerland',
+    voiceAvatarUrl: andrewAvatar,
+    promise: 'Partner insights and co-sell strategies for EMEA',
+    cadenceLabel: 'Weekly',
+    episodes: [
+      {
+        id: 'voice-andrew-ep-1',
+        publishedAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(), // 8 hours ago
+        hookTitle: "Co-sell momentum in Swiss manufacturing",
+        mediaType: 'image',
+        coverUrl: andrewAvatar,
+        hook: 'Swiss manufacturing accounts are accelerating co-sell deals—here\'s the pattern I\'m seeing.',
+        takeaway: 'Local partners with industry expertise are closing 40% faster when positioned as implementation leads.',
+        nextMove: "Ask: 'Which local partner has the deepest manufacturing domain expertise for your region?'",
+        durationLabel: '25s read',
+        tagLabel: 'Co-Sell'
       }
     ]
   },
