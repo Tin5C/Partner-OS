@@ -77,7 +77,7 @@ export const internalConfig: SpaceConfig = {
   },
   
   // All story types visible to internal users
-  allowedStoryTypes: ['signal', 'voice', 'competitor', 'startup', 'customer', 'expert', 'industry'],
+  allowedStoryTypes: ['signal', 'voice', 'competitor', 'startup', 'customer', 'expert', 'industry', 'success', 'winwire'],
   
   // All packs available
   availablePacks: [

@@ -80,7 +80,7 @@ export const partnerConfig: SpaceConfig = {
   },
   
   // Only curated/approved story types
-  allowedStoryTypes: ['voice', 'competitor', 'product'],
+  allowedStoryTypes: ['voice', 'competitor', 'product', 'success', 'winwire'],
   
   // Partner-approved packs only
   availablePacks: [
