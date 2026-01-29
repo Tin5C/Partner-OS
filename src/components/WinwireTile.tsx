@@ -46,6 +46,19 @@ export function WinwireTile({ story, listenedState, onClick }: WinwireTileProps)
         </span>
       </div>
 
+      {/* Logo (if provided) */}
+      {story.logoUrl && (
+        <div className="absolute top-10 left-2.5 z-10">
+          <div className="w-8 h-8 rounded-md bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm">
+            <img 
+              src={story.logoUrl} 
+              alt="" 
+              className="w-6 h-6 object-contain"
+            />
+          </div>
+        </div>
+      )}
+
       {/* Duration badge */}
       <div className="absolute top-2.5 right-2.5 z-10">
         <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-black/50 text-white/90 backdrop-blur-sm">
