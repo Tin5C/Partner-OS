@@ -1,7 +1,6 @@
 import * as React from 'react';
-import { TrendingUp, Calendar, ChevronRight, Clock, Linkedin, Globe, FileText, Mic, Users, Upload, Eye, Sparkles } from 'lucide-react';
+import { TrendingUp, Calendar, ChevronRight, Clock, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { usePresenceSources } from '@/hooks/usePresenceSources';
 import { Progress } from '@/components/ui/progress';
 
 interface CompactCardProps {
@@ -75,28 +74,13 @@ interface GrowthPresenceSectionProps {
   onSkillClick?: () => void;
   onEventsClick?: () => void;
   onScorecardClick?: () => void;
-  onSourcesClick?: () => void;
 }
 
 export function GrowthPresenceSection({ 
   onSkillClick, 
   onEventsClick, 
   onScorecardClick,
-  onSourcesClick,
 }: GrowthPresenceSectionProps) {
-  const { connectedCount, sources } = usePresenceSources();
-
-  // Source icons for inline display
-  const sourceIcons = [
-    { icon: <Linkedin className="w-3 h-3" />, type: 'linkedin', label: 'LinkedIn' },
-    { icon: <Globe className="w-3 h-3" />, type: 'website', label: 'Website' },
-    { icon: <FileText className="w-3 h-3" />, type: 'newsletter', label: 'Newsletter' },
-    { icon: <Mic className="w-3 h-3" />, type: 'podcast', label: 'Podcast' },
-    { icon: <Users className="w-3 h-3" />, type: 'speaker', label: 'Speaker' },
-    { icon: <Upload className="w-3 h-3" />, type: 'pdf', label: 'PDF' },
-  ];
-
-  const getSourceConnected = (type: string) => sources.find(s => s.type === type)?.connected;
 
   // Mock score for display
   const mockScore = 62;
@@ -136,11 +120,11 @@ export function GrowthPresenceSection({
           </h2>
         </div>
         
-        {/* Single Unified Card */}
+        {/* Single Buyer Perception Snapshot Card */}
         <button
           onClick={onScorecardClick}
           className={cn(
-            "flex flex-col p-4 rounded-xl text-left w-full",
+            "flex items-start gap-3 p-4 rounded-xl text-left w-full",
             "bg-card border border-border",
             "shadow-[0_1px_2px_rgba(0,0,0,0.03)]",
             "hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)]",
@@ -148,82 +132,38 @@ export function GrowthPresenceSection({
             "transition-all duration-200"
           )}
         >
-          {/* Header Row */}
-          <div className="flex items-start gap-3">
-            <div className={cn(
-              "w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0",
-              "bg-muted/50"
-            )}>
-              <Eye className="w-4 h-4 text-muted-foreground" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <h4 className="text-sm font-medium text-foreground">Buyer Perception Snapshot</h4>
-                <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">
-                  Tier 1
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                How buyers are likely to perceive you.
-              </p>
-              {/* Score + Progress */}
-              <div className="flex items-center gap-2 mt-2">
-                <Progress value={mockScore} className="h-1 flex-1 max-w-[100px]" />
-                <span className="text-[10px] font-medium text-foreground">{mockScore}/100</span>
-              </div>
-            </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1" />
+          {/* Icon */}
+          <div className={cn(
+            "w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0",
+            "bg-muted/50"
+          )}>
+            <Eye className="w-4 h-4 text-muted-foreground" />
           </div>
 
-          {/* Divider */}
-          <div className="border-t border-border/60 my-3" />
-
-          {/* Improve Signal Quality Section */}
-          <div 
-            className="flex items-start gap-3"
-            onClick={(e) => {
-              e.stopPropagation();
-              onSourcesClick?.();
-            }}
-          >
-            <div className={cn(
-              "w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0",
-              "bg-muted/50"
-            )}>
-              <Sparkles className="w-4 h-4 text-muted-foreground" />
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h4 className="text-sm font-medium text-foreground">Buyer Perception Snapshot</h4>
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">
+                Tier 1
+              </span>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <h4 className="text-sm font-medium text-foreground">Improve Signal Quality</h4>
-                {connectedCount > 0 && (
-                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">
-                    {connectedCount} connected
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Add sources to increase accuracy.
-              </p>
-              {/* Source Icons */}
-              <div className="flex items-center gap-2 mt-2">
-                {sourceIcons.map((s, idx) => (
-                  <span 
-                    key={idx} 
-                    className={cn(
-                      "transition-colors",
-                      getSourceConnected(s.type) 
-                        ? "text-primary" 
-                        : "text-muted-foreground/40"
-                    )}
-                    title={s.label}
-                  >
-                    {s.icon}
-                  </span>
-                ))}
-              </div>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              How buyers are likely to perceive you.
+            </p>
+            {/* Score + Progress */}
+            <div className="flex items-center gap-2 mt-2">
+              <Progress value={mockScore} className="h-1 flex-1 max-w-[100px]" />
+              <span className="text-[10px] font-medium text-foreground">{mockScore}/100</span>
             </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1" />
+            {/* Subtle hint */}
+            <p className="text-[10px] text-muted-foreground/70 mt-1.5">
+              Add sources to improve accuracy
+            </p>
           </div>
+
+          {/* Arrow */}
+          <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1" />
         </button>
       </section>
     </div>

@@ -197,7 +197,6 @@ export default function ExperiencePage() {
           onSkillClick={() => setSkillPanelOpen(true)}
           onEventsClick={() => setEventsPanelOpen(true)}
           onScorecardClick={() => setScorecardOpen(true)}
-          onSourcesClick={() => setSourcesOpen(true)}
         />
       </main>
 
