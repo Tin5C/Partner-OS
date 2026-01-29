@@ -129,7 +129,7 @@ const getMockBriefings = (packIds: string[]): PackGridItem[] => {
 
 export function HomeRenderer() {
   const { spaceType, spaceConfig, isUnlocked, unlock } = useSpace();
-  const { sources, connectedCount, connectSource, disconnectSource } = usePresenceSources();
+  const { sources, connectSource, disconnectSource } = usePresenceSources(spaceType);
 
   // Panel states
   const [readPanelOpen, setReadPanelOpen] = useState(false);

@@ -1,6 +1,5 @@
 // Hook for managing presence sources (mock local storage)
 import { useState, useEffect, useCallback } from 'react';
-import { useExperience } from '@/contexts/ExperienceContext';
 import { PersonSource } from '@/lib/presenceScorecardData';
 
 const DEFAULT_SOURCES: PersonSource[] = [
@@ -12,18 +11,17 @@ const DEFAULT_SOURCES: PersonSource[] = [
   { id: 'pdf', type: 'pdf', label: 'Upload PDF', connected: false },
 ];
 
-function getStorageKey(tenantSlug: string, audience: string): string {
-  return `presence_sources_${audience}_${tenantSlug}`;
+function getStorageKey(spaceType: string): string {
+  return `presence_sources_${spaceType}`;
 }
 
-export function usePresenceSources() {
-  const { tenantSlug, audience } = useExperience();
+export function usePresenceSources(spaceType: string = 'internal') {
   const [sources, setSources] = useState<PersonSource[]>(DEFAULT_SOURCES);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load from localStorage on mount
   useEffect(() => {
-    const key = getStorageKey(tenantSlug, audience);
+    const key = getStorageKey(spaceType);
     const stored = localStorage.getItem(key);
     if (stored) {
       try {
@@ -35,14 +33,14 @@ export function usePresenceSources() {
       setSources(DEFAULT_SOURCES);
     }
     setIsLoaded(true);
-  }, [tenantSlug, audience]);
+  }, [spaceType]);
 
   // Save to localStorage
   const saveSources = useCallback((newSources: PersonSource[]) => {
-    const key = getStorageKey(tenantSlug, audience);
+    const key = getStorageKey(spaceType);
     localStorage.setItem(key, JSON.stringify(newSources));
     setSources(newSources);
-  }, [tenantSlug, audience]);
+  }, [spaceType]);
 
   // Connect a source
   const connectSource = useCallback((sourceId: string, value: string) => {
