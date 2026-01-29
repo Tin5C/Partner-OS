@@ -1,5 +1,7 @@
-// Winwire Stories - Narrated case studies with subtitles
-// These are enterprise-safe stories that autoplay audio with synchronized subtitles
+// Winwire Stories - Video-first case studies
+// Enterprise-safe stories with video as the centerpiece
+
+import ubsWinwireVideo from '@/assets/stories/ubs-winwire.mp4';
 
 export interface WinwireSubtitle {
   start: number;  // seconds
@@ -21,7 +23,8 @@ export interface WinwireStory {
   media: {
     backgroundType: 'static' | 'video';
     backgroundUrl: string;
-    audioUrl: string;
+    videoUrl?: string;  // Video-first: primary media
+    audioUrl?: string;  // Fallback audio if needed
   };
   subtitles: WinwireSubtitle[];
   tags: string[];
@@ -44,19 +47,11 @@ export const winwireStories: WinwireStory[] = [
     logoUrl: "/assets/logos/ubs.png",
     durationSeconds: 65,
     media: {
-      backgroundType: "static",
-      backgroundUrl: "/assets/backgrounds/abstract-finance.jpg",
-      audioUrl: "/assets/audio/winwire-ubs-ai-narration.mp4"
+      backgroundType: "video",
+      backgroundUrl: "/assets/logos/ubs.png",
+      videoUrl: ubsWinwireVideo,
     },
-    subtitles: [
-      { start: 0, end: 6, text: "UBS transformed how advisors access institutional knowledge with AI." },
-      { start: 6, end: 14, text: "They were sitting on tens of thousands of investment and product documents." },
-      { start: 14, end: 22, text: "Finding the right insight often took too long." },
-      { start: 22, end: 32, text: "So UBS digitized and indexed over sixty thousand documents into a searchable knowledge base." },
-      { start: 32, end: 42, text: "Advisors can now surface relevant insights in seconds." },
-      { start: 42, end: 52, text: "Strong governance and access controls were built in from the start." },
-      { start: 52, end: 65, text: "Ask yourself: what internal knowledge would change performance if it was instantly searchable?" }
-    ],
+    subtitles: [], // Video has audio - no need for subtitle overlays
     tags: ["AI", "Knowledge Management", "Advisory", "Enablement"],
     sourceType: "public-learning",
     sanitizationLevel: "enterprise-safe",
