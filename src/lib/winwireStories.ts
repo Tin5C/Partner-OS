@@ -36,7 +36,7 @@ export const winwireStories: WinwireStory[] = [
     id: "winwire-ubs-ai-documents",
     type: "story",
     storyType: "winwire",
-    spaceVisibility: ["partner"],
+    spaceVisibility: ["internal", "partner"],
     chipLabel: "Winwire",
     title: "UBS turns 60,000+ documents into AI-ready knowledge",
     subtitle: "How advisors unlocked institutional knowledge with AI",
