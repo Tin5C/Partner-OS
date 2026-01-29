@@ -16,6 +16,7 @@ export interface WinwireStory {
   title: string;
   subtitle: string;
   industry: string;
+  logoUrl?: string;  // Optional logo to show on tile
   durationSeconds: number;
   media: {
     backgroundType: 'static' | 'video';
@@ -35,16 +36,17 @@ export const winwireStories: WinwireStory[] = [
     id: "winwire-ubs-ai-documents",
     type: "story",
     storyType: "winwire",
-    spaceVisibility: ["internal", "partner"],
+    spaceVisibility: ["partner"],
     chipLabel: "Winwire",
     title: "UBS turns 60,000+ documents into AI-ready knowledge",
     subtitle: "How advisors unlocked institutional knowledge with AI",
     industry: "Banking / Financial Services",
+    logoUrl: "/assets/logos/ubs.png",
     durationSeconds: 65,
     media: {
       backgroundType: "static",
       backgroundUrl: "/assets/backgrounds/abstract-finance.jpg",
-      audioUrl: "/assets/audio/winwire-ubs-ai-narration.mp3"
+      audioUrl: "/assets/audio/winwire-ubs-ai-narration.mp4"
     },
     subtitles: [
       { start: 0, end: 6, text: "UBS transformed how advisors access institutional knowledge with AI." },
