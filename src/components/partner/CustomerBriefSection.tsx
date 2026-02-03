@@ -43,6 +43,8 @@ import {
   SignalCoverage,
   CaptureAction,
   ConditionalRefinement,
+  ExtractedSignals,
+  EvidenceState,
   generatePartnerBrief,
   DEAL_MOTIONS,
   INDUSTRIES,
@@ -55,6 +57,15 @@ import {
   CLOUD_FOOTPRINTS,
   KNOWN_LICENSES,
 } from '@/data/partnerBriefData';
+import { EvidenceUploadBlock } from './EvidenceUploadBlock';
+import { ExtractedSignalsBlock } from './ExtractedSignalsBlock';
+
+// Default empty evidence state
+const createEmptyEvidence = (): EvidenceState => ({
+  uploads: [],
+  links: [],
+  extractedSignals: { applications: [], architecture: [], licenses: [] },
+});
 
 export function CustomerBriefSection() {
   // Form state
@@ -71,18 +82,20 @@ export function CustomerBriefSection() {
   const [applicationLandscape, setApplicationLandscape] = useState<string>('');
   const [cloudFootprint, setCloudFootprint] = useState<string>('');
   const [knownLicenses, setKnownLicenses] = useState<string>('');
-  const [hasScreenshots, setHasScreenshots] = useState(false);
-  const [hasDocs, setHasDocs] = useState(false);
-  const [pastedLink, setPastedLink] = useState<string>('');
+  // Evidence state (new structure)
+  const [evidence, setEvidence] = useState<EvidenceState>(createEmptyEvidence());
   
   // UI state
   const [isGenerating, setIsGenerating] = useState(false);
   const [output, setOutput] = useState<PartnerBriefOutput | null>(null);
   const [contextOpen, setContextOpen] = useState(false);
   const [showCustomerError, setShowCustomerError] = useState(false);
+  // Local extracted signals for editing after generation
+  const [editedSignals, setEditedSignals] = useState<ExtractedSignals | null>(null);
 
   const canGenerate = customerName.trim() && dealMotion;
   const hasContext = industry || region || dealSizeBand || timeline || competitors.length > 0 || needsMost.length > 0 || painPoints || applicationLandscape || cloudFootprint || knownLicenses;
+  const hasEvidence = evidence.uploads.length > 0 || evidence.links.length > 0;
 
   const handleGenerate = () => {
     if (!customerName.trim()) {
@@ -108,14 +121,11 @@ export function CustomerBriefSection() {
         applicationLandscape: applicationLandscape || undefined,
         cloudFootprint: cloudFootprint || undefined,
         knownLicenses: knownLicenses || undefined,
-        attachments: {
-          hasScreenshots,
-          hasDocs,
-          links: pastedLink ? [pastedLink] : undefined,
-        },
+        evidence: hasEvidence ? evidence : undefined,
       };
       const result = generatePartnerBrief(input);
       setOutput(result);
+      setEditedSignals(result.extractedSignals);
       setIsGenerating(false);
     }, 1500);
   };
@@ -157,9 +167,7 @@ export function CustomerBriefSection() {
     setApplicationLandscape('');
     setCloudFootprint('');
     setKnownLicenses('');
-    setHasScreenshots(false);
-    setHasDocs(false);
-    setPastedLink('');
+    setEvidence(createEmptyEvidence());
   };
 
   const handleReset = () => {
@@ -175,10 +183,9 @@ export function CustomerBriefSection() {
     setApplicationLandscape('');
     setCloudFootprint('');
     setKnownLicenses('');
-    setHasScreenshots(false);
-    setHasDocs(false);
-    setPastedLink('');
+    setEvidence(createEmptyEvidence());
     setOutput(null);
+    setEditedSignals(null);
     setContextOpen(false);
   };
 
@@ -377,11 +384,11 @@ export function CustomerBriefSection() {
                     </div>
                   </div>
 
-                  {/* Enhanced Signals Section */}
+                  {/* Seller-known signals row */}
                   <div className="pt-3 border-t border-border/50">
                     <p className="text-xs font-medium text-muted-foreground mb-3 flex items-center gap-1.5">
                       <TrendingUp className="w-3 h-3" />
-                      Signal Quality (improves recommendations)
+                      Seller-known signals (improves recommendations)
                     </p>
                     
                     {/* Row: App Landscape, Cloud Footprint, Licenses */}
@@ -451,60 +458,14 @@ export function CustomerBriefSection() {
                         )}
                       />
                     </div>
+                  </div>
 
-                    {/* Evidence Uploads */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setHasScreenshots(!hasScreenshots)}
-                          className={cn(
-                            "w-4 h-4 rounded border flex items-center justify-center",
-                            hasScreenshots 
-                              ? "bg-primary border-primary" 
-                              : "bg-background border-border"
-                          )}
-                        >
-                          {hasScreenshots && <CheckCircle2 className="w-3 h-3 text-primary-foreground" />}
-                        </button>
-                        <span className="text-xs text-foreground">LinkedIn/Website screenshots</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setHasDocs(!hasDocs)}
-                          className={cn(
-                            "w-4 h-4 rounded border flex items-center justify-center",
-                            hasDocs 
-                              ? "bg-primary border-primary" 
-                              : "bg-background border-border"
-                          )}
-                        >
-                          {hasDocs && <CheckCircle2 className="w-3 h-3 text-primary-foreground" />}
-                        </button>
-                        <span className="text-xs text-foreground">Customer deck / meeting notes</span>
-                      </div>
-                    </div>
-
-                    {/* Paste Link */}
-                    <div className="mt-3">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <Link2 className="w-3 h-3 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">Customer website link (for signal scan)</span>
-                      </div>
-                      <input
-                        type="text"
-                        value={pastedLink}
-                        onChange={(e) => setPastedLink(e.target.value)}
-                        placeholder="https://..."
-                        className={cn(
-                          "w-full h-9 px-3 rounded-lg text-sm",
-                          "bg-background border border-border",
-                          "placeholder:text-muted-foreground/60",
-                          "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30"
-                        )}
-                      />
-                    </div>
+                  {/* Evidence Upload Section (replaces old checkboxes) */}
+                  <div className="pt-3 border-t border-border/50">
+                    <EvidenceUploadBlock
+                      evidence={evidence}
+                      onEvidenceChange={setEvidence}
+                    />
                   </div>
 
                   {/* What do you need most? */}
@@ -599,6 +560,14 @@ export function CustomerBriefSection() {
                 </div>
               </div>
             </div>
+
+            {/* Extracted Signals Block */}
+            {editedSignals && (
+              <ExtractedSignalsBlock
+                signals={editedSignals}
+                onSignalsChange={setEditedSignals}
+              />
+            )}
 
             {/* Capture Plan */}
             {output.capturePlan.length > 0 && (
