@@ -66,6 +66,7 @@ import {
 } from '@/data/partnerBriefData';
 import { EvidenceUploadBlock } from './EvidenceUploadBlock';
 import { ExtractedSignalsBlock } from './ExtractedSignalsBlock';
+import { savePartnerBriefContext } from './ExpertCornersRail';
 
 // Default empty evidence state
 const createEmptyEvidence = (): EvidenceState => ({
@@ -183,6 +184,9 @@ export function CustomerBriefSection() {
       setOutput(result);
       setEditedSignals(result.extractedSignals);
       setIsGenerating(false);
+      
+      // Save brief context for Expert Corners recommendations
+      savePartnerBriefContext(input);
     }, 1500);
   };
 

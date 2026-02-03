@@ -1,18 +1,28 @@
 // Partner Expert Corners Tile
 // Video-first tile with thumbnail, duration, progress indicator
 // Shows EXPLAINER badge for synthetic doc explainers, VIDEO for human experts
+// Includes "why recommended" reason and completed state
 
-import { Play, Video, Sparkles } from 'lucide-react';
+import { Play, Video, Sparkles, Check } from 'lucide-react';
 import { PartnerExpertEpisode, isSyntheticExplainer } from '@/data/partnerExpertCorners';
 import { cn } from '@/lib/utils';
 
 interface ExpertCornersTileProps {
   episode: PartnerExpertEpisode;
   onClick: () => void;
+  reason?: string;
+  isCompleted?: boolean;
+  progressPercent?: number;
 }
 
-export function ExpertCornersTile({ episode, onClick }: ExpertCornersTileProps) {
-  const hasProgress = episode.progress && episode.progress > 0;
+export function ExpertCornersTile({ 
+  episode, 
+  onClick, 
+  reason,
+  isCompleted = false,
+  progressPercent,
+}: ExpertCornersTileProps) {
+  const hasProgress = progressPercent !== undefined && progressPercent > 0;
   const isSynthetic = isSyntheticExplainer(episode);
   const isGenerating = episode.generationStatus === 'generating';
 
@@ -20,9 +30,10 @@ export function ExpertCornersTile({ episode, onClick }: ExpertCornersTileProps) 
     <button
       onClick={onClick}
       className={cn(
-        "group relative flex-shrink-0 w-[200px] rounded-xl overflow-hidden",
+        "group relative flex-shrink-0 w-[220px] rounded-xl overflow-hidden",
         "border border-border bg-card shadow-sm transition-all duration-200",
-        "hover:shadow-md hover:border-border/80 active:scale-[0.98]"
+        "hover:shadow-md hover:border-border/80 active:scale-[0.98]",
+        isCompleted && "opacity-80"
       )}
     >
       {/* Thumbnail */}
@@ -71,13 +82,21 @@ export function ExpertCornersTile({ episode, onClick }: ExpertCornersTileProps) 
             </>
           )}
         </div>
+        
+        {/* Completed badge */}
+        {isCompleted && (
+          <div className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded bg-green-600 text-white">
+            <Check className="w-3 h-3" />
+            <span className="text-[9px] font-medium">Completed</span>
+          </div>
+        )}
 
         {/* Progress bar */}
-        {hasProgress && (
+        {hasProgress && !isCompleted && (
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/30">
             <div 
               className="h-full bg-primary transition-all"
-              style={{ width: `${episode.progress}%` }}
+              style={{ width: `${progressPercent}%` }}
             />
           </div>
         )}
@@ -111,7 +130,7 @@ export function ExpertCornersTile({ episode, onClick }: ExpertCornersTileProps) 
           <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-secondary-foreground font-medium">
             {episode.vendorTag}
           </span>
-          {hasProgress && (
+          {hasProgress && !isCompleted && (
             <span className="text-[10px] text-muted-foreground">
               Continue
             </span>
@@ -122,6 +141,13 @@ export function ExpertCornersTile({ episode, onClick }: ExpertCornersTileProps) 
             </span>
           )}
         </div>
+        
+        {/* Why recommended (subtle one-liner) */}
+        {reason && (
+          <p className="text-[10px] text-muted-foreground mt-2 line-clamp-1 italic">
+            {reason}
+          </p>
+        )}
       </div>
     </button>
   );
