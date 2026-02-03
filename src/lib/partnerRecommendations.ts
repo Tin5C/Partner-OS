@@ -9,6 +9,8 @@ export interface RecommendedEpisode {
   episode: PartnerExpertEpisode;
   reason: string;
   priority: number; // Lower = higher priority
+  matchedSignals?: string[];
+  matchedContext?: string;
 }
 
 // Get recommendation reason as a short string
@@ -177,6 +179,8 @@ export function getRecommendedEpisodes(
       episode,
       reason,
       priority,
+      matchedSignals: matchedSignals.length > 0 ? matchedSignals : undefined,
+      matchedContext: matchedSpecificArea || matchedDealMotion,
     });
   }
   
