@@ -1,5 +1,6 @@
 // Partner Expert Corners Rail
-// Horizontal scrolling rail of video-first expert episodes
+// Horizontal scrolling rail of synthetic explainer videos
+// Partner-only feature - not shown in Internal space
 
 import { useState } from 'react';
 import { SectionHeader } from '@/components/shared/SectionHeader';
@@ -15,7 +16,7 @@ interface ExpertCornersRailProps {
 
 export function ExpertCornersRail({ 
   title = 'Expert Corners',
-  subtitle = 'Deep-dive video sessions from vendor experts.'
+  subtitle = 'Synthetic explainers based on vendor documentation'
 }: ExpertCornersRailProps) {
   const [selectedEpisode, setSelectedEpisode] = useState<PartnerExpertEpisode | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
