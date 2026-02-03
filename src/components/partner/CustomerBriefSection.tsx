@@ -18,6 +18,12 @@ import {
   Calendar,
   ExternalLink,
   ChevronRight,
+  Target,
+  TrendingUp,
+  Lightbulb,
+  Upload,
+  Link2,
+  Globe,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -29,10 +35,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { 
   PartnerBriefInput, 
   PartnerBriefOutput,
+  SignalCoverage,
+  CaptureAction,
+  ConditionalRefinement,
   generatePartnerBrief,
   DEAL_MOTIONS,
   INDUSTRIES,
@@ -41,6 +51,9 @@ import {
   TIMELINES,
   COMPETITORS,
   NEEDS_MOST,
+  APPLICATION_LANDSCAPES,
+  CLOUD_FOOTPRINTS,
+  KNOWN_LICENSES,
 } from '@/data/partnerBriefData';
 
 export function CustomerBriefSection() {
@@ -53,6 +66,14 @@ export function CustomerBriefSection() {
   const [timeline, setTimeline] = useState<string>('');
   const [competitors, setCompetitors] = useState<string[]>([]);
   const [needsMost, setNeedsMost] = useState<string[]>([]);
+  // Enhanced signal inputs
+  const [painPoints, setPainPoints] = useState<string>('');
+  const [applicationLandscape, setApplicationLandscape] = useState<string>('');
+  const [cloudFootprint, setCloudFootprint] = useState<string>('');
+  const [knownLicenses, setKnownLicenses] = useState<string>('');
+  const [hasScreenshots, setHasScreenshots] = useState(false);
+  const [hasDocs, setHasDocs] = useState(false);
+  const [pastedLink, setPastedLink] = useState<string>('');
   
   // UI state
   const [isGenerating, setIsGenerating] = useState(false);
@@ -61,7 +82,7 @@ export function CustomerBriefSection() {
   const [showCustomerError, setShowCustomerError] = useState(false);
 
   const canGenerate = customerName.trim() && dealMotion;
-  const hasContext = industry || region || dealSizeBand || timeline || competitors.length > 0 || needsMost.length > 0;
+  const hasContext = industry || region || dealSizeBand || timeline || competitors.length > 0 || needsMost.length > 0 || painPoints || applicationLandscape || cloudFootprint || knownLicenses;
 
   const handleGenerate = () => {
     if (!customerName.trim()) {
@@ -83,6 +104,15 @@ export function CustomerBriefSection() {
         timeline: timeline || undefined,
         competitors: competitors.length > 0 ? competitors : undefined,
         needsMost,
+        painPoints: painPoints || undefined,
+        applicationLandscape: applicationLandscape || undefined,
+        cloudFootprint: cloudFootprint || undefined,
+        knownLicenses: knownLicenses || undefined,
+        attachments: {
+          hasScreenshots,
+          hasDocs,
+          links: pastedLink ? [pastedLink] : undefined,
+        },
       };
       const result = generatePartnerBrief(input);
       setOutput(result);
@@ -123,6 +153,13 @@ export function CustomerBriefSection() {
     setTimeline('');
     setCompetitors([]);
     setNeedsMost([]);
+    setPainPoints('');
+    setApplicationLandscape('');
+    setCloudFootprint('');
+    setKnownLicenses('');
+    setHasScreenshots(false);
+    setHasDocs(false);
+    setPastedLink('');
   };
 
   const handleReset = () => {
@@ -134,8 +171,23 @@ export function CustomerBriefSection() {
     setTimeline('');
     setCompetitors([]);
     setNeedsMost([]);
+    setPainPoints('');
+    setApplicationLandscape('');
+    setCloudFootprint('');
+    setKnownLicenses('');
+    setHasScreenshots(false);
+    setHasDocs(false);
+    setPastedLink('');
     setOutput(null);
     setContextOpen(false);
+  };
+
+  const getCaptureIcon = (category: CaptureAction['category']) => {
+    switch (category) {
+      case 'seller': return <Target className="w-3 h-3 text-primary" />;
+      case 'upload': return <Upload className="w-3 h-3 text-blue-500" />;
+      case 'public': return <Globe className="w-3 h-3 text-green-600" />;
+    }
   };
 
   return (
@@ -325,6 +377,136 @@ export function CustomerBriefSection() {
                     </div>
                   </div>
 
+                  {/* Enhanced Signals Section */}
+                  <div className="pt-3 border-t border-border/50">
+                    <p className="text-xs font-medium text-muted-foreground mb-3 flex items-center gap-1.5">
+                      <TrendingUp className="w-3 h-3" />
+                      Signal Quality (improves recommendations)
+                    </p>
+                    
+                    {/* Row: App Landscape, Cloud Footprint, Licenses */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                      <div>
+                        <label className="text-xs text-muted-foreground mb-1.5 block">
+                          Application Landscape
+                        </label>
+                        <Select value={applicationLandscape} onValueChange={setApplicationLandscape}>
+                          <SelectTrigger className="w-full h-9 bg-background border-border text-sm">
+                            <SelectValue placeholder="Select..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-popover border border-border z-50">
+                            {APPLICATION_LANDSCAPES.map((a) => (
+                              <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground mb-1.5 block">
+                          Cloud Footprint
+                        </label>
+                        <Select value={cloudFootprint} onValueChange={setCloudFootprint}>
+                          <SelectTrigger className="w-full h-9 bg-background border-border text-sm">
+                            <SelectValue placeholder="Select..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-popover border border-border z-50">
+                            {CLOUD_FOOTPRINTS.map((c) => (
+                              <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground mb-1.5 block">
+                          Known Licenses
+                        </label>
+                        <Select value={knownLicenses} onValueChange={setKnownLicenses}>
+                          <SelectTrigger className="w-full h-9 bg-background border-border text-sm">
+                            <SelectValue placeholder="Select..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-popover border border-border z-50">
+                            {KNOWN_LICENSES.map((l) => (
+                              <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {/* Pain Points */}
+                    <div className="mb-3">
+                      <label className="text-xs text-muted-foreground mb-1.5 block">
+                        Known Pain Points / Challenges
+                      </label>
+                      <input
+                        type="text"
+                        value={painPoints}
+                        onChange={(e) => setPainPoints(e.target.value)}
+                        placeholder="e.g., Legacy system migration, cost reduction, security concerns..."
+                        className={cn(
+                          "w-full h-9 px-3 rounded-lg text-sm",
+                          "bg-background border border-border",
+                          "placeholder:text-muted-foreground/60",
+                          "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30"
+                        )}
+                      />
+                    </div>
+
+                    {/* Evidence Uploads */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setHasScreenshots(!hasScreenshots)}
+                          className={cn(
+                            "w-4 h-4 rounded border flex items-center justify-center",
+                            hasScreenshots 
+                              ? "bg-primary border-primary" 
+                              : "bg-background border-border"
+                          )}
+                        >
+                          {hasScreenshots && <CheckCircle2 className="w-3 h-3 text-primary-foreground" />}
+                        </button>
+                        <span className="text-xs text-foreground">LinkedIn/Website screenshots</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setHasDocs(!hasDocs)}
+                          className={cn(
+                            "w-4 h-4 rounded border flex items-center justify-center",
+                            hasDocs 
+                              ? "bg-primary border-primary" 
+                              : "bg-background border-border"
+                          )}
+                        >
+                          {hasDocs && <CheckCircle2 className="w-3 h-3 text-primary-foreground" />}
+                        </button>
+                        <span className="text-xs text-foreground">Customer deck / meeting notes</span>
+                      </div>
+                    </div>
+
+                    {/* Paste Link */}
+                    <div className="mt-3">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <Link2 className="w-3 h-3 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">Customer website link (for signal scan)</span>
+                      </div>
+                      <input
+                        type="text"
+                        value={pastedLink}
+                        onChange={(e) => setPastedLink(e.target.value)}
+                        placeholder="https://..."
+                        className={cn(
+                          "w-full h-9 px-3 rounded-lg text-sm",
+                          "bg-background border border-border",
+                          "placeholder:text-muted-foreground/60",
+                          "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30"
+                        )}
+                      />
+                    </div>
+                  </div>
+
                   {/* What do you need most? */}
                   <div>
                     <label className="text-xs font-medium text-muted-foreground mb-2 block">
@@ -368,12 +550,90 @@ export function CustomerBriefSection() {
         {/* Output Section */}
         {output && (
           <div className="p-5 space-y-5">
-            {/* Top Recommendations */}
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="w-4 h-4 text-primary" />
-                <h3 className="text-sm font-semibold text-foreground">Recommended Microsoft Support</h3>
+            {/* Signal Coverage Block */}
+            <div className="rounded-xl border border-border bg-muted/10 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Target className="w-4 h-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">Signal Coverage</h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={cn(
+                    "text-xs font-medium px-2 py-0.5 rounded-full",
+                    output.signalCoverage.confidence === 'High' && "bg-green-100 text-green-700",
+                    output.signalCoverage.confidence === 'Medium' && "bg-amber-100 text-amber-700",
+                    output.signalCoverage.confidence === 'Low' && "bg-red-100 text-red-700"
+                  )}>
+                    {output.signalCoverage.confidence} confidence
+                  </span>
+                </div>
               </div>
+              
+              <div className="flex items-center gap-4 mb-4">
+                <div className="flex-1">
+                  <Progress value={output.signalCoverage.score} className="h-2" />
+                </div>
+                <span className="text-lg font-semibold text-foreground w-16 text-right">
+                  {output.signalCoverage.score}/100
+                </span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="p-2 rounded-lg bg-background/50">
+                  <p className="text-xs text-muted-foreground">Seller Known</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {output.signalCoverage.breakdown.sellerKnown.score}/{output.signalCoverage.breakdown.sellerKnown.max}
+                  </p>
+                </div>
+                <div className="p-2 rounded-lg bg-background/50">
+                  <p className="text-xs text-muted-foreground">Evidence</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {output.signalCoverage.breakdown.evidenceUploads.score}/{output.signalCoverage.breakdown.evidenceUploads.max}
+                  </p>
+                </div>
+                <div className="p-2 rounded-lg bg-background/50">
+                  <p className="text-xs text-muted-foreground">Public Signals</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {output.signalCoverage.breakdown.publicSignals.score}/{output.signalCoverage.breakdown.publicSignals.max}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Capture Plan */}
+            {output.capturePlan.length > 0 && (
+              <div className="rounded-xl border border-border bg-muted/10 p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <TrendingUp className="w-4 h-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">Capture Plan</h3>
+                  <span className="text-xs text-muted-foreground">(to reach 80+ quickly)</span>
+                </div>
+                <div className="space-y-2">
+                  {output.capturePlan.map((action, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-start gap-3 p-2 rounded-lg bg-background/50"
+                    >
+                      <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
+                        {getCaptureIcon(action.category)}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-foreground">{action.action}</p>
+                        <p className="text-xs text-muted-foreground">{action.timeEstimate}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Top Recommendations with "Current Signals" note */}
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Sparkles className="w-4 h-4 text-primary" />
+                <h3 className="text-sm font-semibold text-foreground">Opportunities based on current signals</h3>
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">This is based on current signals only.</p>
               <div className="space-y-2">
                 {output.topRecommendations.map((rec, idx) => (
                   <div
@@ -396,6 +656,24 @@ export function CustomerBriefSection() {
                 ))}
               </div>
             </div>
+
+            {/* Conditional Refinements */}
+            {output.conditionalRefinements.length > 0 && (
+              <div className="rounded-xl border border-amber-200/50 bg-amber-50/30 p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Lightbulb className="w-4 h-4 text-amber-600" />
+                  <h3 className="text-sm font-semibold text-foreground">If we had more signal, we'd refine like this</h3>
+                </div>
+                <div className="space-y-3">
+                  {output.conditionalRefinements.map((ref, idx) => (
+                    <div key={idx} className="text-sm">
+                      <p className="text-foreground font-medium">{ref.condition}:</p>
+                      <p className="text-muted-foreground ml-3">{ref.refinement}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Two Column Layout for Programs & Funding */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
