@@ -9,14 +9,6 @@ export const partnerConfig: SpaceConfig = {
   
   sections: [
     {
-      id: 'partner-toolkit',
-      type: 'partnerToolkit',
-      title: 'Microsoft Partner Toolkit',
-      subtitle: 'Resources and tools to accelerate your Microsoft partnership.',
-      variant: 'primary',
-      enabled: true,
-    },
-    {
       id: 'stories',
       type: 'storiesRow',
       title: 'Stories',
@@ -25,12 +17,12 @@ export const partnerConfig: SpaceConfig = {
       enabled: true,
     },
     {
-      id: 'account-prep',
-      type: 'accountPrep',
-      title: 'Account Prep',
-      subtitle: 'Generate a meeting-ready prep pack',
+      id: 'customer-brief',
+      type: 'customerBrief',
+      title: 'Customer Brief',
+      subtitle: 'Enter your deal context — get the right programs, funding, assets, and steps.',
       variant: 'primary',
-      enabled: false, // Partners use different prep flow
+      enabled: true,
     },
     {
       id: 'briefings',
@@ -68,8 +60,8 @@ export const partnerConfig: SpaceConfig = {
     headerSubtitle: 'Partner Sales Readiness',
     storiesTitle: 'Stories',
     storiesSubtitle: 'Product updates, competitive insights, and thought leadership.',
-    accountPrepTitle: 'Account Prep',
-    accountPrepSubtitle: 'Prepare for customer conversations',
+    accountPrepTitle: 'Customer Brief',
+    accountPrepSubtitle: 'Enter your deal context — get the right programs, funding, assets, and steps.',
     briefingsTitle: 'Briefings',
     briefingsSubtitle: 'Partner-ready insights and talking points.',
     growthTitle: 'Enablement',
@@ -79,13 +71,13 @@ export const partnerConfig: SpaceConfig = {
   
   features: {
     stories: true,
-    accountPrep: false, // Disabled for partners
+    accountPrep: false, // Partners use Customer Brief instead
     weekNavigator: true,
     jumpNav: true,
     reputation: false, // Hidden for partners
     events: false, // Hidden for partners
     skillOfWeek: true,
-    partnerToolkit: true, // Partner-only feature
+    customerBrief: true, // Partner-only feature
   },
   
   // Only curated/approved story types

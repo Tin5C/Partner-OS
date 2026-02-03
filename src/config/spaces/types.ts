@@ -10,7 +10,7 @@ export type SectionType =
   | 'growth'
   | 'reputation'
   | 'enablementProgress'
-  | 'partnerToolkit';
+  | 'customerBrief';
 
 export type SectionVariant = 'primary' | 'secondary' | 'tertiary';
 
@@ -49,7 +49,7 @@ export interface SpaceFeatures {
   reputation: boolean;
   events: boolean;
   skillOfWeek: boolean;
-  partnerToolkit?: boolean; // Partner-only feature
+  customerBrief?: boolean; // Partner-only feature
 }
 
 export interface SpaceConfig {

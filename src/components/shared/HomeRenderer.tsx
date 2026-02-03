@@ -20,7 +20,7 @@ import { GrowthPresenceSection } from '@/components/home/GrowthPresenceSection';
 import { EventsPanel } from '@/components/events';
 import { ScorecardModal, SourcesModal } from '@/components/presence';
 import { SkillExecSummaryPanel } from '@/components/skills';
-import { PartnerToolkit } from '@/components/partner';
+import { CustomerBriefSection } from '@/components/partner/CustomerBriefSection';
 import { usePresenceSources } from '@/hooks/usePresenceSources';
 import { PackContent } from '@/config/contentModel';
 import { SectionConfig } from '@/config/spaces';
@@ -253,9 +253,9 @@ export function HomeRenderer() {
           />
         );
 
-      case 'partnerToolkit':
-        return spaceConfig.features.partnerToolkit ? (
-          <PartnerToolkit key={section.id} />
+      case 'customerBrief':
+        return spaceConfig.features.customerBrief ? (
+          <CustomerBriefSection key={section.id} />
         ) : null;
 
       default:
