@@ -9,7 +9,8 @@ export type SectionType =
   | 'packGrid'
   | 'growth'
   | 'reputation'
-  | 'enablementProgress';
+  | 'enablementProgress'
+  | 'partnerToolkit';
 
 export type SectionVariant = 'primary' | 'secondary' | 'tertiary';
 
@@ -48,6 +49,7 @@ export interface SpaceFeatures {
   reputation: boolean;
   events: boolean;
   skillOfWeek: boolean;
+  partnerToolkit?: boolean; // Partner-only feature
 }
 
 export interface SpaceConfig {
