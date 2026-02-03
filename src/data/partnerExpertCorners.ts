@@ -1,23 +1,49 @@
 // Partner-only Expert Corners data
-// Video-first expert episodes (8–45 minutes)
+// Includes synthetic doc explainer episodes (8–45 minutes)
+
+export type EpisodeType = 'humanExpert' | 'syntheticDocExplainer';
+export type GenerationStatus = 'ready' | 'generating' | 'failed';
+export type ConfidenceLevel = 'Low' | 'Medium' | 'High';
+
+// Structured exec summary for synthetic explainers
+export interface SyntheticExecSummary {
+  whatThisCovers: string[];
+  whyItMattersForPartners: string[];
+  whenToUseInDeal: string[];
+  partnerTalkTrack: string[];
+  commonObjections?: { objection: string; response: string }[];
+  nextBestActions: string[];
+}
 
 export interface PartnerExpertEpisode {
   id: string;
   title: string;
-  expertName: string;
-  expertRole: string;
   vendorTag: string;
   durationMinutes: number;
   coverImageUrl: string;
   videoUrl: string;
   publishedAt: string;
   chapters?: { time: number; label: string }[];
+  progress?: number; // 0-100, local state for MVP
+  
+  // Episode type - determines UI treatment
+  type?: EpisodeType; // defaults to 'humanExpert' if not specified
+  
+  // Human expert fields (legacy)
+  expertName?: string;
+  expertRole?: string;
   readingSummary?: {
     tldr: string;
     keyPoints: string[];
     actionItems: string[];
   };
-  progress?: number; // 0-100, local state for MVP
+  
+  // Synthetic doc explainer fields
+  topicTags?: string[];
+  sourceReferences?: string[];
+  generationStatus?: GenerationStatus;
+  confidenceLevel?: ConfidenceLevel;
+  execSummary?: SyntheticExecSummary;
 }
 
 export interface PartnerExpertCorner {
@@ -40,8 +66,301 @@ export function getAllPartnerExpertEpisodes(): PartnerExpertEpisode[] {
     .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 }
 
-// Mock data for MVP
+// Check if episode is synthetic explainer
+export function isSyntheticExplainer(episode: PartnerExpertEpisode): boolean {
+  return episode.type === 'syntheticDocExplainer';
+}
+
+// Mock data for MVP - includes both human expert and synthetic episodes
 export const partnerExpertCorners: PartnerExpertCorner[] = [
+  {
+    id: 'synthetic-explainers',
+    title: 'Synthetic Explainers',
+    description: 'AI-generated explainer videos from vendor documentation',
+    episodes: [
+      {
+        id: 'ai-governance-purview',
+        type: 'syntheticDocExplainer',
+        title: 'AI Governance with Microsoft Purview',
+        vendorTag: 'Microsoft',
+        topicTags: ['AI Governance', 'Compliance', 'Data Protection'],
+        durationMinutes: 34,
+        coverImageUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&h=450&fit=crop',
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+        publishedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+        generationStatus: 'ready',
+        confidenceLevel: 'High',
+        sourceReferences: [
+          'https://learn.microsoft.com/en-us/purview/ai-microsoft-purview',
+          'https://learn.microsoft.com/en-us/purview/data-governance',
+          'https://learn.microsoft.com/en-us/azure/ai-services/responsible-use-of-ai-overview',
+        ],
+        chapters: [
+          { time: 0, label: 'Introduction to AI Governance' },
+          { time: 240, label: 'Purview Capabilities Overview' },
+          { time: 600, label: 'Data Classification & Labeling' },
+          { time: 1020, label: 'AI Controls & Policies' },
+          { time: 1500, label: 'Implementation Roadmap' },
+        ],
+        execSummary: {
+          whatThisCovers: [
+            'How Microsoft Purview provides governance controls for AI workloads',
+            'Data classification, sensitivity labeling, and access policies for AI-ready data',
+            'Compliance frameworks and audit capabilities for AI deployments',
+          ],
+          whyItMattersForPartners: [
+            'Every enterprise AI project faces governance blockers — Purview directly addresses these',
+            'Positions partners as trusted advisors who understand compliance requirements',
+          ],
+          whenToUseInDeal: [
+            'When customers express concerns about AI safety, data leakage, or regulatory compliance',
+            'During discovery when data governance is immature or undefined',
+          ],
+          partnerTalkTrack: [
+            '"Before we deploy any AI, we need to ensure your data is classified and governed — that\'s where Purview comes in."',
+            '"Purview gives you visibility into what data AI can access and audit trails for compliance."',
+            '"We typically see governance as the unlock for faster AI adoption, not a blocker."',
+          ],
+          commonObjections: [
+            {
+              objection: 'We already have a data governance tool',
+              response: 'Purview integrates with existing tools and adds AI-specific controls like prompt monitoring and data boundary enforcement.',
+            },
+            {
+              objection: 'This seems like more overhead',
+              response: 'It\'s actually the opposite — proper governance reduces friction later by preventing data access issues and compliance violations.',
+            },
+          ],
+          nextBestActions: [
+            'Run a data readiness assessment using Purview\'s free scanner',
+            'Identify top 3 datasets needed for the customer\'s priority AI use case',
+            'Schedule a Purview demo focused on AI governance capabilities',
+          ],
+        },
+      },
+      {
+        id: 'azure-ai-foundry',
+        type: 'syntheticDocExplainer',
+        title: 'AI Innovation at Scale with Azure AI Foundry',
+        vendorTag: 'Microsoft',
+        topicTags: ['Azure AI', 'MLOps', 'Partner Accelerators'],
+        durationMinutes: 28,
+        coverImageUrl: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=450&fit=crop',
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+        publishedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        generationStatus: 'ready',
+        confidenceLevel: 'High',
+        sourceReferences: [
+          'https://learn.microsoft.com/en-us/azure/ai-studio/',
+          'https://learn.microsoft.com/en-us/azure/machine-learning/',
+          'https://azure.microsoft.com/en-us/products/ai-services/',
+        ],
+        chapters: [
+          { time: 0, label: 'Azure AI Foundry Overview' },
+          { time: 180, label: 'From Experimentation to Production' },
+          { time: 480, label: 'Partner Accelerators & Templates' },
+          { time: 900, label: 'Integration Patterns' },
+          { time: 1320, label: 'Next Steps' },
+        ],
+        execSummary: {
+          whatThisCovers: [
+            'Azure AI Foundry as the unified platform for AI development and deployment',
+            'Transition path from experimentation (notebooks, prompts) to production (APIs, monitoring)',
+            'Partner-specific accelerators and pre-built templates for common scenarios',
+          ],
+          whyItMattersForPartners: [
+            'Foundry consolidates previously fragmented AI services — simpler story to tell',
+            'Partner accelerators reduce time-to-value and increase project success rates',
+          ],
+          whenToUseInDeal: [
+            'When customers want to move beyond POCs to production AI',
+            'When discussing AI strategy or platform consolidation',
+          ],
+          partnerTalkTrack: [
+            '"Azure AI Foundry is where your team builds, tests, and deploys AI — all in one place."',
+            '"We have accelerators that cut 60% of the typical setup time for common patterns like RAG and agents."',
+            '"The beauty is you can start with prompts and notebooks, then graduate to production APIs without switching platforms."',
+          ],
+          nextBestActions: [
+            'Demo Azure AI Foundry with a customer-relevant use case',
+            'Identify which partner accelerator applies to the customer\'s priority scenario',
+            'Propose a 2-week pilot using Foundry for their top AI use case',
+          ],
+        },
+      },
+      {
+        id: 'enterprise-copilot-security',
+        type: 'syntheticDocExplainer',
+        title: 'Enterprise Copilot: Security, Boundaries, Adoption',
+        vendorTag: 'Microsoft',
+        topicTags: ['Copilot', 'Security', 'IT Governance'],
+        durationMinutes: 38,
+        coverImageUrl: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&h=450&fit=crop',
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+        publishedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+        generationStatus: 'ready',
+        confidenceLevel: 'High',
+        sourceReferences: [
+          'https://learn.microsoft.com/en-us/copilot/microsoft-365/microsoft-365-copilot-overview',
+          'https://learn.microsoft.com/en-us/copilot/microsoft-365/microsoft-365-copilot-privacy',
+          'https://learn.microsoft.com/en-us/entra/identity/',
+        ],
+        chapters: [
+          { time: 0, label: 'Enterprise Copilot Landscape' },
+          { time: 300, label: 'Security Architecture' },
+          { time: 720, label: 'Data Boundaries & Access Controls' },
+          { time: 1200, label: 'IT Governance Patterns' },
+          { time: 1680, label: 'Adoption Roadmap' },
+        ],
+        execSummary: {
+          whatThisCovers: [
+            'Security architecture and data boundaries for Microsoft 365 Copilot',
+            'IT governance patterns including access controls, audit, and rollout strategies',
+            'Common adoption blockers and how to address them',
+          ],
+          whyItMattersForPartners: [
+            'Security concerns are the #1 blocker for Copilot adoption — this content directly addresses them',
+            'Partners who can speak to IT/security concerns close deals faster',
+          ],
+          whenToUseInDeal: [
+            'When IT or security stakeholders raise concerns about Copilot accessing sensitive data',
+            'During Copilot readiness assessments or adoption planning',
+          ],
+          partnerTalkTrack: [
+            '"Copilot respects your existing permissions — if a user can\'t see a file, Copilot can\'t either."',
+            '"We recommend starting with a pilot group to validate data boundaries before broader rollout."',
+            '"The biggest risk isn\'t Copilot seeing too much — it\'s existing oversharing that Copilot makes visible."',
+          ],
+          commonObjections: [
+            {
+              objection: 'Copilot might expose sensitive data',
+              response: 'Copilot respects all existing SharePoint permissions and sensitivity labels. We typically run a permission audit first.',
+            },
+            {
+              objection: 'We\'re not sure our org is ready',
+              response: 'That\'s why we start with a readiness assessment — it identifies gaps before any rollout.',
+            },
+          ],
+          nextBestActions: [
+            'Run a SharePoint permission audit to identify oversharing risks',
+            'Identify a pilot group (typically 50-100 users) for controlled rollout',
+            'Schedule a Copilot security deep-dive with the customer\'s IT/security team',
+          ],
+        },
+      },
+      {
+        id: 'responsible-ai-azure',
+        type: 'syntheticDocExplainer',
+        title: 'Responsible AI in Practice on Azure',
+        vendorTag: 'Microsoft',
+        topicTags: ['Responsible AI', 'Ethics', 'Platform Controls'],
+        durationMinutes: 24,
+        coverImageUrl: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800&h=450&fit=crop',
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+        publishedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+        generationStatus: 'ready',
+        confidenceLevel: 'Medium',
+        sourceReferences: [
+          'https://learn.microsoft.com/en-us/azure/ai-services/responsible-use-of-ai-overview',
+          'https://www.microsoft.com/en-us/ai/responsible-ai',
+          'https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/content-filter',
+        ],
+        chapters: [
+          { time: 0, label: 'Responsible AI Principles' },
+          { time: 180, label: 'Azure Platform Controls' },
+          { time: 480, label: 'Content Filtering' },
+          { time: 840, label: 'Transparency & Documentation' },
+          { time: 1140, label: 'Implementation Checklist' },
+        ],
+        execSummary: {
+          whatThisCovers: [
+            'Microsoft\'s Responsible AI principles and how they translate to platform controls',
+            'Content filtering, safety systems, and transparency features in Azure AI services',
+            'Practical implementation checklist for responsible AI deployments',
+          ],
+          whyItMattersForPartners: [
+            'Customers increasingly ask about AI ethics and safety — partners need credible answers',
+            'Responsible AI practices reduce deployment risk and build customer trust',
+          ],
+          whenToUseInDeal: [
+            'When customers ask about AI safety, bias, or ethical considerations',
+            'During procurement or compliance discussions involving AI',
+          ],
+          partnerTalkTrack: [
+            '"Azure AI has built-in content filters that block harmful outputs by default."',
+            '"We follow Microsoft\'s Responsible AI framework, which includes fairness, transparency, and accountability."',
+            '"Every AI deployment we do includes a Responsible AI review as part of our process."',
+          ],
+          nextBestActions: [
+            'Include Responsible AI considerations in your AI proposal template',
+            'Run a Responsible AI workshop for customer stakeholders',
+            'Review Azure AI content filter documentation for customer-specific tuning',
+          ],
+        },
+      },
+      {
+        id: 'data-readiness-ai',
+        type: 'syntheticDocExplainer',
+        title: 'Data Readiness for AI: What Blocks Real Adoption',
+        vendorTag: 'Microsoft',
+        topicTags: ['Data Quality', 'Data Governance', 'AI Readiness'],
+        durationMinutes: 32,
+        coverImageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=450&fit=crop',
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+        publishedAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
+        generationStatus: 'ready',
+        confidenceLevel: 'High',
+        sourceReferences: [
+          'https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/scenarios/data-management/',
+          'https://learn.microsoft.com/en-us/purview/data-catalog',
+          'https://learn.microsoft.com/en-us/fabric/get-started/microsoft-fabric-overview',
+        ],
+        chapters: [
+          { time: 0, label: 'Why Data Readiness Matters' },
+          { time: 240, label: 'Common Data Blockers' },
+          { time: 600, label: 'Data Quality Assessment' },
+          { time: 1020, label: 'Ownership & Governance' },
+          { time: 1440, label: 'Accelerating AI Readiness' },
+        ],
+        execSummary: {
+          whatThisCovers: [
+            'Common data quality, ownership, and governance issues that block AI adoption',
+            'Assessment frameworks for evaluating data readiness',
+            'Practical approaches to accelerating data readiness without boiling the ocean',
+          ],
+          whyItMattersForPartners: [
+            'Data issues cause 70%+ of AI project failures — partners who address this win',
+            'Data readiness engagements often lead to larger AI and data platform deals',
+          ],
+          whenToUseInDeal: [
+            'When customers want to start AI but haven\'t assessed their data estate',
+            'When AI POCs succeed but production stalls due to data issues',
+          ],
+          partnerTalkTrack: [
+            '"Before we build any AI, let\'s understand what data you have and how ready it is."',
+            '"Most AI projects don\'t fail because of the AI — they fail because of the data."',
+            '"We use a data readiness assessment that takes 2 weeks and gives you a clear picture of what needs work."',
+          ],
+          commonObjections: [
+            {
+              objection: 'We already know our data — let\'s just start the AI project',
+              response: 'Great — let\'s validate that quickly. A 1-week assessment can confirm readiness or surface issues early, saving months later.',
+            },
+            {
+              objection: 'This sounds like a long data governance project',
+              response: 'We focus on the specific data needed for your priority AI use case — not a full data transformation.',
+            },
+          ],
+          nextBestActions: [
+            'Propose a 2-week data readiness assessment for their priority AI use case',
+            'Identify the key datasets needed and their current owners',
+            'Use Purview or Fabric to run a quick data profiling scan',
+          ],
+        },
+      },
+    ],
+  },
+  // Legacy human expert episodes (kept for backwards compatibility)
   {
     id: 'azure-ai-deep-dives',
     title: 'Azure AI Deep Dives',
@@ -49,6 +368,7 @@ export const partnerExpertCorners: PartnerExpertCorner[] = [
     episodes: [
       {
         id: 'azure-openai-rag',
+        type: 'humanExpert',
         title: 'Building Production RAG with Azure OpenAI',
         expertName: 'Sarah Mitchell',
         expertRole: 'Principal Cloud Solution Architect',
@@ -56,7 +376,7 @@ export const partnerExpertCorners: PartnerExpertCorner[] = [
         durationMinutes: 32,
         coverImageUrl: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=450&fit=crop',
         videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-        publishedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        publishedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
         chapters: [
           { time: 0, label: 'Introduction' },
           { time: 180, label: 'RAG Architecture Overview' },
@@ -79,107 +399,6 @@ export const partnerExpertCorners: PartnerExpertCorner[] = [
           ],
         },
         progress: 45,
-      },
-      {
-        id: 'copilot-studio-workshop',
-        title: 'Copilot Studio: From Zero to Custom Copilot',
-        expertName: 'James Park',
-        expertRole: 'Senior Technical Specialist',
-        vendorTag: 'Microsoft',
-        durationMinutes: 28,
-        coverImageUrl: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&h=450&fit=crop',
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-        publishedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        readingSummary: {
-          tldr: 'Step-by-step guide to building custom copilots with Copilot Studio for enterprise scenarios.',
-          keyPoints: [
-            'Copilot Studio enables no-code/low-code AI assistant creation',
-            'Connect to enterprise data sources securely',
-            'Customize topics and conversation flows',
-          ],
-          actionItems: [
-            'Identify 3 use cases for custom copilots in your customer accounts',
-            'Schedule a Copilot Studio demo for interested prospects',
-          ],
-        },
-      },
-      {
-        id: 'azure-fabric-analytics',
-        title: 'Microsoft Fabric for Modern Analytics',
-        expertName: 'Elena Rodriguez',
-        expertRole: 'Data & AI Specialist',
-        vendorTag: 'Microsoft',
-        durationMinutes: 38,
-        coverImageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=450&fit=crop',
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-        publishedAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-    ],
-  },
-  {
-    id: 'partner-sales-masterclass',
-    title: 'Partner Sales Masterclass',
-    description: 'Advanced selling techniques for Microsoft partners',
-    episodes: [
-      {
-        id: 'enterprise-discovery',
-        title: 'Enterprise Discovery: Questions That Win Deals',
-        expertName: 'Michael Chen',
-        expertRole: 'Partner Success Manager',
-        vendorTag: 'Microsoft',
-        durationMinutes: 24,
-        coverImageUrl: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=450&fit=crop',
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-        publishedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-        progress: 80,
-        readingSummary: {
-          tldr: 'Master the discovery questions that uncover enterprise pain points and accelerate deal cycles.',
-          keyPoints: [
-            'Start with business outcomes, not technology features',
-            'Use the MEDDIC framework for deal qualification',
-            'Document buying committee dynamics early',
-          ],
-          actionItems: [
-            'Practice the top 5 discovery questions in your next call',
-            'Map stakeholders for your top 3 opportunities',
-          ],
-        },
-      },
-      {
-        id: 'co-sell-motion',
-        title: 'Maximizing Co-Sell Opportunities',
-        expertName: 'Amanda Foster',
-        expertRole: 'Partner Development Manager',
-        vendorTag: 'Microsoft',
-        durationMinutes: 18,
-        coverImageUrl: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800&h=450&fit=crop',
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
-        publishedAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-    ],
-  },
-  {
-    id: 'cloud-architecture',
-    title: 'Cloud Architecture Patterns',
-    description: 'Reference architectures and design patterns',
-    episodes: [
-      {
-        id: 'zero-trust-architecture',
-        title: 'Implementing Zero Trust on Azure',
-        expertName: 'David Kim',
-        expertRole: 'Security Architecture Lead',
-        vendorTag: 'Microsoft',
-        durationMinutes: 42,
-        coverImageUrl: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&h=450&fit=crop',
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
-        publishedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-        chapters: [
-          { time: 0, label: 'Zero Trust Principles' },
-          { time: 300, label: 'Identity & Access' },
-          { time: 720, label: 'Network Segmentation' },
-          { time: 1200, label: 'Data Protection' },
-          { time: 1800, label: 'Implementation Roadmap' },
-        ],
       },
     ],
   },
