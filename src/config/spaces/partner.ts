@@ -39,8 +39,8 @@ export const partnerConfig: SpaceConfig = {
     {
       id: 'expert-corners',
       type: 'expertCorners',
-      title: 'Expert Corners',
-      subtitle: 'Deep-dive video sessions from vendor experts.',
+      title: 'Solution deep dives tailored to you',
+      subtitle: 'Synthetic explainers based on vendor documentation',
       variant: 'primary',
       enabled: true,
     },
