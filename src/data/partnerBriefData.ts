@@ -35,6 +35,11 @@ export interface EvidenceState {
   extractedSignals: ExtractedSignals;
 }
 
+// ============= Brief Scope & Input Mode Types =============
+
+export type BriefScope = 'entire-account' | 'specific-area';
+export type InputMode = 'guided' | 'brainstorm';
+
 // ============= Brief Input/Output Types =============
 
 export interface PartnerBriefInput {
@@ -59,6 +64,11 @@ export interface PartnerBriefInput {
     hiringScanned?: boolean;
     newsScanned?: boolean;
   };
+  // NEW: Scope & Input Mode
+  briefScope: BriefScope;
+  specificArea?: string;
+  inputMode: InputMode;
+  brainstormNotes?: string;
 }
 
 // Signal coverage for the brief
@@ -85,6 +95,14 @@ export interface ConditionalRefinement {
   refinement: string;
 }
 
+// AI Opportunity area for structured output
+export interface AIOpportunity {
+  name: string;
+  whyRelevant: string;
+  partnerAction: string;
+  effortVsImpact: 'Low' | 'Medium' | 'High';
+}
+
 export interface PartnerBriefOutput {
   // Signal coverage (new)
   signalCoverage: SignalCoverage;
@@ -92,6 +110,12 @@ export interface PartnerBriefOutput {
   conditionalRefinements: ConditionalRefinement[];
   // Extracted signals for display/editing
   extractedSignals: ExtractedSignals;
+  // Scope & Mode metadata for display
+  briefScope: BriefScope;
+  specificArea?: string;
+  inputMode: InputMode;
+  // AI Opportunity Map (partner view)
+  aiOpportunities: AIOpportunity[];
   
   topRecommendations: Array<{
     title: string;
@@ -567,6 +591,97 @@ function generateConditionalRefinements(input: PartnerBriefInput): ConditionalRe
   return refinements.slice(0, 4);
 }
 
+// Generate AI Opportunity Map based on signals and scope
+function generateAIOpportunities(input: PartnerBriefInput, extractedSignals: ExtractedSignals): AIOpportunity[] {
+  const opportunities: AIOpportunity[] = [];
+  const scopeFilter = input.briefScope === 'specific-area' && input.specificArea 
+    ? input.specificArea.toLowerCase() 
+    : null;
+
+  // Motion-based opportunities
+  if (input.dealMotion === 'ai-copilot') {
+    opportunities.push({
+      name: 'Copilot for M365 Deployment',
+      whyRelevant: 'Direct alignment with AI/Copilot motion; high executive interest.',
+      partnerAction: 'Lead Copilot readiness assessment + pilot deployment',
+      effortVsImpact: 'Medium',
+    });
+  }
+
+  if (input.dealMotion === 'migration' || input.dealMotion === 'data-platform') {
+    opportunities.push({
+      name: 'Azure Data & Analytics Modernization',
+      whyRelevant: 'Migration motions create foundation for AI-ready data estate.',
+      partnerAction: 'Propose Azure Synapse/Fabric migration + AI enrichment layer',
+      effortVsImpact: 'High',
+    });
+  }
+
+  if (input.dealMotion === 'security') {
+    opportunities.push({
+      name: 'Microsoft Security Suite Adoption',
+      whyRelevant: 'Security focus aligns with Defender/Sentinel attach.',
+      partnerAction: 'Conduct security posture assessment + XDR roadmap',
+      effortVsImpact: 'Medium',
+    });
+  }
+
+  // Signal-based opportunities from extracted signals
+  const hasApps = extractedSignals.applications.length > 0;
+  const hasSAP = extractedSignals.applications.some(a => a.label.toLowerCase().includes('sap'));
+  const hasSalesforce = extractedSignals.applications.some(a => a.label.toLowerCase().includes('salesforce'));
+  const hasHybrid = extractedSignals.architecture.some(a => a.label.toLowerCase().includes('hybrid'));
+
+  if (hasSAP) {
+    opportunities.push({
+      name: 'SAP on Azure Modernization',
+      whyRelevant: 'SAP detected in application landscape; prime target for RISE with SAP on Azure.',
+      partnerAction: 'Propose SAP migration assessment + Azure infrastructure sizing',
+      effortVsImpact: 'High',
+    });
+  }
+
+  if (hasSalesforce && !opportunities.some(o => o.name.includes('Dynamics'))) {
+    opportunities.push({
+      name: 'Dynamics 365 Integration Strategy',
+      whyRelevant: 'Salesforce presence suggests CRM modernization or integration opportunity.',
+      partnerAction: 'Evaluate Dynamics migration or integration patterns',
+      effortVsImpact: 'Medium',
+    });
+  }
+
+  if (hasHybrid) {
+    opportunities.push({
+      name: 'Azure Arc Hybrid Management',
+      whyRelevant: 'Hybrid infrastructure pattern detected; unified management opportunity.',
+      partnerAction: 'Deploy Azure Arc for hybrid estate governance',
+      effortVsImpact: 'Low',
+    });
+  }
+
+  // General opportunities if list is short
+  if (opportunities.length < 2) {
+    opportunities.push({
+      name: 'AI Readiness Assessment',
+      whyRelevant: 'General AI opportunity applicable across most accounts.',
+      partnerAction: 'Conduct AI maturity assessment + identify quick wins',
+      effortVsImpact: 'Low',
+    });
+  }
+
+  // Filter by scope if specific area
+  if (scopeFilter) {
+    const filtered = opportunities.filter(o => 
+      o.name.toLowerCase().includes(scopeFilter) || 
+      o.whyRelevant.toLowerCase().includes(scopeFilter) ||
+      o.partnerAction.toLowerCase().includes(scopeFilter)
+    );
+    return filtered.length > 0 ? filtered.slice(0, 4) : opportunities.slice(0, 2);
+  }
+
+  return opportunities.slice(0, 4);
+}
+
 // Recommendation engine (MVP rules-based)
 export function generatePartnerBrief(input: PartnerBriefInput): PartnerBriefOutput {
   const recommendations: PartnerBriefOutput['topRecommendations'] = [];
@@ -584,6 +699,7 @@ export function generatePartnerBrief(input: PartnerBriefInput): PartnerBriefOutp
   const signalCoverage = calculateSignalCoverage(input, extractedSignals);
   const capturePlan = generateCapturePlan(input, extractedSignals);
   const conditionalRefinements = generateConditionalRefinements(input);
+  const aiOpportunities = generateAIOpportunities(input, extractedSignals);
 
   // Determine co-sell recommendation
   const isLargeDeal = input.dealSizeBand === '250k-1m' || input.dealSizeBand === 'over-1m';
@@ -730,6 +846,10 @@ export function generatePartnerBrief(input: PartnerBriefInput): PartnerBriefOutp
     capturePlan,
     conditionalRefinements,
     extractedSignals,
+    briefScope: input.briefScope,
+    specificArea: input.specificArea,
+    inputMode: input.inputMode,
+    aiOpportunities,
     topRecommendations: recommendations.slice(0, 3),
     programs: {
       coSell: {

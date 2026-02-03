@@ -117,6 +117,9 @@ export function PartnerBriefForm({
       competitors: competitors.length > 0 ? competitors : undefined,
       needsMost,
       evidence: pastedLink ? { uploads: [], links: [{ id: '1', url: pastedLink, type: 'website' }], extractedSignals: { applications: [], architecture: [], licenses: [] } } : undefined,
+      // Default scope and mode for form-based input
+      briefScope: 'entire-account',
+      inputMode: 'guided',
     };
 
     onSubmit(data);
