@@ -10,13 +10,55 @@ export interface PartnerBriefInput {
   timeline?: string;
   competitors?: string[];
   needsMost: string[];
+  // Enhanced signal tracking
+  painPoints?: string;
+  applicationLandscape?: string;
+  cloudFootprint?: string;
+  knownLicenses?: string;
   attachments?: {
     files?: File[];
     links?: string[];
+    hasScreenshots?: boolean;
+    hasDocs?: boolean;
+  };
+  // Public signal flags (placeholder for future)
+  publicSignals?: {
+    websiteScanned?: boolean;
+    hiringScanned?: boolean;
+    newsScanned?: boolean;
   };
 }
 
+// Signal coverage for the brief
+export interface SignalCoverage {
+  score: number; // 0-100
+  confidence: 'Low' | 'Medium' | 'High';
+  breakdown: {
+    sellerKnown: { score: number; max: number; items: string[] };
+    evidenceUploads: { score: number; max: number; items: string[] };
+    publicSignals: { score: number; max: number; items: string[] };
+  };
+}
+
+// Capture plan item
+export interface CaptureAction {
+  action: string;
+  category: 'seller' | 'upload' | 'public';
+  timeEstimate: string;
+}
+
+// Conditional refinement
+export interface ConditionalRefinement {
+  condition: string;
+  refinement: string;
+}
+
 export interface PartnerBriefOutput {
+  // Signal coverage (new)
+  signalCoverage: SignalCoverage;
+  capturePlan: CaptureAction[];
+  conditionalRefinements: ConditionalRefinement[];
+  
   topRecommendations: Array<{
     title: string;
     description: string;
@@ -117,6 +159,32 @@ export const NEEDS_MOST = [
   { value: 'executive', label: 'Executive sponsor' },
 ];
 
+export const APPLICATION_LANDSCAPES = [
+  { value: 'sap', label: 'SAP / ERP' },
+  { value: 'salesforce', label: 'Salesforce / CRM' },
+  { value: 'legacy-custom', label: 'Legacy / Custom apps' },
+  { value: 'modern-cloud', label: 'Modern cloud-native' },
+  { value: 'mixed', label: 'Mixed environment' },
+];
+
+export const CLOUD_FOOTPRINTS = [
+  { value: 'azure-primary', label: 'Azure primary' },
+  { value: 'aws-primary', label: 'AWS primary' },
+  { value: 'gcp-primary', label: 'GCP primary' },
+  { value: 'multi-cloud', label: 'Multi-cloud' },
+  { value: 'on-prem', label: 'On-premises' },
+  { value: 'hybrid', label: 'Hybrid' },
+];
+
+export const KNOWN_LICENSES = [
+  { value: 'm365-e3', label: 'M365 E3' },
+  { value: 'm365-e5', label: 'M365 E5' },
+  { value: 'azure-enterprise', label: 'Azure Enterprise' },
+  { value: 'dynamics', label: 'Dynamics 365' },
+  { value: 'power-platform', label: 'Power Platform' },
+  { value: 'security-suite', label: 'Security Suite' },
+];
+
 // Workshop templates
 const WORKSHOPS: Record<string, { name: string; agenda: string[]; expectedOutputs: string[] }> = {
   'ai-copilot': {
@@ -177,6 +245,180 @@ const WORKSHOPS: Record<string, { name: string; agenda: string[]; expectedOutput
   },
 };
 
+// Calculate signal coverage score
+function calculateSignalCoverage(input: PartnerBriefInput): SignalCoverage {
+  const sellerKnownItems: string[] = [];
+  const evidenceItems: string[] = [];
+  const publicItems: string[] = [];
+
+  // Seller-known inputs (max 40 points)
+  if (input.dealMotion) sellerKnownItems.push('Motion selected');
+  if (input.competitors && input.competitors.length > 0) sellerKnownItems.push('Competitor provided');
+  if (input.painPoints) sellerKnownItems.push('Pain points provided');
+  if (input.applicationLandscape) sellerKnownItems.push('Application landscape');
+  if (input.cloudFootprint) sellerKnownItems.push('Cloud footprint');
+  if (input.knownLicenses) sellerKnownItems.push('Known licenses');
+  
+  const sellerScore = Math.min(40, sellerKnownItems.length * 7);
+
+  // Evidence uploads (max 30 points)
+  if (input.attachments?.hasScreenshots) evidenceItems.push('Screenshots uploaded');
+  if (input.attachments?.hasDocs) evidenceItems.push('Docs/PDF uploaded');
+  if (input.attachments?.links && input.attachments.links.length > 0) evidenceItems.push('Links added');
+  
+  const evidenceScore = Math.min(30, evidenceItems.length * 10);
+
+  // Public signals (max 30 points) - placeholder for future
+  if (input.publicSignals?.websiteScanned) publicItems.push('Website signal');
+  if (input.publicSignals?.hiringScanned) publicItems.push('Hiring signal');
+  if (input.publicSignals?.newsScanned) publicItems.push('News/PR signal');
+  
+  const publicScore = Math.min(30, publicItems.length * 10);
+
+  const totalScore = sellerScore + evidenceScore + publicScore;
+  
+  let confidence: 'Low' | 'Medium' | 'High' = 'Low';
+  if (totalScore >= 70) confidence = 'High';
+  else if (totalScore >= 40) confidence = 'Medium';
+
+  return {
+    score: totalScore,
+    confidence,
+    breakdown: {
+      sellerKnown: { score: sellerScore, max: 40, items: sellerKnownItems },
+      evidenceUploads: { score: evidenceScore, max: 30, items: evidenceItems },
+      publicSignals: { score: publicScore, max: 30, items: publicItems },
+    },
+  };
+}
+
+// Generate capture plan based on missing signals
+function generateCapturePlan(input: PartnerBriefInput): CaptureAction[] {
+  const actions: CaptureAction[] = [];
+
+  // Seller inputs
+  if (!input.painPoints) {
+    actions.push({
+      action: 'Add known pain points or business challenges',
+      category: 'seller',
+      timeEstimate: '2 min',
+    });
+  }
+  if (!input.applicationLandscape) {
+    actions.push({
+      action: 'Select application landscape pattern (SAP, Salesforce, etc.)',
+      category: 'seller',
+      timeEstimate: '1 min',
+    });
+  }
+  if (!input.cloudFootprint) {
+    actions.push({
+      action: 'Indicate current cloud/platform footprint',
+      category: 'seller',
+      timeEstimate: '1 min',
+    });
+  }
+  if (!input.knownLicenses) {
+    actions.push({
+      action: 'Add known Microsoft licenses (M365, Azure, etc.)',
+      category: 'seller',
+      timeEstimate: '1 min',
+    });
+  }
+
+  // Evidence uploads
+  if (!input.attachments?.hasScreenshots) {
+    actions.push({
+      action: 'Upload 2 LinkedIn screenshots (About + Solutions page)',
+      category: 'upload',
+      timeEstimate: '3 min',
+    });
+  }
+  if (!input.attachments?.hasDocs) {
+    actions.push({
+      action: 'Add 1 customer deck or meeting notes',
+      category: 'upload',
+      timeEstimate: '2 min',
+    });
+  }
+
+  // Public signals
+  if (!input.publicSignals?.websiteScanned) {
+    actions.push({
+      action: 'Paste link to customer website (for signal scan)',
+      category: 'public',
+      timeEstimate: '1 min',
+    });
+  }
+  if (!input.publicSignals?.hiringScanned) {
+    actions.push({
+      action: 'Paste link to customer careers page (for hiring signals)',
+      category: 'public',
+      timeEstimate: '1 min',
+    });
+  }
+
+  return actions.slice(0, 6);
+}
+
+// Generate conditional refinements based on context
+function generateConditionalRefinements(input: PartnerBriefInput): ConditionalRefinement[] {
+  const refinements: ConditionalRefinement[] = [];
+
+  // License-based refinements
+  if (!input.knownLicenses) {
+    refinements.push({
+      condition: 'If we confirm M365 + security licensing',
+      refinement: "We'd evaluate Copilot readiness + Defender/Sentinel attach opportunities.",
+    });
+  }
+
+  // Application landscape refinements
+  if (!input.applicationLandscape) {
+    refinements.push({
+      condition: 'If app landscape includes SAP',
+      refinement: "We'd prioritize SAP on Azure modernization + reference cases.",
+    });
+    refinements.push({
+      condition: 'If Salesforce is primary CRM',
+      refinement: "We'd explore Dynamics migration path or integration strategy.",
+    });
+  }
+
+  // Cloud footprint refinements
+  if (!input.cloudFootprint) {
+    refinements.push({
+      condition: 'If AWS is current primary cloud',
+      refinement: "We'd focus on Azure competitive positioning + migration incentives.",
+    });
+  }
+
+  // Hiring-based refinements
+  if (!input.publicSignals?.hiringScanned) {
+    refinements.push({
+      condition: 'If hiring indicates data engineering growth',
+      refinement: "We'd push data foundation + AI readiness workshop.",
+    });
+  }
+
+  // Deal motion specific
+  if (input.dealMotion === 'ai-copilot') {
+    refinements.push({
+      condition: 'If M365 usage data is available',
+      refinement: "We'd provide personalized Copilot ROI projection by department.",
+    });
+  }
+
+  if (input.dealMotion === 'security') {
+    refinements.push({
+      condition: 'If current security stack is documented',
+      refinement: "We'd map replacement/integration path for Microsoft Security suite.",
+    });
+  }
+
+  return refinements.slice(0, 4);
+}
+
 // Recommendation engine (MVP rules-based)
 export function generatePartnerBrief(input: PartnerBriefInput): PartnerBriefOutput {
   const recommendations: PartnerBriefOutput['topRecommendations'] = [];
@@ -186,6 +428,11 @@ export function generatePartnerBrief(input: PartnerBriefInput): PartnerBriefOutp
   const assets: PartnerBriefOutput['assets'] = [];
   const nextSevenDays: string[] = [];
   const evidenceNeeded: string[] = [];
+
+  // Calculate signal coverage
+  const signalCoverage = calculateSignalCoverage(input);
+  const capturePlan = generateCapturePlan(input);
+  const conditionalRefinements = generateConditionalRefinements(input);
 
   // Determine co-sell recommendation
   const isLargeDeal = input.dealSizeBand === '250k-1m' || input.dealSizeBand === 'over-1m';
@@ -328,6 +575,9 @@ export function generatePartnerBrief(input: PartnerBriefInput): PartnerBriefOutp
   nextSevenDays.push('Review recommended assets and customize pitch');
 
   return {
+    signalCoverage,
+    capturePlan,
+    conditionalRefinements,
     topRecommendations: recommendations.slice(0, 3),
     programs: {
       coSell: {
