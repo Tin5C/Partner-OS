@@ -9,6 +9,14 @@ export const partnerConfig: SpaceConfig = {
   
   sections: [
     {
+      id: 'partner-toolkit',
+      type: 'partnerToolkit',
+      title: 'Microsoft Partner Toolkit',
+      subtitle: 'Resources and tools to accelerate your Microsoft partnership.',
+      variant: 'primary',
+      enabled: true,
+    },
+    {
       id: 'stories',
       type: 'storiesRow',
       title: 'Stories',
@@ -77,6 +85,7 @@ export const partnerConfig: SpaceConfig = {
     reputation: false, // Hidden for partners
     events: false, // Hidden for partners
     skillOfWeek: true,
+    partnerToolkit: true, // Partner-only feature
   },
   
   // Only curated/approved story types
