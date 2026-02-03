@@ -37,6 +37,14 @@ export const partnerConfig: SpaceConfig = {
       },
     },
     {
+      id: 'expert-corners',
+      type: 'expertCorners',
+      title: 'Expert Corners',
+      subtitle: 'Deep-dive video sessions from vendor experts.',
+      variant: 'primary',
+      enabled: true,
+    },
+    {
       id: 'growth',
       type: 'growth',
       title: 'Enablement',
@@ -78,6 +86,7 @@ export const partnerConfig: SpaceConfig = {
     events: false, // Hidden for partners
     skillOfWeek: true,
     customerBrief: true, // Partner-only feature
+    expertCorners: true, // Partner-only feature
   },
   
   // Only curated/approved story types

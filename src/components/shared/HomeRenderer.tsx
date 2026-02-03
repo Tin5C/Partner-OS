@@ -21,6 +21,7 @@ import { EventsPanel } from '@/components/events';
 import { ScorecardModal, SourcesModal } from '@/components/presence';
 import { SkillExecSummaryPanel } from '@/components/skills';
 import { CustomerBriefSection } from '@/components/partner/CustomerBriefSection';
+import { ExpertCornersRail } from '@/components/partner/ExpertCornersRail';
 import { usePresenceSources } from '@/hooks/usePresenceSources';
 import { PackContent } from '@/config/contentModel';
 import { SectionConfig } from '@/config/spaces';
@@ -256,6 +257,15 @@ export function HomeRenderer() {
       case 'customerBrief':
         return spaceConfig.features.customerBrief ? (
           <CustomerBriefSection key={section.id} />
+        ) : null;
+
+      case 'expertCorners':
+        return spaceConfig.features.expertCorners ? (
+          <ExpertCornersRail
+            key={section.id}
+            title={section.title}
+            subtitle={section.subtitle}
+          />
         ) : null;
 
       default:
