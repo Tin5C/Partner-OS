@@ -1,6 +1,42 @@
 // Partner Brief Data Model
 // Rules-based recommendations for Microsoft Partner support
 
+// ============= Evidence & Extracted Signals Types =============
+
+export interface EvidenceUpload {
+  id: string;
+  type: 'screenshot' | 'document';
+  filename: string;
+  uploadedAt: Date;
+}
+
+export interface EvidenceLink {
+  id: string;
+  url: string;
+  type: 'website' | 'careers' | 'product' | 'other';
+}
+
+export interface ExtractedSignal {
+  id: string;
+  label: string;
+  confidence: 'Low' | 'Medium' | 'High';
+  confirmed: boolean;
+}
+
+export interface ExtractedSignals {
+  applications: ExtractedSignal[];
+  architecture: ExtractedSignal[];
+  licenses: ExtractedSignal[];
+}
+
+export interface EvidenceState {
+  uploads: EvidenceUpload[];
+  links: EvidenceLink[];
+  extractedSignals: ExtractedSignals;
+}
+
+// ============= Brief Input/Output Types =============
+
 export interface PartnerBriefInput {
   customerName: string;
   dealMotion: string;
@@ -15,12 +51,8 @@ export interface PartnerBriefInput {
   applicationLandscape?: string;
   cloudFootprint?: string;
   knownLicenses?: string;
-  attachments?: {
-    files?: File[];
-    links?: string[];
-    hasScreenshots?: boolean;
-    hasDocs?: boolean;
-  };
+  // Evidence (new structure)
+  evidence?: EvidenceState;
   // Public signal flags (placeholder for future)
   publicSignals?: {
     websiteScanned?: boolean;
@@ -58,6 +90,8 @@ export interface PartnerBriefOutput {
   signalCoverage: SignalCoverage;
   capturePlan: CaptureAction[];
   conditionalRefinements: ConditionalRefinement[];
+  // Extracted signals for display/editing
+  extractedSignals: ExtractedSignals;
   
   topRecommendations: Array<{
     title: string;
@@ -245,8 +279,108 @@ const WORKSHOPS: Record<string, { name: string; agenda: string[]; expectedOutput
   },
 };
 
+// Mock extraction of signals from evidence (MVP)
+function mockExtractSignals(input: PartnerBriefInput): ExtractedSignals {
+  const hasEvidence = input.evidence && 
+    (input.evidence.uploads.length > 0 || input.evidence.links.length > 0);
+  
+  if (!hasEvidence) {
+    return {
+      applications: [],
+      architecture: [],
+      licenses: [],
+    };
+  }
+
+  // Generate mock extracted signals based on evidence
+  const applications: ExtractedSignal[] = [];
+  const architecture: ExtractedSignal[] = [];
+  const licenses: ExtractedSignal[] = [];
+
+  // If uploads exist, generate mock detections
+  if (input.evidence?.uploads && input.evidence.uploads.length > 0) {
+    // Mock app detections
+    applications.push({
+      id: 'app-1',
+      label: 'SAP ECC',
+      confidence: 'High',
+      confirmed: false,
+    });
+    applications.push({
+      id: 'app-2',
+      label: 'Salesforce',
+      confidence: 'Medium',
+      confirmed: false,
+    });
+    
+    // Mock architecture patterns
+    architecture.push({
+      id: 'arch-1',
+      label: 'Hybrid infrastructure',
+      confidence: 'High',
+      confirmed: false,
+    });
+    architecture.push({
+      id: 'arch-2',
+      label: 'Data lakehouse pattern',
+      confidence: 'Low',
+      confirmed: false,
+    });
+    
+    // Mock license signals
+    licenses.push({
+      id: 'lic-1',
+      label: 'M365 E5 (detected)',
+      confidence: 'High',
+      confirmed: false,
+    });
+  }
+
+  // If links exist, add more mock detections
+  if (input.evidence?.links && input.evidence.links.length > 0) {
+    if (!applications.some(a => a.label === 'ServiceNow')) {
+      applications.push({
+        id: 'app-3',
+        label: 'ServiceNow',
+        confidence: 'Medium',
+        confirmed: false,
+      });
+    }
+    
+    if (!architecture.some(a => a.label.includes('security'))) {
+      architecture.push({
+        id: 'arch-3',
+        label: 'Identity & security focus',
+        confidence: 'Medium',
+        confirmed: false,
+      });
+    }
+    
+    if (!licenses.some(l => l.label.includes('Azure'))) {
+      licenses.push({
+        id: 'lic-2',
+        label: 'Azure consumption signal',
+        confidence: 'Medium',
+        confirmed: false,
+      });
+    }
+  }
+
+  return { applications, architecture, licenses };
+}
+
+// Count confirmed signals for scoring
+function countConfirmedSignals(signals: ExtractedSignals): number {
+  const confirmed = [
+    ...signals.applications.filter(s => s.confirmed),
+    ...signals.architecture.filter(s => s.confirmed),
+    ...signals.licenses.filter(s => s.confirmed),
+  ];
+  return confirmed.length;
+}
+
 // Calculate signal coverage score
-function calculateSignalCoverage(input: PartnerBriefInput): SignalCoverage {
+function calculateSignalCoverage(input: PartnerBriefInput, extractedSignals: ExtractedSignals): SignalCoverage {
   const sellerKnownItems: string[] = [];
   const evidenceItems: string[] = [];
   const publicItems: string[] = [];
@@ -262,11 +396,20 @@ function calculateSignalCoverage(input: PartnerBriefInput): SignalCoverage {
   const sellerScore = Math.min(40, sellerKnownItems.length * 7);
 
   // Evidence uploads (max 30 points)
-  if (input.attachments?.hasScreenshots) evidenceItems.push('Screenshots uploaded');
-  if (input.attachments?.hasDocs) evidenceItems.push('Docs/PDF uploaded');
-  if (input.attachments?.links && input.attachments.links.length > 0) evidenceItems.push('Links added');
+  const hasUploads = input.evidence?.uploads && input.evidence.uploads.length > 0;
+  const hasLinks = input.evidence?.links && input.evidence.links.length > 0;
+  const confirmedCount = countConfirmedSignals(extractedSignals);
   
-  const evidenceScore = Math.min(30, evidenceItems.length * 10);
+  if (hasUploads) evidenceItems.push('Evidence uploaded');
+  if (hasLinks) evidenceItems.push('Links added');
+  if (confirmedCount > 0) evidenceItems.push(`${confirmedCount} signals confirmed`);
+  
+  // Base evidence score + bonus for confirmed signals
+  let evidenceScore = 0;
+  if (hasUploads) evidenceScore += 10;
+  if (hasLinks) evidenceScore += 5;
+  evidenceScore += Math.min(15, confirmedCount * 5); // Up to 15 bonus for confirmations
+  evidenceScore = Math.min(30, evidenceScore);
 
   // Public signals (max 30 points) - placeholder for future
   if (input.publicSignals?.websiteScanned) publicItems.push('Website signal');
@@ -293,8 +436,13 @@ function calculateSignalCoverage(input: PartnerBriefInput): SignalCoverage {
 }
 
 // Generate capture plan based on missing signals
-function generateCapturePlan(input: PartnerBriefInput): CaptureAction[] {
+function generateCapturePlan(input: PartnerBriefInput, extractedSignals: ExtractedSignals): CaptureAction[] {
   const actions: CaptureAction[] = [];
+  const hasUploads = input.evidence?.uploads && input.evidence.uploads.length > 0;
+  const hasLinks = input.evidence?.links && input.evidence.links.length > 0;
+  const hasExtractedApps = extractedSignals.applications.length > 0;
+  const hasExtractedArch = extractedSignals.architecture.length > 0;
+  const hasExtractedLicenses = extractedSignals.licenses.length > 0;
 
   // Seller inputs
   if (!input.painPoints) {
@@ -304,11 +452,11 @@ function generateCapturePlan(input: PartnerBriefInput): CaptureAction[] {
       timeEstimate: '2 min',
     });
   }
-  if (!input.applicationLandscape) {
+  if (!input.applicationLandscape && !hasExtractedApps) {
     actions.push({
-      action: 'Select application landscape pattern (SAP, Salesforce, etc.)',
-      category: 'seller',
-      timeEstimate: '1 min',
+      action: 'Upload architecture screenshot or customer deck',
+      category: 'upload',
+      timeEstimate: '3 min',
     });
   }
   if (!input.cloudFootprint) {
@@ -318,38 +466,38 @@ function generateCapturePlan(input: PartnerBriefInput): CaptureAction[] {
       timeEstimate: '1 min',
     });
   }
-  if (!input.knownLicenses) {
+  if (!input.knownLicenses && !hasExtractedLicenses) {
     actions.push({
-      action: 'Add known Microsoft licenses (M365, Azure, etc.)',
-      category: 'seller',
-      timeEstimate: '1 min',
+      action: 'Add license signals or upload admin screenshot (redacted)',
+      category: 'upload',
+      timeEstimate: '2 min',
     });
   }
 
   // Evidence uploads
-  if (!input.attachments?.hasScreenshots) {
+  if (!hasUploads) {
     actions.push({
       action: 'Upload 2 LinkedIn screenshots (About + Solutions page)',
       category: 'upload',
       timeEstimate: '3 min',
     });
   }
-  if (!input.attachments?.hasDocs) {
+  if (!hasLinks) {
     actions.push({
-      action: 'Add 1 customer deck or meeting notes',
-      category: 'upload',
-      timeEstimate: '2 min',
-    });
-  }
-
-  // Public signals
-  if (!input.publicSignals?.websiteScanned) {
-    actions.push({
-      action: 'Paste link to customer website (for signal scan)',
+      action: 'Paste link to customer website for signal scan',
       category: 'public',
       timeEstimate: '1 min',
     });
   }
+  if (!hasExtractedArch && !input.applicationLandscape) {
+    actions.push({
+      action: 'Paste link to careers / tech blog for architecture signals',
+      category: 'public',
+      timeEstimate: '1 min',
+    });
+  }
+
+  // Public signals
   if (!input.publicSignals?.hiringScanned) {
     actions.push({
       action: 'Paste link to customer careers page (for hiring signals)',
@@ -429,9 +577,12 @@ export function generatePartnerBrief(input: PartnerBriefInput): PartnerBriefOutp
   const nextSevenDays: string[] = [];
   const evidenceNeeded: string[] = [];
 
-  // Calculate signal coverage
-  const signalCoverage = calculateSignalCoverage(input);
-  const capturePlan = generateCapturePlan(input);
+  // Extract signals from evidence (mock for MVP)
+  const extractedSignals = mockExtractSignals(input);
+
+  // Calculate signal coverage with extracted signals
+  const signalCoverage = calculateSignalCoverage(input, extractedSignals);
+  const capturePlan = generateCapturePlan(input, extractedSignals);
   const conditionalRefinements = generateConditionalRefinements(input);
 
   // Determine co-sell recommendation
@@ -578,6 +729,7 @@ export function generatePartnerBrief(input: PartnerBriefInput): PartnerBriefOutp
     signalCoverage,
     capturePlan,
     conditionalRefinements,
+    extractedSignals,
     topRecommendations: recommendations.slice(0, 3),
     programs: {
       coSell: {

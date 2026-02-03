@@ -116,7 +116,7 @@ export function PartnerBriefForm({
       timeline: timeline || undefined,
       competitors: competitors.length > 0 ? competitors : undefined,
       needsMost,
-      attachments: pastedLink ? { links: [pastedLink] } : undefined,
+      evidence: pastedLink ? { uploads: [], links: [{ id: '1', url: pastedLink, type: 'website' }], extractedSignals: { applications: [], architecture: [], licenses: [] } } : undefined,
     };
 
     onSubmit(data);
