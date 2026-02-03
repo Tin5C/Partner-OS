@@ -1,14 +1,19 @@
 // Partner Expert Corners Viewer
 // Video-first fullscreen viewer with structured exec summary for synthetic explainers
-// Includes progress tracking and expertise completion banners
+// Includes progress tracking, expertise completion banners, and "Apply to my project" action
 
-import { useState, useRef, useEffect } from 'react';
-import { X, Play, Pause, Volume2, VolumeX, Maximize, BookOpen, ChevronRight, ExternalLink, Sparkles, AlertCircle, RefreshCw, Award } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { X, Play, Pause, Volume2, VolumeX, Maximize, BookOpen, ChevronRight, ExternalLink, Sparkles, AlertCircle, RefreshCw, Award, FolderPlus, Check } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PartnerExpertEpisode, isSyntheticExplainer } from '@/data/partnerExpertCorners';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+
+// Storage keys for partner brief context
+const PARTNER_BRIEF_CONTEXT_KEY = 'partner_brief_last_context';
+const APPLIED_DEEP_DIVES_KEY = 'partner_applied_deep_dives';
 
 interface ExpertCornersViewerProps {
   episode: PartnerExpertEpisode | null;
@@ -45,10 +50,57 @@ export function ExpertCornersViewer({
   const [showSummary, setShowSummary] = useState(false);
   const [showExpertiseBanner, setShowExpertiseBanner] = useState(false);
   const [bannerTopic, setBannerTopic] = useState<string | null>(null);
+  const [isApplied, setIsApplied] = useState(false);
+  const [hasBriefContext, setHasBriefContext] = useState(false);
 
   const isSynthetic = episode ? isSyntheticExplainer(episode) : false;
   const isGenerating = episode?.generationStatus === 'generating';
   const isFailed = episode?.generationStatus === 'failed';
+  
+  // Check if brief context exists and if this episode is already applied
+  useEffect(() => {
+    if (episode && open) {
+      try {
+        const storedContext = localStorage.getItem(PARTNER_BRIEF_CONTEXT_KEY);
+        setHasBriefContext(!!storedContext);
+        
+        const storedApplied = localStorage.getItem(APPLIED_DEEP_DIVES_KEY);
+        if (storedApplied) {
+          const appliedList = JSON.parse(storedApplied) as string[];
+          setIsApplied(appliedList.includes(episode.id));
+        } else {
+          setIsApplied(false);
+        }
+      } catch (e) {
+        console.warn('Failed to check brief context:', e);
+      }
+    }
+  }, [episode, open]);
+  
+  // Apply episode to partner brief
+  const handleApplyToProject = useCallback(() => {
+    if (!episode) return;
+    
+    if (!hasBriefContext) {
+      toast.info('Create a Customer Brief to apply this deep dive');
+      return;
+    }
+    
+    try {
+      const storedApplied = localStorage.getItem(APPLIED_DEEP_DIVES_KEY);
+      const appliedList: string[] = storedApplied ? JSON.parse(storedApplied) : [];
+      
+      if (!appliedList.includes(episode.id)) {
+        appliedList.push(episode.id);
+        localStorage.setItem(APPLIED_DEEP_DIVES_KEY, JSON.stringify(appliedList));
+        setIsApplied(true);
+        toast.success('Deep dive added to your project');
+      }
+    } catch (e) {
+      console.warn('Failed to apply deep dive:', e);
+      toast.error('Failed to apply deep dive');
+    }
+  }, [episode, hasBriefContext]);
 
   // Reset state when episode changes
   useEffect(() => {
@@ -325,6 +377,27 @@ export function ExpertCornersViewer({
                     </div>
 
                     <div className="flex items-center gap-2">
+                      {/* Apply to my project button */}
+                      <Button 
+                        variant={isApplied ? "secondary" : "default"}
+                        size="sm"
+                        className="h-8 text-xs"
+                        onClick={handleApplyToProject}
+                        disabled={isApplied}
+                      >
+                        {isApplied ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 mr-1.5" />
+                            Applied
+                          </>
+                        ) : (
+                          <>
+                            <FolderPlus className="w-3.5 h-3.5 mr-1.5" />
+                            Apply to my project
+                          </>
+                        )}
+                      </Button>
+                      
                       {(episode.execSummary || episode.readingSummary) && (
                         <Button 
                           variant="outline" 
