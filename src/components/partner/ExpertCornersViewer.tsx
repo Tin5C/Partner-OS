@@ -1,8 +1,9 @@
 // Partner Expert Corners Viewer
 // Video-first fullscreen viewer with structured exec summary for synthetic explainers
+// Includes progress tracking and expertise completion banners
 
 import { useState, useRef, useEffect } from 'react';
-import { X, Play, Pause, Volume2, VolumeX, Maximize, BookOpen, ChevronRight, ExternalLink, Sparkles, AlertCircle, RefreshCw } from 'lucide-react';
+import { X, Play, Pause, Volume2, VolumeX, Maximize, BookOpen, ChevronRight, ExternalLink, Sparkles, AlertCircle, RefreshCw, Award } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,15 +14,37 @@ interface ExpertCornersViewerProps {
   episode: PartnerExpertEpisode | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onProgressUpdate?: (episodeId: string, progressPercent: number) => void;
+  recentlyCompletedTopic?: string | null;
+  onClearCompletedTopic?: () => void;
 }
 
-export function ExpertCornersViewer({ episode, open, onOpenChange }: ExpertCornersViewerProps) {
+// Summary section component
+function SummarySection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-2">
+      <h4 className="text-sm font-semibold text-foreground">{title}</h4>
+      {children}
+    </div>
+  );
+}
+
+export function ExpertCornersViewer({ 
+  episode, 
+  open, 
+  onOpenChange,
+  onProgressUpdate,
+  recentlyCompletedTopic,
+  onClearCompletedTopic,
+}: ExpertCornersViewerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
+  const [showExpertiseBanner, setShowExpertiseBanner] = useState(false);
+  const [bannerTopic, setBannerTopic] = useState<string | null>(null);
 
   const isSynthetic = episode ? isSyntheticExplainer(episode) : false;
   const isGenerating = episode?.generationStatus === 'generating';
@@ -33,15 +56,42 @@ export function ExpertCornersViewer({ episode, open, onOpenChange }: ExpertCorne
       setIsPlaying(false);
       setCurrentTime(0);
       setShowSummary(false);
+      setShowExpertiseBanner(false);
+      setBannerTopic(null);
     }
   }, [episode, open]);
+  
+  // Show expertise banner when topic is newly completed
+  useEffect(() => {
+    if (recentlyCompletedTopic && open) {
+      setBannerTopic(recentlyCompletedTopic);
+      setShowExpertiseBanner(true);
+      
+      // Auto-dismiss after 5 seconds
+      const timer = setTimeout(() => {
+        setShowExpertiseBanner(false);
+        onClearCompletedTopic?.();
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [recentlyCompletedTopic, open, onClearCompletedTopic]);
 
-  // Handle video time update
+  // Handle video time update and report progress
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    const handleTimeUpdate = () => setCurrentTime(video.currentTime);
+    const handleTimeUpdate = () => {
+      setCurrentTime(video.currentTime);
+      
+      // Report progress
+      if (episode && onProgressUpdate && video.duration > 0) {
+        const progressPercent = (video.currentTime / video.duration) * 100;
+        onProgressUpdate(episode.id, progressPercent);
+      }
+    };
+    
     const handleLoadedMetadata = () => setDuration(video.duration);
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
@@ -57,7 +107,7 @@ export function ExpertCornersViewer({ episode, open, onOpenChange }: ExpertCorne
       video.removeEventListener('play', handlePlay);
       video.removeEventListener('pause', handlePause);
     };
-  }, [episode]);
+  }, [episode, onProgressUpdate]);
 
   if (!episode) return null;
 
@@ -128,6 +178,30 @@ export function ExpertCornersViewer({ episode, open, onOpenChange }: ExpertCorne
         <div className="flex justify-center pt-3 pb-2">
           <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
         </div>
+        
+        {/* Expertise Banner (shows on topic completion) */}
+        {showExpertiseBanner && bannerTopic && (
+          <div className="mx-4 mb-2 px-4 py-3 rounded-xl bg-primary/10 border border-primary/20 flex items-center gap-3 animate-in slide-in-from-top duration-300">
+            <Award className="w-5 h-5 text-primary flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-foreground">
+                Expertise signal strengthened: {bannerTopic}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Your expertise is being recognized.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setShowExpertiseBanner(false);
+                onClearCompletedTopic?.();
+              }}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
 
         {/* Header */}
         <div className="flex items-center justify-between px-4 pb-3 border-b border-border">
@@ -419,38 +493,27 @@ export function ExpertCornersViewer({ episode, open, onOpenChange }: ExpertCorne
                               href={url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-sm text-primary hover:underline flex items-center gap-1.5 break-all"
+                              className="flex items-center gap-2 text-sm text-primary hover:underline"
                             >
-                              <ExternalLink className="w-3 h-3 flex-shrink-0" />
-                              {url.replace('https://', '').substring(0, 60)}...
+                              <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
+                              <span className="truncate">{url}</span>
                             </a>
                           </li>
                         ))}
                       </ul>
-                      {episode.confidenceLevel && (
-                        <p className="text-xs text-muted-foreground mt-3">
-                          Confidence: {episode.confidenceLevel} — multiple sources
-                        </p>
-                      )}
                     </SummarySection>
                   )}
                 </div>
               )}
 
-              {/* Legacy human expert summary */}
+              {/* Human Expert Reading Summary */}
               {!isSynthetic && episode.readingSummary && (
                 <div className="space-y-6">
-                  <div>
-                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                      TL;DR
-                    </h3>
-                    <p className="text-base leading-relaxed">{episode.readingSummary.tldr}</p>
-                  </div>
+                  <SummarySection title="TL;DR">
+                    <p className="text-sm text-foreground">{episode.readingSummary.tldr}</p>
+                  </SummarySection>
 
-                  <div>
-                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                      Key Points
-                    </h3>
+                  <SummarySection title="Key Points">
                     <ul className="space-y-2">
                       {episode.readingSummary.keyPoints.map((point, idx) => (
                         <li key={idx} className="flex gap-2 text-sm">
@@ -459,12 +522,9 @@ export function ExpertCornersViewer({ episode, open, onOpenChange }: ExpertCorne
                         </li>
                       ))}
                     </ul>
-                  </div>
+                  </SummarySection>
 
-                  <div>
-                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                      Action Items
-                    </h3>
+                  <SummarySection title="Action Items">
                     <ul className="space-y-2">
                       {episode.readingSummary.actionItems.map((item, idx) => (
                         <li key={idx} className="flex gap-2 text-sm">
@@ -473,7 +533,7 @@ export function ExpertCornersViewer({ episode, open, onOpenChange }: ExpertCorne
                         </li>
                       ))}
                     </ul>
-                  </div>
+                  </SummarySection>
                 </div>
               )}
             </div>
@@ -481,17 +541,5 @@ export function ExpertCornersViewer({ episode, open, onOpenChange }: ExpertCorne
         </div>
       </SheetContent>
     </Sheet>
-  );
-}
-
-// Helper component for summary sections
-function SummarySection({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-        {title}
-      </h3>
-      {children}
-    </div>
   );
 }

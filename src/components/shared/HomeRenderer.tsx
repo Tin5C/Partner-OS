@@ -22,6 +22,7 @@ import { ScorecardModal, SourcesModal } from '@/components/presence';
 import { SkillExecSummaryPanel } from '@/components/skills';
 import { CustomerBriefSection } from '@/components/partner/CustomerBriefSection';
 import { ExpertCornersRail } from '@/components/partner/ExpertCornersRail';
+import { PartnerGrowthSection } from '@/components/partner/PartnerGrowthSection';
 import { usePresenceSources } from '@/hooks/usePresenceSources';
 import { PackContent } from '@/config/contentModel';
 import { SectionConfig } from '@/config/spaces';
@@ -227,6 +228,20 @@ export function HomeRenderer() {
         );
 
       case 'growth':
+        // Use PartnerGrowthSection for partner space (includes expertise signals)
+        if (spaceType === 'partner') {
+          return (
+            <PartnerGrowthSection
+              key={section.id}
+              onSkillClick={() => setSkillPanelOpen(true)}
+              onEventsClick={() => setEventsPanelOpen(true)}
+              onExpertiseClick={() => {
+                // Could open a full expertise panel in the future
+              }}
+            />
+          );
+        }
+        // Use regular GrowthPresenceSection for internal space
         return spaceConfig.features.skillOfWeek || spaceConfig.features.events ? (
           <GrowthPresenceSection
             key={section.id}
