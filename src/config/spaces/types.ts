@@ -11,7 +11,8 @@ export type SectionType =
   | 'reputation'
   | 'enablementProgress'
   | 'customerBrief'
-  | 'expertCorners';
+  | 'expertCorners'
+  | 'trendingPacks';
 
 export type SectionVariant = 'primary' | 'secondary' | 'tertiary';
 
@@ -52,6 +53,7 @@ export interface SpaceFeatures {
   skillOfWeek: boolean;
   customerBrief?: boolean; // Partner-only feature
   expertCorners?: boolean; // Partner-only feature
+  trendingPacks?: boolean; // Partner-only feature
 }
 
 export interface SpaceConfig {

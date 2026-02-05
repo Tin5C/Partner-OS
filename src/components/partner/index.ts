@@ -12,3 +12,6 @@ export { ExtractedSignalsBlock } from './ExtractedSignalsBlock';
 export { ExpertiseBadge, ExpertiseLevelPill } from './ExpertiseBadge';
 export { PartnerExpertiseSection } from './PartnerExpertiseSection';
 export { PartnerGrowthSection } from './PartnerGrowthSection';
+export { TrendingPackCard } from './TrendingPackCard';
+export { TrendingPackViewer } from './TrendingPackViewer';
+export { TrendingPacksSection } from './TrendingPacksSection';

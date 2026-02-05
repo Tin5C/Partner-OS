@@ -23,6 +23,7 @@ import { SkillExecSummaryPanel } from '@/components/skills';
 import { CustomerBriefSection } from '@/components/partner/CustomerBriefSection';
 import { ExpertCornersRail } from '@/components/partner/ExpertCornersRail';
 import { PartnerGrowthSection } from '@/components/partner/PartnerGrowthSection';
+import { TrendingPacksSection } from '@/components/partner/TrendingPacksSection';
 import { usePresenceSources } from '@/hooks/usePresenceSources';
 import { PackContent } from '@/config/contentModel';
 import { SectionConfig } from '@/config/spaces';
@@ -280,6 +281,16 @@ export function HomeRenderer() {
             key={section.id}
             title={section.title}
             subtitle={section.subtitle}
+          />
+        ) : null;
+
+      case 'trendingPacks':
+        return spaceConfig.features.trendingPacks ? (
+          <TrendingPacksSection
+            key={section.id}
+            title={section.title}
+            subtitle={section.subtitle}
+            maxItems={5}
           />
         ) : null;
 
