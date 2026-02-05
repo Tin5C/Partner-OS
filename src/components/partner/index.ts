@@ -30,3 +30,4 @@ export { BriefReadinessCard } from './BriefReadinessCard';
 export { BriefTemplateSelector } from './BriefTemplateSelector';
 export { ContextRequestModal } from './ContextRequestModal';
 export { QuickBriefSection } from './QuickBriefSection';
+export { QuickBriefOutput } from './QuickBriefOutput';
