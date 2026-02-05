@@ -8,6 +8,7 @@ interface SectionHeaderProps {
   variant?: 'primary' | 'secondary' | 'tertiary';
   inlineSubtitle?: boolean;
   className?: string;
+  action?: React.ReactNode;
 }
 
 const variantStyles = {
@@ -21,7 +22,8 @@ export function SectionHeader({
   subtitle, 
   variant = 'primary',
   inlineSubtitle = false,
-  className 
+  className,
+  action
 }: SectionHeaderProps) {
   if (inlineSubtitle) {
     return (
@@ -38,24 +40,30 @@ export function SectionHeader({
             {subtitle}
           </span>
         )}
+        {action && <div className="ml-auto">{action}</div>}
       </div>
     );
   }
 
   return (
     <div className={className}>
-      <h2 className={cn(
-        variant === 'primary' 
-          ? "text-lg font-semibold text-foreground" 
-          : variantStyles[variant]
-      )}>
-        {title}
-      </h2>
-      {subtitle && (
-        <p className="text-sm text-muted-foreground">
-          {subtitle}
-        </p>
-      )}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className={cn(
+            variant === 'primary' 
+              ? "text-lg font-semibold text-foreground" 
+              : variantStyles[variant]
+          )}>
+            {title}
+          </h2>
+          {subtitle && (
+            <p className="text-sm text-muted-foreground">
+              {subtitle}
+            </p>
+          )}
+        </div>
+        {action && <div>{action}</div>}
+      </div>
     </div>
   );
 }
