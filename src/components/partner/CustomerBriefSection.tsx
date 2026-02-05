@@ -660,6 +660,14 @@ export function CustomerBriefSection() {
                 </CollapsibleContent>
               </Collapsible>
             )}
+
+            {/* Request Info from Colleagues — always visible in input area */}
+            <RequestInfoPanel
+              customerName={customerName}
+              meetingContext={briefScope === 'specific-area' ? specificArea : undefined}
+              colleagueNotes={colleagueNotes}
+              onColleagueNotes={setColleagueNotes}
+            />
           </div>
         </div>
 
@@ -771,9 +779,10 @@ export function CustomerBriefSection() {
               </div>
             )}
 
-            {/* Request Info from Colleagues */}
+            {/* Request Info from Colleagues (also in output for easy access) */}
             <RequestInfoPanel
               customerName={customerName}
+              meetingContext={briefScope === 'specific-area' ? specificArea : undefined}
               colleagueNotes={colleagueNotes}
               onColleagueNotes={setColleagueNotes}
             />
