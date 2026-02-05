@@ -1,4 +1,5 @@
 // Space Context - Provides space configuration and state
+// Updated to force recompile
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { SpaceConfig, SpaceType, getSpaceConfigByType } from '@/config/spaces';

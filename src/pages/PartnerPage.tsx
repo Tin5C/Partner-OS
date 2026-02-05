@@ -1,5 +1,5 @@
 // Partner Space Page
-// Wrapper that provides SpaceContext for /partner route
+// Wrapper that provides SpaceContext for /partner route - updated
 
 import { SpaceProvider } from '@/contexts/SpaceContext';
 import { HomeRenderer } from '@/components/shared/HomeRenderer';
