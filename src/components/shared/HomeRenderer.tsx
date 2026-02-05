@@ -25,6 +25,7 @@ import { ExpertCornersRail } from '@/components/partner/ExpertCornersRail';
 import { PartnerGrowthSection } from '@/components/partner/PartnerGrowthSection';
 import { TrendingPacksSection } from '@/components/partner/TrendingPacksSection';
 import { PartnerStoriesRow } from '@/components/partner/PartnerStoriesRow';
+import { CapabilitySnapshotCard } from '@/components/partner/CapabilitySnapshotCard';
 import { usePresenceSources } from '@/hooks/usePresenceSources';
 import { PackContent } from '@/config/contentModel';
 import { SectionConfig } from '@/config/spaces';
@@ -306,6 +307,14 @@ export function HomeRenderer() {
             subtitle={section.subtitle}
             maxItems={5}
           />
+        ) : null;
+
+      case 'capabilityBrand':
+        return spaceConfig.features.capabilityBrand ? (
+          <section key={section.id} className="space-y-4">
+            <SectionHeader title={section.title} />
+            <CapabilitySnapshotCard />
+          </section>
         ) : null;
 
       default:

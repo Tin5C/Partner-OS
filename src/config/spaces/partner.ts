@@ -58,7 +58,16 @@ export const partnerConfig: SpaceConfig = {
         'objection-handling-subtitle': 'Approved objection responses',
       },
     },
-    // 6. GROWTH - Personal development (lower priority)
+    // 6. CAPABILITY & BRAND - Pricing power (persona-aware)
+    {
+      id: 'capability-brand',
+      type: 'capabilityBrand',
+      title: 'Capability & Brand Snapshot',
+      subtitle: undefined,
+      variant: 'secondary',
+      enabled: true,
+    },
+    // 7. GROWTH - Personal development (lower priority)
     {
       id: 'growth',
       type: 'growth',
@@ -89,12 +98,13 @@ export const partnerConfig: SpaceConfig = {
     accountPrep: false, // Partners use Customer Brief instead
     weekNavigator: true,
     jumpNav: true,
-    reputation: false, // Hidden for partners
+    reputation: false, // Hidden for partners - replaced by Capability & Brand
     events: false, // Hidden for partners
     skillOfWeek: true,
     customerBrief: true, // Partner-only feature
     expertCorners: true, // Partner-only feature
     trendingPacks: true, // Partner-only feature
+    capabilityBrand: true, // Partner-only: persona-aware branding
   },
   
   // Only curated/approved story types
