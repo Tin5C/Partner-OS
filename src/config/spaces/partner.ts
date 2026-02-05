@@ -13,7 +13,7 @@ export const partnerConfig: SpaceConfig = {
   displayName: 'Partner',
   
   sections: [
-    // 1. STORIES - What's new / what should I notice?
+    // 1. STORIES — trigger: "what changed?"
     {
       id: 'stories',
       type: 'storiesRow',
@@ -22,7 +22,16 @@ export const partnerConfig: SpaceConfig = {
       variant: 'primary',
       enabled: true,
     },
-    // 2. CUSTOMER BRIEF - What am I working on? (The spine of the page)
+    // 2. QUICK BRIEF — fast situational refresh (60–120 sec)
+    {
+      id: 'quick-brief',
+      type: 'quickBrief',
+      title: 'Quick Brief',
+      subtitle: 'Fast situational refresh before a call or meeting — 60 seconds.',
+      variant: 'secondary',
+      enabled: true,
+    },
+    // 3. DEAL PLANNING — AI Deal Brief (5–10 min commitment)
     {
       id: 'customer-brief',
       type: 'customerBrief',
@@ -31,7 +40,7 @@ export const partnerConfig: SpaceConfig = {
       variant: 'primary',
       enabled: true,
     },
-    // 3. SOLUTION DEEP DIVES - Help me understand this properly
+    // 4. SOLUTION DEEP DIVES — Help me understand this properly
     {
       id: 'expert-corners',
       type: 'expertCorners',
@@ -40,7 +49,7 @@ export const partnerConfig: SpaceConfig = {
       variant: 'primary',
       enabled: true,
     },
-    // 4. TRENDING PACKS - What's hot right now / what buyers care about
+    // 5. TRENDING PACKS — What's hot right now / what buyers care about
     {
       id: 'trending-packs',
       type: 'trendingPacks',
@@ -49,7 +58,7 @@ export const partnerConfig: SpaceConfig = {
       variant: 'primary',
       enabled: true,
     },
-    // 5. EXECUTION PACKS / BRIEFINGS - What do I say or do next?
+    // 6. EXECUTION PACKS / BRIEFINGS
     {
       id: 'briefings',
       type: 'packGrid',
@@ -62,7 +71,7 @@ export const partnerConfig: SpaceConfig = {
         'objection-handling-subtitle': 'Approved objection responses',
       },
     },
-    // 6. CAPABILITY & BRAND - Pricing power (persona-aware)
+    // 7. CAPABILITY & BRAND
     {
       id: 'capability-brand',
       type: 'capabilityBrand',
@@ -71,7 +80,7 @@ export const partnerConfig: SpaceConfig = {
       variant: 'secondary',
       enabled: true,
     },
-    // 7. GROWTH - Personal development (lower priority)
+    // 8. GROWTH — Personal development (lower priority)
     {
       id: 'growth',
       type: 'growth',
@@ -105,7 +114,8 @@ export const partnerConfig: SpaceConfig = {
     reputation: false, // Hidden for partners - replaced by Capability & Brand
     events: false, // Hidden for partners
     skillOfWeek: true,
-    customerBrief: true, // Partner-only feature
+    customerBrief: true, // Partner-only: full AI Deal Brief
+    quickBrief: true, // Partner-only: fast 60-sec situational brief
     expertCorners: true, // Partner-only feature
     trendingPacks: true, // Partner-only feature
     capabilityBrand: true, // Partner-only: persona-aware branding

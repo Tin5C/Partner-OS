@@ -17,6 +17,7 @@ interface PartnerStoriesRowProps {
   hasCustomerBrief?: boolean;
   onCreateBrief?: () => void;
   onOpenTrendingPack?: (packId: string) => void;
+  onCreateQuickBrief?: () => void;
 }
 
 export function PartnerStoriesRow({
@@ -24,6 +25,7 @@ export function PartnerStoriesRow({
   hasCustomerBrief = false,
   onCreateBrief,
   onOpenTrendingPack,
+  onCreateQuickBrief,
 }: PartnerStoriesRowProps) {
   const homepageStories = getHomepagePartnerStories(8);
   const allActiveStories = getActivePartnerStories(partnerStories);
@@ -131,6 +133,7 @@ export function PartnerStoriesRow({
         onAddToBrief={handleAddToBrief}
         onOpenTrendingPack={onOpenTrendingPack}
         onCreateBrief={onCreateBrief}
+        onCreateQuickBrief={onCreateQuickBrief}
       />
 
       {/* Browse All Sheet */}

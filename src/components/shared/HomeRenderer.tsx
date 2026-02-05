@@ -25,6 +25,7 @@ import { ExpertCornersRail } from '@/components/partner/ExpertCornersRail';
 import { PartnerGrowthSection } from '@/components/partner/PartnerGrowthSection';
 import { TrendingPacksSection } from '@/components/partner/TrendingPacksSection';
 import { PartnerStoriesRow } from '@/components/partner/PartnerStoriesRow';
+import { QuickBriefSection } from '@/components/partner/QuickBriefSection';
 import { CapabilitySnapshotCard } from '@/components/partner/CapabilitySnapshotCard';
 import { usePresenceSources } from '@/hooks/usePresenceSources';
 import { PackContent } from '@/config/contentModel';
@@ -147,6 +148,12 @@ export function HomeRenderer() {
   const [scorecardOpen, setScorecardOpen] = useState(false);
   const [sourcesOpen, setSourcesOpen] = useState(false);
 
+  // Scroll to Deal Brief section
+  const scrollToDealBrief = () => {
+    const el = document.getElementById('section-customer-brief');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   // If not unlocked, show access gate
   if (!isUnlocked) {
     return <AccessGate onUnlock={unlock} />;
@@ -207,9 +214,11 @@ export function HomeRenderer() {
           return (
             <PartnerStoriesRow
               key={section.id}
-              hasCustomerBrief={false} // Would check actual brief state
-              onCreateBrief={() => {
-                // Could scroll to Customer Brief section
+              hasCustomerBrief={false}
+              onCreateBrief={scrollToDealBrief}
+              onCreateQuickBrief={() => {
+                const el = document.getElementById('section-quick-brief');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
               }}
             />
           );
@@ -287,7 +296,18 @@ export function HomeRenderer() {
 
       case 'customerBrief':
         return spaceConfig.features.customerBrief ? (
-          <CustomerBriefSection key={section.id} />
+          <div id="section-customer-brief" key={section.id}>
+            <CustomerBriefSection />
+          </div>
+        ) : null;
+
+      case 'quickBrief':
+        return spaceConfig.features.quickBrief ? (
+          <div id="section-quick-brief" key={section.id}>
+            <QuickBriefSection
+              onOpenDealBrief={scrollToDealBrief}
+            />
+          </div>
         ) : null;
 
       case 'expertCorners':

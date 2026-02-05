@@ -1,7 +1,8 @@
 // Partner Story Viewer - 1-tap execution viewer
 // Shows headline, "so what", and primary action button
+// Actions: Add to Brief, Add to Quick Brief, Open Pack, Create Brief
 
-import { X, ChevronLeft, ChevronRight, ExternalLink, Plus, FileText, TrendingUp } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, ExternalLink, Plus, FileText, TrendingUp, Zap } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { PartnerStory, signalTypeColors } from '@/data/partnerStories';
@@ -25,6 +26,7 @@ interface PartnerStoryViewerProps {
   onAddToBrief?: (story: PartnerStory) => void;
   onOpenTrendingPack?: (packId: string) => void;
   onCreateBrief?: () => void;
+  onCreateQuickBrief?: () => void;
 }
 
 export function PartnerStoryViewer({
@@ -43,6 +45,7 @@ export function PartnerStoryViewer({
   onAddToBrief,
   onOpenTrendingPack,
   onCreateBrief,
+  onCreateQuickBrief,
 }: PartnerStoryViewerProps) {
   if (!story) return null;
 
@@ -83,6 +86,15 @@ export function PartnerStoryViewer({
           onClose();
         }
         break;
+
+      case 'CreateQuickBrief':
+      case 'AddToQuickBrief':
+        if (onCreateQuickBrief) {
+          onCreateQuickBrief();
+          toast.success('Opening Quick Brief');
+          onClose();
+        }
+        break;
     }
   };
 
@@ -95,6 +107,9 @@ export function PartnerStoryViewer({
         return <TrendingUp className="h-4 w-4 mr-2" />;
       case 'CreateBrief':
         return <FileText className="h-4 w-4 mr-2" />;
+      case 'CreateQuickBrief':
+      case 'AddToQuickBrief':
+        return <Zap className="h-4 w-4 mr-2" />;
     }
   };
 
