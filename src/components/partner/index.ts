@@ -24,3 +24,4 @@ export { SellerSnapshotForm } from './SellerSnapshotForm';
 export { EngineerSnapshotForm } from './EngineerSnapshotForm';
 export { SellerSnapshotOutput } from './SellerSnapshotOutput';
 export { EngineerSnapshotOutput } from './EngineerSnapshotOutput';
+export { RequestInfoPanel } from './RequestInfoPanel';
