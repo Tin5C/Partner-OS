@@ -66,7 +66,7 @@ import {
 } from '@/data/partnerBriefData';
 import { EvidenceUploadBlock } from './EvidenceUploadBlock';
 import { ExtractedSignalsBlock } from './ExtractedSignalsBlock';
-import { RequestInfoPanel } from './RequestInfoPanel';
+import { ContextRequestCard } from './ContextRequestCard';
 import { savePartnerBriefContext } from './ExpertCornersRail';
 
 // Default empty evidence state
@@ -661,12 +661,13 @@ export function CustomerBriefSection() {
               </Collapsible>
             )}
 
-            {/* Request Info from Colleagues — always visible in input area */}
-            <RequestInfoPanel
+            {/* Context Request — lightweight "Missing context?" card */}
+            <ContextRequestCard
               customerName={customerName}
               meetingContext={briefScope === 'specific-area' ? specificArea : undefined}
               colleagueNotes={colleagueNotes}
               onColleagueNotes={setColleagueNotes}
+              hasNewContext={colleagueNotes.trim().length > 0}
             />
           </div>
         </div>
@@ -779,12 +780,13 @@ export function CustomerBriefSection() {
               </div>
             )}
 
-            {/* Request Info from Colleagues (also in output for easy access) */}
-            <RequestInfoPanel
+            {/* Context Request — also in output for easy access */}
+            <ContextRequestCard
               customerName={customerName}
               meetingContext={briefScope === 'specific-area' ? specificArea : undefined}
               colleagueNotes={colleagueNotes}
               onColleagueNotes={setColleagueNotes}
+              hasNewContext={colleagueNotes.trim().length > 0}
             />
 
             {/* AI Opportunity Map (Partner View) */}
