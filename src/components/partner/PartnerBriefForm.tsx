@@ -120,6 +120,7 @@ export function PartnerBriefForm({
       // Default scope and mode for form-based input
       briefScope: 'entire-account',
       inputMode: 'guided',
+      personaType: 'seller',
     };
 
     onSubmit(data);

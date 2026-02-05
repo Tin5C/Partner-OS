@@ -1,5 +1,6 @@
-// Customer Brief Section (Partner-only)
+// AI Deal Brief Section (Partner-only)
 // Matches the Account Prep design pattern for consistency
+// Supports: Seller vs Engineer persona, AI-specific inputs/outputs
 // Supports: Entire account vs Specific area, Guided vs Brainstorm modes
 
 import * as React from 'react';
@@ -27,6 +28,9 @@ import {
   Globe,
   Layers,
   Zap,
+  Brain,
+  Shield,
+  Gauge,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -51,7 +55,11 @@ import {
   EvidenceState,
   BriefScope,
   InputMode,
+  PersonaType,
   AIOpportunity,
+  AIReadinessScore,
+  SellerOutput,
+  EngineerOutput,
   generatePartnerBrief,
   DEAL_MOTIONS,
   INDUSTRIES,
@@ -63,6 +71,8 @@ import {
   APPLICATION_LANDSCAPES,
   CLOUD_FOOTPRINTS,
   KNOWN_LICENSES,
+  AI_CONSTRAINTS,
+  AI_USE_CASE_SUGGESTIONS,
 } from '@/data/partnerBriefData';
 import { EvidenceUploadBlock } from './EvidenceUploadBlock';
 import { ExtractedSignalsBlock } from './ExtractedSignalsBlock';
@@ -110,10 +120,11 @@ function SegmentedControl<T extends string>({
 }
 
 export function CustomerBriefSection() {
-  // Scope & Mode state
+  // Scope, Mode & Persona state
   const [briefScope, setBriefScope] = useState<BriefScope>('entire-account');
   const [specificArea, setSpecificArea] = useState<string>('');
   const [inputMode, setInputMode] = useState<InputMode>('guided');
+  const [personaType, setPersonaType] = useState<PersonaType>('seller');
   const [brainstormNotes, setBrainstormNotes] = useState<string>('');
   
   // Form state (guided mode)
@@ -130,7 +141,11 @@ export function CustomerBriefSection() {
   const [applicationLandscape, setApplicationLandscape] = useState<string>('');
   const [cloudFootprint, setCloudFootprint] = useState<string>('');
   const [knownLicenses, setKnownLicenses] = useState<string>('');
-  // Evidence state (new structure)
+  // AI-specific inputs
+  const [aiUseCases, setAiUseCases] = useState<string>('');
+  const [aiConstraints, setAiConstraints] = useState<string[]>([]);
+  const [aiConstraintNotes, setAiConstraintNotes] = useState<string>('');
+  // Evidence state
   const [evidence, setEvidence] = useState<EvidenceState>(createEmptyEvidence());
   
   // UI state
@@ -140,7 +155,7 @@ export function CustomerBriefSection() {
   const [showCustomerError, setShowCustomerError] = useState(false);
   // Local extracted signals for editing after generation
   const [editedSignals, setEditedSignals] = useState<ExtractedSignals | null>(null);
-  // Colleague notes from Request Info panel
+  // Colleague notes from Context Request
   const [colleagueNotes, setColleagueNotes] = useState<string>('');
 
   // Validation logic
@@ -181,10 +196,15 @@ export function CustomerBriefSection() {
         brainstormNotes: colleagueNotes
           ? (inputMode === 'brainstorm' ? `${brainstormNotes}\n\n--- Colleague notes ---\n${colleagueNotes}` : colleagueNotes)
           : (inputMode === 'brainstorm' ? brainstormNotes : undefined),
-        // New scope & mode fields
+        // Scope, mode & persona
         briefScope,
         specificArea: briefScope === 'specific-area' ? specificArea : undefined,
         inputMode,
+        personaType,
+        // AI-specific
+        aiUseCases: aiUseCases || undefined,
+        aiConstraints: aiConstraints.length > 0 ? aiConstraints : undefined,
+        aiConstraintNotes: aiConstraintNotes || undefined,
       };
       const result = generatePartnerBrief(input);
       setOutput(result);
@@ -254,6 +274,10 @@ export function CustomerBriefSection() {
     setSpecificArea('');
     setBriefScope('entire-account');
     setInputMode('guided');
+    setPersonaType('seller');
+    setAiUseCases('');
+    setAiConstraints([]);
+    setAiConstraintNotes('');
     setOutput(null);
     setEditedSignals(null);
     setContextOpen(false);
@@ -280,9 +304,12 @@ export function CustomerBriefSection() {
     <section className="space-y-4">
       {/* Section Header */}
       <div>
-        <h2 className="text-lg font-semibold text-foreground">Customer Brief</h2>
+        <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+          <Brain className="w-5 h-5 text-primary" />
+          AI Deal Brief
+        </h2>
         <p className="text-sm text-muted-foreground">
-          Enter your deal context — get the right programs, funding, assets, and steps.
+          Turn messy AI deal context into a deal-ready plan in 5–10 minutes.
         </p>
       </div>
 
@@ -294,10 +321,10 @@ export function CustomerBriefSection() {
         {/* Controls Bar */}
         <div className="p-5 border-b border-border/60">
           <div className="flex flex-col gap-4">
-            {/* Row 0: Scope & Mode Selectors */}
+            {/* Row 0: Scope, Mode & Persona Selectors */}
             <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-muted-foreground">Brief scope</span>
+                <span className="text-xs font-medium text-muted-foreground">Scope</span>
                 <SegmentedControl<BriefScope>
                   value={briefScope}
                   onChange={(v) => setBriefScope(v)}
@@ -308,7 +335,18 @@ export function CustomerBriefSection() {
                 />
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-muted-foreground">Input mode</span>
+                <span className="text-xs font-medium text-muted-foreground">Persona</span>
+                <SegmentedControl<PersonaType>
+                  value={personaType}
+                  onChange={(v) => setPersonaType(v)}
+                  options={[
+                    { value: 'seller', label: 'Seller' },
+                    { value: 'engineer', label: 'Engineer' },
+                  ]}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-muted-foreground">Input</span>
                 <SegmentedControl<InputMode>
                   value={inputMode}
                   onChange={(v) => setInputMode(v)}
@@ -614,6 +652,91 @@ export function CustomerBriefSection() {
                       </div>
                     </div>
 
+                    {/* AI Use Cases & Constraints */}
+                    <div className="pt-3 border-t border-border/50">
+                      <p className="text-xs font-medium text-muted-foreground mb-3 flex items-center gap-1.5">
+                        <Brain className="w-3 h-3" />
+                        AI deal context
+                      </p>
+                      
+                      {/* AI Use Cases */}
+                      <div className="mb-3">
+                        <label className="text-xs text-muted-foreground mb-1.5 block">
+                          AI use case(s)
+                        </label>
+                        <input
+                          type="text"
+                          value={aiUseCases}
+                          onChange={(e) => setAiUseCases(e.target.value)}
+                          placeholder="e.g., Document processing, customer service automation, knowledge base..."
+                          className={cn(
+                            "w-full h-9 px-3 rounded-lg text-sm",
+                            "bg-background border border-border",
+                            "placeholder:text-muted-foreground/60",
+                            "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30"
+                          )}
+                        />
+                        {AI_USE_CASE_SUGGESTIONS.length > 0 && !aiUseCases && (
+                          <div className="flex flex-wrap gap-1.5 mt-2">
+                            {AI_USE_CASE_SUGGESTIONS.slice(0, 5).map((suggestion) => (
+                              <button
+                                key={suggestion}
+                                type="button"
+                                onClick={() => setAiUseCases(suggestion)}
+                                className="px-2 py-0.5 rounded text-[10px] text-muted-foreground border border-border hover:bg-secondary transition-colors"
+                              >
+                                {suggestion}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* AI Constraints */}
+                      <div className="mb-3">
+                        <label className="text-xs text-muted-foreground mb-2 block">
+                          Known constraints
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {AI_CONSTRAINTS.map((c) => (
+                            <button
+                              key={c.value}
+                              type="button"
+                              onClick={() => setAiConstraints(prev =>
+                                prev.includes(c.value) ? prev.filter(x => x !== c.value) : [...prev, c.value]
+                              )}
+                              className={cn(
+                                'px-2.5 py-1 rounded-lg text-xs font-medium transition-all border',
+                                aiConstraints.includes(c.value)
+                                  ? 'bg-primary text-primary-foreground border-primary'
+                                  : 'bg-card text-foreground border-border hover:bg-secondary'
+                              )}
+                            >
+                              {c.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Constraint notes */}
+                      {aiConstraints.length > 0 && (
+                        <div className="mb-3">
+                          <input
+                            type="text"
+                            value={aiConstraintNotes}
+                            onChange={(e) => setAiConstraintNotes(e.target.value)}
+                            placeholder="Any specifics? e.g., GDPR, on-prem only, no public cloud..."
+                            className={cn(
+                              "w-full h-9 px-3 rounded-lg text-sm",
+                              "bg-background border border-border",
+                              "placeholder:text-muted-foreground/60",
+                              "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30"
+                            )}
+                          />
+                        </div>
+                      )}
+                    </div>
+
                     {/* Evidence Upload Section */}
                     <div className="pt-3 border-t border-border/50">
                       <EvidenceUploadBlock
@@ -776,6 +899,156 @@ export function CustomerBriefSection() {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* AI Readiness Score */}
+            <div className="rounded-xl border border-border bg-muted/10 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Gauge className="w-4 h-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">AI Readiness</h3>
+                </div>
+                <span className={cn(
+                  "text-xs font-medium px-2 py-0.5 rounded-full",
+                  output.aiReadiness.score >= 60 ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                )}>
+                  {output.aiReadiness.label} — {output.aiReadiness.score}/100
+                </span>
+              </div>
+              <Progress value={output.aiReadiness.score} className="h-2 mb-3" />
+              <div className="space-y-1.5">
+                {output.aiReadiness.missingChecklist.filter(c => !c.filled).slice(0, 5).map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-2 text-xs">
+                    <div className="w-3 h-3 rounded-sm border border-muted-foreground/40 flex-shrink-0" />
+                    <span className="text-muted-foreground">{item.category}: {item.item}</span>
+                  </div>
+                ))}
+                {output.aiReadiness.missingChecklist.filter(c => c.filled).slice(0, 3).map((item, idx) => (
+                  <div key={`f-${idx}`} className="flex items-center gap-2 text-xs">
+                    <CheckCircle2 className="w-3 h-3 text-primary flex-shrink-0" />
+                    <span className="text-foreground">{item.category}: {item.item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Seller-specific output */}
+            {output.sellerOutput && (
+              <div className="rounded-xl border border-border bg-muted/10 p-4 space-y-4">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">Seller Brief</h3>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Use case & outcome</p>
+                  <p className="text-sm text-foreground">{output.sellerOutput.useCaseOutcome}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Value framing</p>
+                  <p className="text-sm text-foreground">{output.sellerOutput.valueFraming}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Talk track</p>
+                  <div className="space-y-1.5">
+                    {output.sellerOutput.talkTrack.map((line, idx) => (
+                      <p key={idx} className="text-sm text-foreground italic">{line}</p>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-2">AI objections & responses</p>
+                  <div className="space-y-2">
+                    {output.sellerOutput.objections.map((obj, idx) => (
+                      <div key={idx} className="p-2.5 rounded-lg bg-background/50">
+                        <p className="text-xs font-medium text-foreground mb-1">"{obj.objection}"</p>
+                        <p className="text-xs text-muted-foreground">{obj.response}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Pilot path</p>
+                  <div className="space-y-1">
+                    {output.sellerOutput.pilotPath.map((step, idx) => (
+                      <p key={idx} className="text-xs text-foreground">{step}</p>
+                    ))}
+                  </div>
+                </div>
+                {output.sellerOutput.followUpEmail && (
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-xs font-medium text-muted-foreground">Follow-up email draft</p>
+                      <button
+                        onClick={() => handleCopySection(output.sellerOutput?.followUpEmail || '')}
+                        className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                      >
+                        <Copy className="w-3 h-3" /> Copy
+                      </button>
+                    </div>
+                    <pre className="text-xs text-muted-foreground whitespace-pre-wrap font-sans leading-relaxed p-3 rounded-lg bg-background/50 max-h-[200px] overflow-y-auto">
+                      {output.sellerOutput.followUpEmail}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Engineer-specific output */}
+            {output.engineerOutput && (
+              <div className="rounded-xl border border-border bg-muted/10 p-4 space-y-4">
+                <div className="flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">Engineer Brief</h3>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Assumptions & open questions</p>
+                  <ul className="space-y-1">
+                    {output.engineerOutput.assumptions.map((a, idx) => (
+                      <li key={idx} className="text-xs text-foreground flex items-start gap-2">
+                        <AlertCircle className="w-3 h-3 text-muted-foreground mt-0.5 flex-shrink-0" />
+                        {a}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Recommended architecture</p>
+                  <div className="p-2.5 rounded-lg bg-primary/5 border border-primary/10">
+                    <p className="text-sm font-medium text-foreground">{output.engineerOutput.architecturePattern.name}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{output.engineerOutput.architecturePattern.rationale}</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Required services</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {output.engineerOutput.requiredServices.map((svc, idx) => (
+                      <span key={idx} className="px-2 py-0.5 rounded-md text-xs bg-muted text-foreground">{svc}</span>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-2">Risks & mitigations</p>
+                  <div className="space-y-2">
+                    {output.engineerOutput.risks.map((r, idx) => (
+                      <div key={idx} className="p-2.5 rounded-lg bg-background/50">
+                        <p className="text-xs font-medium text-foreground mb-1">{r.risk}</p>
+                        <p className="text-xs text-muted-foreground">{r.mitigation}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Validation checklist (PoC gates)</p>
+                  <div className="space-y-1">
+                    {output.engineerOutput.validationChecklist.map((item, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-xs">
+                        <div className="w-3 h-3 rounded-sm border border-muted-foreground/40 flex-shrink-0" />
+                        <span className="text-foreground">{item}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}

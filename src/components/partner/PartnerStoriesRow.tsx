@@ -85,8 +85,8 @@ export function PartnerStoriesRow({
   return (
     <section className={cn("space-y-3", className)}>
       <SectionHeader
-        title="Stories"
-        subtitle="Partner signals you can use today."
+        title="AI Selling Signals"
+        subtitle="What changed, why it matters, what to do."
         action={hasMore ? (
           <Button
             variant="ghost"
@@ -137,7 +137,7 @@ export function PartnerStoriesRow({
       <Sheet open={browseOpen} onOpenChange={setBrowseOpen}>
         <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
           <SheetHeader className="mb-6">
-            <SheetTitle>All Partner Stories</SheetTitle>
+            <SheetTitle>All AI Selling Signals</SheetTitle>
             <p className="text-sm text-muted-foreground">
               {allActiveStories.length} active signals
             </p>

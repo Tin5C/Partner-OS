@@ -1,4 +1,4 @@
-// Partner Request Info Data
+// Partner Request Info Data — AI-native taxonomy
 // Types, templates, and logic for "Request info from colleagues" feature
 
 export interface RequestType {
@@ -7,13 +7,15 @@ export interface RequestType {
   description: string;
 }
 
+// AI-native Account Memory buckets
 export const REQUEST_TYPES: RequestType[] = [
-  { id: 'app-landscape', label: 'Application landscape', description: 'Including proprietary apps' },
-  { id: 'architecture', label: 'Architecture diagram / integration patterns', description: 'Current technical setup' },
-  { id: 'licenses', label: 'Existing licenses / entitlements', description: 'Microsoft & third-party' },
-  { id: 'security', label: 'Security/compliance constraints', description: 'Regulatory & internal policies' },
-  { id: 'stakeholders', label: 'Current initiatives + stakeholders', description: 'Key people & projects' },
-  { id: 'budget', label: 'Budget/timeline/decision process', description: 'Procurement context' },
+  { id: 'use-cases', label: 'Use cases', description: 'AI use cases being explored or deployed' },
+  { id: 'data-sources', label: 'Data sources & owners', description: 'Where data lives and who owns it' },
+  { id: 'security-compliance', label: 'Security/compliance constraints', description: 'Data residency, privacy, regulatory' },
+  { id: 'architecture', label: 'Architecture notes', description: 'Current infra, integration patterns, AI stack' },
+  { id: 'licenses', label: 'Licenses/entitlements/incentives', description: 'Microsoft, third-party, cloud commitments' },
+  { id: 'stakeholders', label: 'Stakeholders & decision process', description: 'Key people, budget, timeline' },
+  { id: 'governance', label: 'Governance maturity', description: 'Shadow AI policies, responsible AI stance' },
 ];
 
 export interface RequestTracking {
@@ -49,29 +51,29 @@ export function generateRequestTemplates(
     : '';
   const meetingLine = meetingContext
     ? `We have a meeting/goal coming up: ${meetingContext}.`
-    : 'We\'re preparing a brief for an upcoming engagement.';
+    : 'We\'re preparing an AI deal brief for an upcoming engagement.';
   const deadline = 'If you can share by end of day today, that would be ideal — otherwise before our next sync.';
 
   const slack = `Hey team 👋
 
-I'm prepping for **${customerName}** and need a few data points from anyone who's touched this account.
+I'm prepping an AI deal brief for **${customerName}** and need a few data points from anyone who's touched this account.
 
 ${meetingLine}
 
 Could you help with any of the following?
 ${bullets}${customLine}
 
-Screenshots or docs are great (redacted is fine).
+Screenshots, docs, or quick notes are great (redacted is fine).
 
 ${deadline}
 
 Thanks!`;
 
-  const email = `Subject: Quick ask — ${customerName} account context needed
+  const email = `Subject: Quick ask — ${customerName} AI deal context needed
 
 Hi team,
 
-I'm putting together a brief for ${customerName} and could use your help filling in some gaps.
+I'm putting together an AI deal brief for ${customerName} and could use your help filling in some gaps.
 
 ${meetingLine}
 
@@ -84,7 +86,7 @@ ${deadline}
 
 Thanks in advance.`;
 
-  const short = `Need info on ${customerName}:
+  const short = `Need AI deal context on ${customerName}:
 ${bullets}${customLine}
 Screenshots/docs welcome (redacted ok). ${deadline}`;
 
