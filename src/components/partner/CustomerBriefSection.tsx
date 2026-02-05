@@ -66,6 +66,7 @@ import {
 } from '@/data/partnerBriefData';
 import { EvidenceUploadBlock } from './EvidenceUploadBlock';
 import { ExtractedSignalsBlock } from './ExtractedSignalsBlock';
+import { RequestInfoPanel } from './RequestInfoPanel';
 import { savePartnerBriefContext } from './ExpertCornersRail';
 
 // Default empty evidence state
@@ -139,6 +140,8 @@ export function CustomerBriefSection() {
   const [showCustomerError, setShowCustomerError] = useState(false);
   // Local extracted signals for editing after generation
   const [editedSignals, setEditedSignals] = useState<ExtractedSignals | null>(null);
+  // Colleague notes from Request Info panel
+  const [colleagueNotes, setColleagueNotes] = useState<string>('');
 
   // Validation logic
   const canGenerate = inputMode === 'brainstorm' 
@@ -174,11 +177,14 @@ export function CustomerBriefSection() {
         cloudFootprint: cloudFootprint || undefined,
         knownLicenses: knownLicenses || undefined,
         evidence: hasEvidence ? evidence : undefined,
+        // Colleague notes feed into brainstorm-style enrichment
+        brainstormNotes: colleagueNotes
+          ? (inputMode === 'brainstorm' ? `${brainstormNotes}\n\n--- Colleague notes ---\n${colleagueNotes}` : colleagueNotes)
+          : (inputMode === 'brainstorm' ? brainstormNotes : undefined),
         // New scope & mode fields
         briefScope,
         specificArea: briefScope === 'specific-area' ? specificArea : undefined,
         inputMode,
-        brainstormNotes: inputMode === 'brainstorm' ? brainstormNotes : undefined,
       };
       const result = generatePartnerBrief(input);
       setOutput(result);
@@ -251,6 +257,7 @@ export function CustomerBriefSection() {
     setOutput(null);
     setEditedSignals(null);
     setContextOpen(false);
+    setColleagueNotes('');
   };
 
   const getCaptureIcon = (category: CaptureAction['category']) => {
@@ -763,6 +770,13 @@ export function CustomerBriefSection() {
                 </div>
               </div>
             )}
+
+            {/* Request Info from Colleagues */}
+            <RequestInfoPanel
+              customerName={customerName}
+              colleagueNotes={colleagueNotes}
+              onColleagueNotes={setColleagueNotes}
+            />
 
             {/* AI Opportunity Map (Partner View) */}
             {output.aiOpportunities.length > 0 && (
