@@ -9,9 +9,6 @@ import {
   X as XIcon,
   Image,
   FileCheck,
-  Layers,
-  Server,
-  BadgeCheck,
   AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -21,12 +18,6 @@ interface EvidenceUploadBlockProps {
   evidence: EvidenceState;
   onEvidenceChange: (evidence: EvidenceState) => void;
 }
-
-const EXTRACT_CATEGORIES = [
-  { icon: Layers, label: 'Applications', description: 'e.g., SAP, Salesforce, ServiceNow' },
-  { icon: Server, label: 'Architecture patterns', description: 'e.g., hybrid, data platform, identity/security' },
-  { icon: BadgeCheck, label: 'License signals', description: 'e.g., M365, Azure usage, security stack' },
-];
 
 export function EvidenceUploadBlock({ evidence, onEvidenceChange }: EvidenceUploadBlockProps) {
   const [linkInput, setLinkInput] = useState('');
@@ -119,15 +110,12 @@ export function EvidenceUploadBlock({ evidence, onEvidenceChange }: EvidenceUplo
           <Upload className="w-4 h-4 text-primary" />
           <span className="text-xs font-medium text-foreground">Evidence Upload (optional)</span>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Add 1–2 artifacts and we'll extract apps, architecture patterns, and license signals to improve recommendations.
-        </p>
       </div>
 
       {/* Upload Controls */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {/* Screenshot Upload */}
-        <div>
+        <div className="space-y-1">
           <input
             ref={screenshotInputRef}
             type="file"
@@ -153,10 +141,13 @@ export function EvidenceUploadBlock({ evidence, onEvidenceChange }: EvidenceUplo
               </p>
             </div>
           </button>
+          <p className="text-[10px] text-muted-foreground/80 pl-1">
+            Helps us identify applications and architecture patterns.
+          </p>
         </div>
 
         {/* Document Upload */}
-        <div>
+        <div className="space-y-1">
           <input
             ref={documentInputRef}
             type="file"
@@ -178,10 +169,13 @@ export function EvidenceUploadBlock({ evidence, onEvidenceChange }: EvidenceUplo
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-foreground">Upload documents</p>
               <p className="text-[10px] text-muted-foreground truncate">
-                Deck / meeting notes / proposal
+                Decks, meeting notes, proposals
               </p>
             </div>
           </button>
+          <p className="text-[10px] text-muted-foreground/80 pl-1">
+            Helps us detect licenses, platforms, and constraints.
+          </p>
         </div>
       </div>
 
@@ -217,8 +211,8 @@ export function EvidenceUploadBlock({ evidence, onEvidenceChange }: EvidenceUplo
             Add
           </button>
         </div>
-        <p className="text-[10px] text-muted-foreground mt-1">
-          For signal scan (website, careers page, tech blog)
+        <p className="text-[10px] text-muted-foreground/80 mt-1 pl-1">
+          We scan for technology signals and AI initiatives.
         </p>
       </div>
 
@@ -281,21 +275,6 @@ export function EvidenceUploadBlock({ evidence, onEvidenceChange }: EvidenceUplo
         </div>
       )}
 
-      {/* What We'll Extract Preview */}
-      <div className="p-3 rounded-lg bg-muted/20 border border-border/50">
-        <p className="text-[10px] font-medium text-muted-foreground mb-2">What we'll extract:</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          {EXTRACT_CATEGORIES.map(({ icon: Icon, label, description }) => (
-            <div key={label} className="flex items-start gap-2">
-              <Icon className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-xs font-medium text-foreground">{label}</p>
-                <p className="text-[10px] text-muted-foreground">{description}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* Privacy Note */}
       <div className="flex items-start gap-2 text-[10px] text-muted-foreground">
