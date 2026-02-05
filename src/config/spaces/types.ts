@@ -12,7 +12,8 @@ export type SectionType =
   | 'enablementProgress'
   | 'customerBrief'
   | 'expertCorners'
-  | 'trendingPacks';
+  | 'trendingPacks'
+  | 'capabilityBrand';
 
 export type SectionVariant = 'primary' | 'secondary' | 'tertiary';
 
@@ -54,6 +55,7 @@ export interface SpaceFeatures {
   customerBrief?: boolean; // Partner-only feature
   expertCorners?: boolean; // Partner-only feature
   trendingPacks?: boolean; // Partner-only feature
+  capabilityBrand?: boolean; // Partner-only: persona-aware branding
 }
 
 export interface SpaceConfig {
