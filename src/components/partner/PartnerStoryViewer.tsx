@@ -54,13 +54,13 @@ export function PartnerStoryViewer({
       case 'ApplyToProject':
         if (hasCustomerBrief && onAddToBrief) {
           onAddToBrief(story);
-          toast.success('Added to your Customer Brief', {
+          toast.success('Added to your AI Deal Brief', {
             description: 'Signal saved under "Signals to use"',
           });
           onMarkListened(story.id);
         } else if (onCreateBrief) {
           // Prompt to create brief first
-          toast.info('Create a Customer Brief first', {
+          toast.info('Create an AI Deal Brief first', {
             description: 'Start a brief to save signals for your deal.',
             action: {
               label: 'Create Brief',
@@ -196,11 +196,11 @@ export function PartnerStoryViewer({
           {needsBrief ? (
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground text-center">
-                Create a Customer Brief to save this signal
+                Create an AI Deal Brief to save this signal
               </p>
               <Button className="w-full" onClick={onCreateBrief}>
                 <FileText className="h-4 w-4 mr-2" />
-                Create Customer Brief
+                Create AI Deal Brief
               </Button>
             </div>
           ) : (

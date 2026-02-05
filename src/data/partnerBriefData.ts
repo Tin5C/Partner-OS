@@ -1,5 +1,6 @@
-// Partner Brief Data Model
-// Rules-based recommendations for Microsoft Partner support
+// Partner Brief Data Model — AI Deal Brief
+// Rules-based recommendations for AI-focused partner selling
+// Supports Seller and Engineer persona outputs
 
 // ============= Evidence & Extracted Signals Types =============
 
@@ -35,10 +36,33 @@ export interface EvidenceState {
   extractedSignals: ExtractedSignals;
 }
 
-// ============= Brief Scope & Input Mode Types =============
+// ============= Brief Scope, Input Mode & Persona Types =============
 
 export type BriefScope = 'entire-account' | 'specific-area';
 export type InputMode = 'guided' | 'brainstorm';
+export type PersonaType = 'seller' | 'engineer';
+
+// AI-specific constraint categories
+export const AI_CONSTRAINTS = [
+  { value: 'data-access', label: 'Data access / availability' },
+  { value: 'security', label: 'Security / compliance' },
+  { value: 'residency', label: 'Data residency' },
+  { value: 'integration', label: 'Integration complexity' },
+  { value: 'budget-timeline', label: 'Budget / timeline' },
+  { value: 'governance', label: 'AI governance / policy' },
+];
+
+// AI use case suggestions
+export const AI_USE_CASE_SUGGESTIONS = [
+  'Document processing & extraction',
+  'Customer service automation',
+  'Knowledge base / RAG',
+  'Code generation / dev productivity',
+  'Predictive analytics / forecasting',
+  'Content generation',
+  'Process automation / agents',
+  'Search & discovery',
+];
 
 // ============= Brief Input/Output Types =============
 
@@ -64,11 +88,16 @@ export interface PartnerBriefInput {
     hiringScanned?: boolean;
     newsScanned?: boolean;
   };
-  // NEW: Scope & Input Mode
+  // Scope & Input Mode
   briefScope: BriefScope;
   specificArea?: string;
   inputMode: InputMode;
   brainstormNotes?: string;
+  // AI Deal Brief additions
+  personaType: PersonaType;
+  aiUseCases?: string;
+  aiConstraints?: string[];
+  aiConstraintNotes?: string;
 }
 
 // Signal coverage for the brief
@@ -103,8 +132,38 @@ export interface AIOpportunity {
   effortVsImpact: 'Low' | 'Medium' | 'High';
 }
 
+// Seller-specific output
+export interface SellerOutput {
+  useCaseOutcome: string;
+  valueFraming: string;
+  talkTrack: string[];
+  objections: Array<{ objection: string; response: string }>;
+  pilotPath: string[];
+  followUpEmail?: string;
+}
+
+// Engineer-specific output
+export interface EngineerOutput {
+  assumptions: string[];
+  architecturePattern: { name: string; rationale: string };
+  requiredServices: string[];
+  risks: Array<{ risk: string; mitigation: string }>;
+  validationChecklist: string[];
+}
+
+// AI Readiness score
+export interface AIReadinessScore {
+  score: number; // 0-100
+  label: string; // 'Not ready' | 'Emerging' | 'Ready' | 'Advanced'
+  missingChecklist: Array<{
+    category: string;
+    item: string;
+    filled: boolean;
+  }>;
+}
+
 export interface PartnerBriefOutput {
-  // Signal coverage (new)
+  // Signal coverage
   signalCoverage: SignalCoverage;
   capturePlan: CaptureAction[];
   conditionalRefinements: ConditionalRefinement[];
@@ -114,8 +173,14 @@ export interface PartnerBriefOutput {
   briefScope: BriefScope;
   specificArea?: string;
   inputMode: InputMode;
+  personaType: PersonaType;
   // AI Opportunity Map (partner view)
   aiOpportunities: AIOpportunity[];
+  // AI Readiness
+  aiReadiness: AIReadinessScore;
+  // Persona-specific outputs
+  sellerOutput?: SellerOutput;
+  engineerOutput?: EngineerOutput;
   
   topRecommendations: Array<{
     title: string;
@@ -682,6 +747,126 @@ function generateAIOpportunities(input: PartnerBriefInput, extractedSignals: Ext
   return opportunities.slice(0, 4);
 }
 
+// Generate AI readiness score
+function generateAIReadiness(input: PartnerBriefInput): AIReadinessScore {
+  const checklist: AIReadinessScore['missingChecklist'] = [
+    { category: 'Data', item: 'Data sources identified', filled: !!input.applicationLandscape || !!input.brainstormNotes },
+    { category: 'Data', item: 'Data owners confirmed', filled: false },
+    { category: 'Data', item: 'Data sensitivity classified', filled: !!input.aiConstraints?.includes('security') },
+    { category: 'Security', item: 'Security stance documented', filled: !!input.aiConstraints?.includes('security') },
+    { category: 'Security', item: 'Data residency requirements clear', filled: !!input.aiConstraints?.includes('residency') },
+    { category: 'Integration', item: 'Integration points mapped', filled: !!input.applicationLandscape },
+    { category: 'Integration', item: 'Current AI stack known', filled: !!input.cloudFootprint },
+    { category: 'Business', item: 'AI use cases defined', filled: !!input.aiUseCases },
+    { category: 'Business', item: 'Success criteria set', filled: false },
+    { category: 'Governance', item: 'AI governance maturity assessed', filled: !!input.aiConstraints?.includes('governance') },
+  ];
+
+  const filledCount = checklist.filter(c => c.filled).length;
+  const score = Math.round((filledCount / checklist.length) * 100);
+  
+  let label = 'Not ready';
+  if (score >= 80) label = 'Advanced';
+  else if (score >= 60) label = 'Ready';
+  else if (score >= 30) label = 'Emerging';
+
+  return { score, label, missingChecklist: checklist };
+}
+
+// Generate seller-specific output
+function generateSellerOutput(input: PartnerBriefInput): SellerOutput {
+  const useCaseText = input.aiUseCases || 'AI-driven productivity and automation';
+  return {
+    useCaseOutcome: `${useCaseText} — enabling measurable efficiency gains and competitive differentiation for ${input.customerName}.`,
+    valueFraming: `By implementing AI solutions, ${input.customerName} can expect 20-40% reduction in manual effort for targeted processes, faster time-to-insight, and improved decision quality. The investment typically pays back within 6-12 months.`,
+    talkTrack: [
+      `"${input.customerName} is exploring AI to drive [business outcome]. We've helped similar organizations achieve [specific result]."`,
+      '"The key question isn\'t whether to adopt AI, but where to start for maximum impact with minimum risk."',
+      '"Our approach: identify 2-3 high-value use cases, validate with a pilot, then scale what works."',
+    ],
+    objections: [
+      { objection: 'Data privacy concerns', response: 'Azure AI processes data within your tenant boundary. No customer data is used to train models. Full compliance with GDPR, SOC2, and industry-specific regulations.' },
+      { objection: 'Hallucination / accuracy risks', response: 'We implement RAG patterns with grounding to your data, plus human-in-the-loop validation. Accuracy improves with better data quality and guardrails.' },
+      { objection: 'IP / data leakage', response: 'Enterprise-grade controls: data never leaves your environment, model outputs are governed, and we audit all AI interactions.' },
+      { objection: 'Cost unpredictability', response: 'We start with a scoped pilot with fixed costs. Production costs are predictable with reserved capacity and consumption monitoring.' },
+    ],
+    pilotPath: [
+      'Week 1-2: Use case validation + data readiness assessment',
+      'Week 3-4: Architecture design + security review',
+      'Week 5-8: Pilot build + testing with real data',
+      'Week 9-10: Success measurement + scale decision',
+    ],
+    followUpEmail: `Subject: AI Opportunity — Next Steps for ${input.customerName}
+
+Hi [Name],
+
+Thank you for the conversation about ${input.customerName}'s AI goals. As discussed, I'd recommend we start with a focused assessment to identify the highest-impact use cases.
+
+Proposed next steps:
+1. 30-min discovery session to map current data landscape
+2. AI readiness assessment (1-2 days)
+3. Pilot scoping with clear success criteria
+
+I'll send a calendar invite for the discovery session. In the meantime, it would be helpful if your team could share any documentation on current data sources and architecture.
+
+Looking forward to it.`,
+  };
+}
+
+// Generate engineer-specific output
+function generateEngineerOutput(input: PartnerBriefInput): EngineerOutput {
+  const hasRAGSignal = input.aiUseCases?.toLowerCase().includes('knowledge') || 
+                       input.aiUseCases?.toLowerCase().includes('search') ||
+                       input.aiUseCases?.toLowerCase().includes('document');
+  const hasAgentSignal = input.aiUseCases?.toLowerCase().includes('agent') ||
+                         input.aiUseCases?.toLowerCase().includes('automation');
+
+  let archPattern = { name: 'RAG (Retrieval-Augmented Generation)', rationale: 'Best for knowledge-heavy use cases. Grounds LLM responses in customer data without fine-tuning. Lower cost, faster to deploy, easier to update.' };
+  
+  if (hasAgentSignal) {
+    archPattern = { name: 'Agentic Architecture', rationale: 'Multi-step reasoning with tool use. Suitable for process automation where the AI needs to take actions, not just answer questions.' };
+  } else if (!hasRAGSignal && input.dealMotion === 'ai-copilot') {
+    archPattern = { name: 'Copilot Extension + RAG', rationale: 'Extends M365 Copilot with custom plugins grounded in customer data. Leverages existing Copilot license investment.' };
+  }
+
+  return {
+    assumptions: [
+      'Customer has structured and/or unstructured data accessible via APIs or file shares',
+      'Azure subscription with appropriate resource quotas is available or can be provisioned',
+      input.cloudFootprint === 'azure-primary' 
+        ? 'Azure is the primary cloud — native integration path available' 
+        : 'Multi-cloud or non-Azure primary — may need data replication or hybrid architecture',
+      'Identity management (Entra ID) is in place for authentication and RBAC',
+      'No real-time (<100ms) inference requirements unless specified',
+    ],
+    architecturePattern: archPattern,
+    requiredServices: [
+      'Azure OpenAI Service (GPT-4o / GPT-4o mini)',
+      'Azure AI Search (for RAG indexing)',
+      'Azure Blob Storage / Data Lake',
+      'Azure App Service or Container Apps (hosting)',
+      'Azure Monitor + Application Insights',
+      ...(input.aiConstraints?.includes('security') ? ['Azure Key Vault', 'Azure Private Link'] : []),
+      ...(input.aiConstraints?.includes('governance') ? ['Azure AI Content Safety', 'Purview'] : []),
+    ],
+    risks: [
+      { risk: 'Data quality issues affecting AI output accuracy', mitigation: 'Implement data profiling + cleansing pipeline before indexing. Set up quality monitoring.' },
+      { risk: 'Token cost overruns during scaling', mitigation: 'Use GPT-4o mini for simple tasks, GPT-4o for complex. Implement caching and prompt optimization.' },
+      { risk: 'Security: prompt injection or data exfiltration', mitigation: 'Input/output filtering, RBAC on data sources, audit logging, content safety filters.' },
+      { risk: 'Governance: lack of AI usage policies', mitigation: 'Define acceptable use policy. Implement logging and human review for sensitive outputs.' },
+    ],
+    validationChecklist: [
+      'Data connectivity validated (all sources accessible)',
+      'Security review passed (networking, auth, data classification)',
+      'Retrieval quality meets threshold (precision/recall on test set)',
+      'Latency within acceptable bounds for user experience',
+      'Cost model validated against projected usage',
+      'User acceptance testing with representative scenarios',
+      'Rollback and incident response plan documented',
+    ],
+  };
+}
+
 // Recommendation engine (MVP rules-based)
 export function generatePartnerBrief(input: PartnerBriefInput): PartnerBriefOutput {
   const recommendations: PartnerBriefOutput['topRecommendations'] = [];
@@ -700,6 +885,11 @@ export function generatePartnerBrief(input: PartnerBriefInput): PartnerBriefOutp
   const capturePlan = generateCapturePlan(input, extractedSignals);
   const conditionalRefinements = generateConditionalRefinements(input);
   const aiOpportunities = generateAIOpportunities(input, extractedSignals);
+  const aiReadiness = generateAIReadiness(input);
+  
+  // Persona-specific outputs
+  const sellerOutput = input.personaType === 'seller' ? generateSellerOutput(input) : undefined;
+  const engineerOutput = input.personaType === 'engineer' ? generateEngineerOutput(input) : undefined;
 
   // Determine co-sell recommendation
   const isLargeDeal = input.dealSizeBand === '250k-1m' || input.dealSizeBand === 'over-1m';
@@ -849,7 +1039,11 @@ export function generatePartnerBrief(input: PartnerBriefInput): PartnerBriefOutp
     briefScope: input.briefScope,
     specificArea: input.specificArea,
     inputMode: input.inputMode,
+    personaType: input.personaType,
     aiOpportunities,
+    aiReadiness,
+    sellerOutput,
+    engineerOutput,
     topRecommendations: recommendations.slice(0, 3),
     programs: {
       coSell: {

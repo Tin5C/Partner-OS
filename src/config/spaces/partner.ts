@@ -13,8 +13,8 @@ export const partnerConfig: SpaceConfig = {
     {
       id: 'stories',
       type: 'storiesRow',
-      title: 'Stories',
-      subtitle: 'Product updates, competitive insights, and thought leadership.',
+      title: 'AI Selling Signals',
+      subtitle: 'What changed, why it matters, what to do.',
       variant: 'primary',
       enabled: true,
     },
@@ -22,8 +22,8 @@ export const partnerConfig: SpaceConfig = {
     {
       id: 'customer-brief',
       type: 'customerBrief',
-      title: 'Customer Brief',
-      subtitle: 'Enter your deal context — get the right programs, funding, assets, and steps.',
+      title: 'AI Deal Brief',
+      subtitle: 'Turn messy AI deal context into a deal-ready plan in 5–10 minutes.',
       variant: 'primary',
       enabled: true,
     },
@@ -81,11 +81,11 @@ export const partnerConfig: SpaceConfig = {
   
   labels: {
     headerTitle: 'Partner Portal',
-    headerSubtitle: 'Partner Sales Readiness',
-    storiesTitle: 'Stories',
-    storiesSubtitle: 'Product updates, competitive insights, and thought leadership.',
-    accountPrepTitle: 'Customer Brief',
-    accountPrepSubtitle: 'Enter your deal context — get the right programs, funding, assets, and steps.',
+    headerSubtitle: 'AI Sales Readiness',
+    storiesTitle: 'AI Selling Signals',
+    storiesSubtitle: 'What changed, why it matters, what to do.',
+    accountPrepTitle: 'AI Deal Brief',
+    accountPrepSubtitle: 'Turn messy AI deal context into a deal-ready plan in 5–10 minutes.',
     briefingsTitle: 'Execution Packs',
     briefingsSubtitle: 'Concrete actions, talk tracks, and objection handling.',
     growthTitle: 'Enablement',
