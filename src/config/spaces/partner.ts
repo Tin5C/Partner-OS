@@ -1,5 +1,6 @@
 // Partner Space Configuration
 // Curated content with partner-safe signals only
+// Guided scroll structure: Stories → Customer Brief → Deep Dives → Trending → Execution
 
 import { SpaceConfig } from './types';
 
@@ -8,6 +9,7 @@ export const partnerConfig: SpaceConfig = {
   displayName: 'Partner',
   
   sections: [
+    // 1. STORIES - What's new / what should I notice?
     {
       id: 'stories',
       type: 'storiesRow',
@@ -16,6 +18,7 @@ export const partnerConfig: SpaceConfig = {
       variant: 'primary',
       enabled: true,
     },
+    // 2. CUSTOMER BRIEF - What am I working on? (The spine of the page)
     {
       id: 'customer-brief',
       type: 'customerBrief',
@@ -24,18 +27,7 @@ export const partnerConfig: SpaceConfig = {
       variant: 'primary',
       enabled: true,
     },
-    {
-      id: 'briefings',
-      type: 'packGrid',
-      title: 'Briefings',
-      subtitle: 'Partner-ready insights and talking points.',
-      variant: 'primary',
-      enabled: true,
-      packs: ['product-focus', 'competitive-overview', 'objection-handling'],
-      copyOverrides: {
-        'objection-handling-subtitle': 'Approved objection responses',
-      },
-    },
+    // 3. SOLUTION DEEP DIVES - Help me understand this properly
     {
       id: 'expert-corners',
       type: 'expertCorners',
@@ -44,6 +36,29 @@ export const partnerConfig: SpaceConfig = {
       variant: 'primary',
       enabled: true,
     },
+    // 4. TRENDING PACKS - What's hot right now / what buyers care about
+    {
+      id: 'trending-packs',
+      type: 'trendingPacks',
+      title: 'Trending Packs',
+      subtitle: 'What partners are talking about right now',
+      variant: 'primary',
+      enabled: true,
+    },
+    // 5. EXECUTION PACKS / BRIEFINGS - What do I say or do next?
+    {
+      id: 'briefings',
+      type: 'packGrid',
+      title: 'Execution Packs',
+      subtitle: 'Concrete actions, talk tracks, and objection handling.',
+      variant: 'primary',
+      enabled: true,
+      packs: ['product-focus', 'competitive-overview', 'objection-handling'],
+      copyOverrides: {
+        'objection-handling-subtitle': 'Approved objection responses',
+      },
+    },
+    // 6. GROWTH - Personal development (lower priority)
     {
       id: 'growth',
       type: 'growth',
@@ -52,14 +67,6 @@ export const partnerConfig: SpaceConfig = {
       variant: 'secondary',
       enabled: true,
       packs: ['skill-of-week'],
-    },
-    {
-      id: 'enablement-progress',
-      type: 'enablementProgress',
-      title: 'Enablement Progress',
-      subtitle: 'Track your partner certification and training.',
-      variant: 'tertiary',
-      enabled: true,
     },
   ],
   
@@ -70,8 +77,8 @@ export const partnerConfig: SpaceConfig = {
     storiesSubtitle: 'Product updates, competitive insights, and thought leadership.',
     accountPrepTitle: 'Customer Brief',
     accountPrepSubtitle: 'Enter your deal context — get the right programs, funding, assets, and steps.',
-    briefingsTitle: 'Briefings',
-    briefingsSubtitle: 'Partner-ready insights and talking points.',
+    briefingsTitle: 'Execution Packs',
+    briefingsSubtitle: 'Concrete actions, talk tracks, and objection handling.',
     growthTitle: 'Enablement',
     reputationTitle: 'Enablement Progress',
     reputationSubtitle: 'Track your partner certification and training.',
@@ -87,6 +94,7 @@ export const partnerConfig: SpaceConfig = {
     skillOfWeek: true,
     customerBrief: true, // Partner-only feature
     expertCorners: true, // Partner-only feature
+    trendingPacks: true, // Partner-only feature
   },
   
   // Only curated/approved story types
