@@ -24,6 +24,7 @@ import { CustomerBriefSection } from '@/components/partner/CustomerBriefSection'
 import { ExpertCornersRail } from '@/components/partner/ExpertCornersRail';
 import { PartnerGrowthSection } from '@/components/partner/PartnerGrowthSection';
 import { TrendingPacksSection } from '@/components/partner/TrendingPacksSection';
+import { PartnerStoriesRow } from '@/components/partner/PartnerStoriesRow';
 import { usePresenceSources } from '@/hooks/usePresenceSources';
 import { PackContent } from '@/config/contentModel';
 import { SectionConfig } from '@/config/spaces';
@@ -200,6 +201,19 @@ export function HomeRenderer() {
 
     switch (section.type) {
       case 'storiesRow':
+        // Partner space uses its own Partner Stories with signal types
+        if (spaceType === 'partner') {
+          return (
+            <PartnerStoriesRow
+              key={section.id}
+              hasCustomerBrief={false} // Would check actual brief state
+              onCreateBrief={() => {
+                // Could scroll to Customer Brief section
+              }}
+            />
+          );
+        }
+        // Internal space uses the generic StoriesRow
         return (
           <StoriesRow
             key={section.id}
