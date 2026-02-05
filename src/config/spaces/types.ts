@@ -11,6 +11,7 @@ export type SectionType =
   | 'reputation'
   | 'enablementProgress'
   | 'customerBrief'
+  | 'quickBrief'
   | 'expertCorners'
   | 'trendingPacks'
   | 'capabilityBrand';
@@ -53,6 +54,7 @@ export interface SpaceFeatures {
   events: boolean;
   skillOfWeek: boolean;
   customerBrief?: boolean; // Partner-only feature
+  quickBrief?: boolean; // Partner-only: fast situational brief
   expertCorners?: boolean; // Partner-only feature
   trendingPacks?: boolean; // Partner-only feature
   capabilityBrand?: boolean; // Partner-only: persona-aware branding

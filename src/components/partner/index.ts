@@ -29,3 +29,4 @@ export { BriefBucketInput } from './BriefBucketInput';
 export { BriefReadinessCard } from './BriefReadinessCard';
 export { BriefTemplateSelector } from './BriefTemplateSelector';
 export { ContextRequestModal } from './ContextRequestModal';
+export { QuickBriefSection } from './QuickBriefSection';

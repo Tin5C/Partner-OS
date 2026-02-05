@@ -3,7 +3,7 @@
 
 export type PartnerSignalType = 'Vendor' | 'Regulatory' | 'LocalMarket';
 
-export type PartnerActionType = 'ApplyToProject' | 'AddToBrief' | 'OpenTrendingPack' | 'CreateBrief';
+export type PartnerActionType = 'ApplyToProject' | 'AddToBrief' | 'AddToQuickBrief' | 'OpenTrendingPack' | 'CreateBrief' | 'CreateQuickBrief';
 
 export interface PartnerStoryAction {
   actionType: PartnerActionType;
@@ -102,8 +102,8 @@ export const partnerStories: PartnerStory[] = [
     headline: 'Partner Incentives Updated for Azure AI',
     soWhat: 'New rebate tiers favor partners with certified AI workloads—check eligibility now.',
     primaryAction: {
-      actionType: 'CreateBrief',
-      actionLabel: 'Check Eligibility',
+      actionType: 'CreateQuickBrief',
+      actionLabel: 'Quick Brief',
     },
     logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg',
     publishedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
@@ -150,8 +150,8 @@ export const partnerStories: PartnerStory[] = [
     headline: 'UK Public Sector AI Funding Round Opens',
     soWhat: '£50M allocated for AI modernization—partners with public sector expertise should engage now.',
     primaryAction: {
-      actionType: 'CreateBrief',
-      actionLabel: 'Start Customer Brief',
+      actionType: 'CreateQuickBrief',
+      actionLabel: 'Start Quick Brief',
     },
     publishedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
     expiresAt: getExpiryDate(10),
