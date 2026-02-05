@@ -1,13 +1,14 @@
 // Partner Expert Corners Viewer
 // Video-first fullscreen viewer with structured exec summary for synthetic explainers
 // Includes progress tracking, expertise completion banners, and "Apply to my project" action
+// Supports YouTube embeds for sourceType: 'youtube'
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Play, Pause, Volume2, VolumeX, Maximize, BookOpen, ChevronRight, ExternalLink, Sparkles, AlertCircle, RefreshCw, Award, FolderPlus, Check } from 'lucide-react';
+import { X, Play, Pause, Volume2, VolumeX, Maximize, BookOpen, ChevronRight, ExternalLink, Sparkles, AlertCircle, RefreshCw, Award, FolderPlus, Check, Video } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PartnerExpertEpisode, isSyntheticExplainer } from '@/data/partnerExpertCorners';
+import { PartnerExpertEpisode, isSyntheticExplainer, isYouTubeEpisode, getYouTubeVideoId } from '@/data/partnerExpertCorners';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -54,6 +55,8 @@ export function ExpertCornersViewer({
   const [hasBriefContext, setHasBriefContext] = useState(false);
 
   const isSynthetic = episode ? isSyntheticExplainer(episode) : false;
+  const isYouTube = episode ? isYouTubeEpisode(episode) : false;
+  const youtubeVideoId = episode?.youtubeUrl ? getYouTubeVideoId(episode.youtubeUrl) : null;
   const isGenerating = episode?.generationStatus === 'generating';
   const isFailed = episode?.generationStatus === 'failed';
   
@@ -259,7 +262,12 @@ export function ExpertCornersViewer({
         <div className="flex items-center justify-between px-4 pb-3 border-b border-border">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
-              {isSynthetic && (
+              {isYouTube ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground text-[10px] font-medium">
+                  <Video className="w-3 h-3" />
+                  Video
+                </span>
+              ) : isSynthetic && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground text-[10px] font-medium">
                   <Sparkles className="w-3 h-3" />
                   Synthetic Explainer
@@ -268,15 +276,9 @@ export function ExpertCornersViewer({
             </div>
             <h2 className="text-lg font-semibold line-clamp-1">{episode.title}</h2>
             <p className="text-sm text-muted-foreground">
-              {isSynthetic ? (
-                <>
-                  {episode.vendorTag}
-                  {episode.topicTags && episode.topicTags.length > 0 && (
-                    <> · {episode.topicTags.join(', ')}</>
-                  )}
-                </>
-              ) : (
-                <>{episode.expertName} · {episode.vendorTag}</>
+              {episode.vendorTag}
+              {episode.topicTags && episode.topicTags.length > 0 && (
+                <> · {episode.topicTags.join(', ')}</>
               )}
             </p>
           </div>
@@ -312,7 +314,17 @@ export function ExpertCornersViewer({
                       </Button>
                     </div>
                   </div>
+                ) : isYouTube && youtubeVideoId ? (
+                  // YouTube embed
+                  <iframe
+                    className="w-full h-full"
+                    src={`https://www.youtube.com/embed/${youtubeVideoId}?rel=0&modestbranding=1`}
+                    title={episode.title}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
                 ) : (
+                  // Native video player
                   <>
                     <video
                       ref={videoRef}
@@ -341,39 +353,50 @@ export function ExpertCornersViewer({
               {/* Video controls */}
               {!isGenerating && !isFailed && (
                 <div className="bg-card border-t border-border p-3 space-y-2">
-                  {/* Progress bar */}
-                  <div 
-                    className="h-1.5 bg-muted rounded-full cursor-pointer group"
-                    onClick={handleSeek}
-                  >
+                  {/* Progress bar - only for native video */}
+                  {!isYouTube && (
                     <div 
-                      className="h-full bg-primary rounded-full relative transition-all"
-                      style={{ width: `${progress}%` }}
+                      className="h-1.5 bg-muted rounded-full cursor-pointer group"
+                      onClick={handleSeek}
                     >
-                      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div 
+                        className="h-full bg-primary rounded-full relative transition-all"
+                        style={{ width: `${progress}%` }}
+                      >
+                        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Controls row */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon" className="h-9 w-9" onClick={togglePlay}>
-                        {isPlaying ? (
-                          <Pause className="w-5 h-5" />
-                        ) : (
-                          <Play className="w-5 h-5 ml-0.5" />
-                        )}
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggleMute}>
-                        {isMuted ? (
-                          <VolumeX className="w-5 h-5" />
-                        ) : (
-                          <Volume2 className="w-5 h-5" />
-                        )}
-                      </Button>
-                      <span className="text-xs text-muted-foreground tabular-nums">
-                        {formatTime(currentTime)} / {formatTime(duration)}
-                      </span>
+                      {!isYouTube && (
+                        <>
+                          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={togglePlay}>
+                            {isPlaying ? (
+                              <Pause className="w-5 h-5" />
+                            ) : (
+                              <Play className="w-5 h-5 ml-0.5" />
+                            )}
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggleMute}>
+                            {isMuted ? (
+                              <VolumeX className="w-5 h-5" />
+                            ) : (
+                              <Volume2 className="w-5 h-5" />
+                            )}
+                          </Button>
+                          <span className="text-xs text-muted-foreground tabular-nums">
+                            {formatTime(currentTime)} / {formatTime(duration)}
+                          </span>
+                        </>
+                      )}
+                      {isYouTube && (
+                        <span className="text-xs text-muted-foreground">
+                          {episode.durationMinutes} min
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -398,7 +421,7 @@ export function ExpertCornersViewer({
                         )}
                       </Button>
                       
-                      {(episode.execSummary || episode.readingSummary) && (
+                      {episode.execSummary && (
                         <Button 
                           variant="outline" 
                           size="sm"
@@ -406,12 +429,14 @@ export function ExpertCornersViewer({
                           onClick={() => setShowSummary(true)}
                         >
                           <BookOpen className="w-3.5 h-3.5 mr-1.5" />
-                          {isSynthetic ? 'Exec summary' : 'Read summary'}
+                          Exec summary
                         </Button>
                       )}
-                      <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggleFullscreen}>
-                        <Maximize className="w-4 h-4" />
-                      </Button>
+                      {!isYouTube && (
+                        <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggleFullscreen}>
+                          <Maximize className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
 

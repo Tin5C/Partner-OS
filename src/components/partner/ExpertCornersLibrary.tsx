@@ -2,7 +2,7 @@
 // Full-screen drawer showing all episodes with filters
 
 import { useState, useMemo } from 'react';
-import { X, Search, Filter, Clock, Check, Sparkles } from 'lucide-react';
+import { X, Search, Filter, Clock, Check, Sparkles, Video } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -12,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { PartnerExpertEpisode, getAllPartnerExpertEpisodes, isSyntheticExplainer } from '@/data/partnerExpertCorners';
+import { PartnerExpertEpisode, getAllPartnerExpertEpisodes, isSyntheticExplainer, isYouTubeEpisode } from '@/data/partnerExpertCorners';
 import { usePartnerExpertise, TopicExpertise } from '@/hooks/usePartnerExpertise';
 import { ExpertiseLevelPill } from './ExpertiseBadge';
 import { cn } from '@/lib/utils';
@@ -168,6 +168,7 @@ export function ExpertCornersLibrary({
                       const progress = getEpisodeProgress(episode.id);
                       const completed = isCompleted(episode.id);
                       const isSynthetic = isSyntheticExplainer(episode);
+                      const isYouTube = isYouTubeEpisode(episode);
                       
                       return (
                         <button
@@ -209,12 +210,17 @@ export function ExpertCornersLibrary({
                               )}
                             </div>
                             <div className="flex items-center gap-2 mt-1">
-                              {isSynthetic && (
-                                <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
-                                  <Sparkles className="w-3 h-3" />
-                                  Explainer
-                                </span>
-                              )}
+                            {isYouTube ? (
+                              <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                                <Video className="w-3 h-3" />
+                                Video
+                              </span>
+                            ) : isSynthetic && (
+                              <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                                <Sparkles className="w-3 h-3" />
+                                Explainer
+                              </span>
+                            )}
                               <span className="text-[10px] px-1.5 py-0.5 bg-secondary rounded text-secondary-foreground">
                                 {episode.vendorTag}
                               </span>

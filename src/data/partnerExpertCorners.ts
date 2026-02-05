@@ -1,7 +1,8 @@
 // Partner-only Expert Corners data
-// Includes synthetic doc explainer episodes (8–45 minutes)
+// Includes synthetic doc explainer episodes (8–45 minutes) and YouTube videos
 
 export type EpisodeType = 'humanExpert' | 'syntheticDocExplainer';
+export type SourceType = 'syntheticDocExplainer' | 'youtube' | 'uploadedVideo';
 export type GenerationStatus = 'ready' | 'generating' | 'failed';
 export type ConfidenceLevel = 'Low' | 'Medium' | 'High';
 
@@ -29,6 +30,10 @@ export interface PartnerExpertEpisode {
   // Episode type - determines UI treatment
   type?: EpisodeType; // defaults to 'humanExpert' if not specified
   
+  // Source type - determines how video is rendered (YouTube embed vs native)
+  sourceType?: SourceType; // defaults to 'syntheticDocExplainer' if not specified
+  youtubeUrl?: string; // required if sourceType is 'youtube'
+  
   // Human expert fields (legacy)
   expertName?: string;
   expertRole?: string;
@@ -44,6 +49,17 @@ export interface PartnerExpertEpisode {
   generationStatus?: GenerationStatus;
   confidenceLevel?: ConfidenceLevel;
   execSummary?: SyntheticExecSummary;
+}
+
+// Helper to check if episode is a YouTube video
+export function isYouTubeEpisode(episode: PartnerExpertEpisode): boolean {
+  return episode.sourceType === 'youtube';
+}
+
+// Extract YouTube video ID from URL
+export function getYouTubeVideoId(url: string): string | null {
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+  return match ? match[1] : null;
 }
 
 export interface PartnerExpertCorner {
@@ -360,7 +376,98 @@ export const partnerExpertCorners: PartnerExpertCorner[] = [
       },
     ],
   },
-  // Legacy human expert episodes (kept for backwards compatibility)
+  // YouTube videos from external sources
+  {
+    id: 'youtube-deep-dives',
+    title: 'YouTube Deep Dives',
+    description: 'Expert videos from official Microsoft channels',
+    episodes: [
+      {
+        id: 'youtube-ai-agents-azure',
+        type: 'humanExpert',
+        sourceType: 'youtube',
+        youtubeUrl: 'https://www.youtube.com/watch?v=HhZo06QSTpU',
+        title: 'Build AI Agents with Azure AI Foundry',
+        vendorTag: 'Microsoft',
+        topicTags: ['Azure AI', 'AI Agents', 'AI Foundry'],
+        durationMinutes: 12,
+        coverImageUrl: 'https://img.youtube.com/vi/HhZo06QSTpU/maxresdefault.jpg',
+        videoUrl: '', // Not used for YouTube
+        publishedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+        generationStatus: 'ready',
+        sourceReferences: [
+          'https://www.youtube.com/watch?v=HhZo06QSTpU',
+        ],
+        execSummary: {
+          whatThisCovers: [
+            'How to build AI agents using Azure AI Foundry',
+            'Key architecture patterns for agentic workflows',
+            'Integration with Azure services and enterprise systems',
+          ],
+          whyItMattersForPartners: [
+            'AI agents are the next wave of enterprise AI adoption — partners need to lead here',
+            'Azure AI Foundry simplifies agent development, reducing partner delivery time',
+          ],
+          whenToUseInDeal: [
+            'When customers want to automate complex workflows with AI',
+            'When discussing next-generation AI capabilities beyond simple Q&A',
+          ],
+          partnerTalkTrack: [
+            '"AI agents can orchestrate multiple tasks autonomously — think of them as AI that takes action, not just answers questions."',
+            '"Azure AI Foundry gives us the tools to build, test, and deploy agents in a governed way."',
+            '"We can start with a simple agent and expand its capabilities over time."',
+          ],
+          nextBestActions: [
+            'Identify one workflow the customer wants to automate end-to-end',
+            'Demo a simple AI agent scenario using Azure AI Foundry',
+            'Propose a 4-week agent pilot for their priority use case',
+          ],
+        },
+      },
+      {
+        id: 'youtube-azure-ai-studio-intro',
+        type: 'humanExpert',
+        sourceType: 'youtube',
+        youtubeUrl: 'https://www.youtube.com/watch?v=4BcVWkSTZ3I',
+        title: 'Getting Started with Azure AI Studio',
+        vendorTag: 'Microsoft',
+        topicTags: ['Azure AI', 'AI Studio', 'Getting Started'],
+        durationMinutes: 15,
+        coverImageUrl: 'https://img.youtube.com/vi/4BcVWkSTZ3I/maxresdefault.jpg',
+        videoUrl: '', // Not used for YouTube
+        publishedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+        generationStatus: 'ready',
+        sourceReferences: [
+          'https://www.youtube.com/watch?v=4BcVWkSTZ3I',
+        ],
+        execSummary: {
+          whatThisCovers: [
+            'Introduction to Azure AI Studio and its core capabilities',
+            'How to set up projects and deploy AI models',
+            'Best practices for prompt engineering and model evaluation',
+          ],
+          whyItMattersForPartners: [
+            'Azure AI Studio is the unified entry point for AI development on Azure',
+            'Partners who know AI Studio can accelerate customer AI journeys significantly',
+          ],
+          whenToUseInDeal: [
+            'When customers are evaluating AI platforms or just starting their AI journey',
+            'When onboarding technical teams to Azure AI capabilities',
+          ],
+          partnerTalkTrack: [
+            '"Azure AI Studio is your one-stop shop for building AI applications — from prompt design to production deployment."',
+            '"We can prototype quickly in the playground and then deploy the same model to production with enterprise guardrails."',
+            '"It integrates with your existing Azure infrastructure, so there\'s no new platform to manage."',
+          ],
+          nextBestActions: [
+            'Walk the customer through Azure AI Studio with a hands-on demo',
+            'Set up a shared AI Studio project for the customer\'s pilot',
+            'Create a prompt template for their specific use case',
+          ],
+        },
+      },
+    ],
+  },
   {
     id: 'azure-ai-deep-dives',
     title: 'Azure AI Deep Dives',
