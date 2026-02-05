@@ -1,11 +1,11 @@
 // Partner Expert Corners Tile
 // Video-first tile with thumbnail, duration, progress indicator
-// Shows EXPLAINER badge for synthetic doc explainers, VIDEO for human experts
+// Shows EXPLAINER badge for synthetic doc explainers, VIDEO for human experts/YouTube
 // Includes interactive "why recommended" popover with "Not relevant" action
 
 import { useState } from 'react';
 import { Play, Video, Sparkles, Check, X } from 'lucide-react';
-import { PartnerExpertEpisode, isSyntheticExplainer } from '@/data/partnerExpertCorners';
+import { PartnerExpertEpisode, isSyntheticExplainer, isYouTubeEpisode } from '@/data/partnerExpertCorners';
 import {
   Popover,
   PopoverContent,
@@ -38,6 +38,7 @@ export function ExpertCornersTile({
   const [popoverOpen, setPopoverOpen] = useState(false);
   const hasProgress = progressPercent !== undefined && progressPercent > 0;
   const isSynthetic = isSyntheticExplainer(episode);
+  const isYouTube = isYouTubeEpisode(episode);
   const isGenerating = episode.generationStatus === 'generating';
 
   const handleDownrank = (e: React.MouseEvent) => {
@@ -97,9 +98,9 @@ export function ExpertCornersTile({
             {episode.durationMinutes} min
           </div>
 
-          {/* Type indicator - EXPLAINER for synthetic, VIDEO for human */}
+          {/* Type indicator - EXPLAINER for synthetic, VIDEO for human/YouTube */}
           <div className="absolute top-2 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded bg-black/60 text-white/90">
-            {isSynthetic ? (
+            {isSynthetic && !isYouTube ? (
               <>
                 <Sparkles className="w-3 h-3" />
                 <span className="text-[9px] font-medium uppercase tracking-wide">Explainer</span>
