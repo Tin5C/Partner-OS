@@ -1,10 +1,10 @@
 // AI Deal Brief Section (Partner-only)
-// Matches the Account Prep design pattern for consistency
-// Supports: Seller vs Engineer persona, AI-specific inputs/outputs
+// Template-driven input/output with persona-specific rendering
+// Supports: Seller vs Engineer persona, template-driven maturity scoring
 // Supports: Entire account vs Specific area, Guided vs Brainstorm modes
 
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { 
   Building2, 
   Sparkles,
@@ -33,7 +33,6 @@ import {
   Gauge,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   Select,
@@ -62,21 +61,22 @@ import {
   EngineerOutput,
   generatePartnerBrief,
   DEAL_MOTIONS,
-  INDUSTRIES,
-  REGIONS,
   DEAL_SIZE_BANDS,
-  TIMELINES,
-  COMPETITORS,
-  NEEDS_MOST,
-  APPLICATION_LANDSCAPES,
-  CLOUD_FOOTPRINTS,
-  KNOWN_LICENSES,
-  AI_CONSTRAINTS,
-  AI_USE_CASE_SUGGESTIONS,
 } from '@/data/partnerBriefData';
+import {
+  BriefTemplateId,
+  BriefTemplateDefinition,
+  BRIEF_TEMPLATE_DEFINITIONS,
+  computeMaturityScore,
+  MaturityScore,
+} from '@/data/briefTemplates';
+import { partnerBriefTemplates } from '@/config/spaces/partner';
 import { EvidenceUploadBlock } from './EvidenceUploadBlock';
 import { ExtractedSignalsBlock } from './ExtractedSignalsBlock';
 import { ContextRequestCard } from './ContextRequestCard';
+import { BriefBucketInput } from './BriefBucketInput';
+import { BriefReadinessCard } from './BriefReadinessCard';
+import { BriefTemplateSelector } from './BriefTemplateSelector';
 import { savePartnerBriefContext } from './ExpertCornersRail';
 
 // Default empty evidence state
@@ -120,6 +120,20 @@ function SegmentedControl<T extends string>({
 }
 
 export function CustomerBriefSection() {
+  // Template state
+  const [selectedTemplate, setSelectedTemplate] = useState<BriefTemplateId>(
+    partnerBriefTemplates.default
+  );
+
+  // Available templates from config
+  const availableTemplates = useMemo(() => {
+    return partnerBriefTemplates.available
+      .map((id) => BRIEF_TEMPLATE_DEFINITIONS[id])
+      .filter(Boolean);
+  }, []);
+
+  const currentTemplate = BRIEF_TEMPLATE_DEFINITIONS[selectedTemplate];
+
   // Scope, Mode & Persona state
   const [briefScope, setBriefScope] = useState<BriefScope>('entire-account');
   const [specificArea, setSpecificArea] = useState<string>('');
@@ -127,35 +141,23 @@ export function CustomerBriefSection() {
   const [personaType, setPersonaType] = useState<PersonaType>('seller');
   const [brainstormNotes, setBrainstormNotes] = useState<string>('');
   
-  // Form state (guided mode)
+  // Template-driven bucket notes (keyed by bucket.id)
+  const [bucketNotes, setBucketNotes] = useState<Record<string, string>>({});
+
+  // Form state (guided mode — core fields)
   const [customerName, setCustomerName] = useState<string>('');
   const [dealMotion, setDealMotion] = useState<string>('');
-  const [industry, setIndustry] = useState<string>('');
-  const [region, setRegion] = useState<string>('');
   const [dealSizeBand, setDealSizeBand] = useState<string>('');
-  const [timeline, setTimeline] = useState<string>('');
-  const [competitors, setCompetitors] = useState<string[]>([]);
-  const [needsMost, setNeedsMost] = useState<string[]>([]);
-  // Enhanced signal inputs
-  const [painPoints, setPainPoints] = useState<string>('');
-  const [applicationLandscape, setApplicationLandscape] = useState<string>('');
-  const [cloudFootprint, setCloudFootprint] = useState<string>('');
-  const [knownLicenses, setKnownLicenses] = useState<string>('');
-  // AI-specific inputs
-  const [aiUseCases, setAiUseCases] = useState<string>('');
-  const [aiConstraints, setAiConstraints] = useState<string[]>([]);
-  const [aiConstraintNotes, setAiConstraintNotes] = useState<string>('');
+
   // Evidence state
   const [evidence, setEvidence] = useState<EvidenceState>(createEmptyEvidence());
   
   // UI state
   const [isGenerating, setIsGenerating] = useState(false);
   const [output, setOutput] = useState<PartnerBriefOutput | null>(null);
-  const [contextOpen, setContextOpen] = useState(false);
+  const [bucketsOpen, setBucketsOpen] = useState(false);
   const [showCustomerError, setShowCustomerError] = useState(false);
-  // Local extracted signals for editing after generation
   const [editedSignals, setEditedSignals] = useState<ExtractedSignals | null>(null);
-  // Colleague notes from Context Request
   const [colleagueNotes, setColleagueNotes] = useState<string>('');
 
   // Validation logic
@@ -163,8 +165,22 @@ export function CustomerBriefSection() {
     ? customerName.trim() && brainstormNotes.trim()
     : customerName.trim() && dealMotion;
   
-  const hasContext = industry || region || dealSizeBand || timeline || competitors.length > 0 || needsMost.length > 0 || painPoints || applicationLandscape || cloudFootprint || knownLicenses;
+  const filledBucketCount = Object.values(bucketNotes).filter(v => v.trim()).length;
   const hasEvidence = evidence.uploads.length > 0 || evidence.links.length > 0;
+
+  // Compute maturity score in real-time
+  const maturityScore = useMemo(() => {
+    const evidenceBucketIds = new Set<string>();
+    if (hasEvidence) {
+      evidenceBucketIds.add('apps-deployment');
+      evidenceBucketIds.add('data-readiness');
+    }
+    return computeMaturityScore(selectedTemplate, bucketNotes, evidenceBucketIds);
+  }, [selectedTemplate, bucketNotes, hasEvidence]);
+
+  const handleBucketNote = (bucketId: string, value: string) => {
+    setBucketNotes(prev => ({ ...prev, [bucketId]: value }));
+  };
 
   const handleGenerate = () => {
     if (!customerName.trim()) {
@@ -178,40 +194,46 @@ export function CustomerBriefSection() {
     setIsGenerating(true);
     
     setTimeout(() => {
+      // Merge bucket notes into a brainstorm-style string for the existing engine
+      const bucketText = Object.entries(bucketNotes)
+        .filter(([_, v]) => v.trim())
+        .map(([k, v]) => {
+          const bucket = currentTemplate.inputBuckets.find(b => b.id === k);
+          return `[${bucket?.label || k}]: ${v}`;
+        })
+        .join('\n');
+
+      const combinedNotes = [
+        inputMode === 'brainstorm' ? brainstormNotes : '',
+        bucketText,
+        colleagueNotes ? `\n--- Colleague notes ---\n${colleagueNotes}` : '',
+      ].filter(Boolean).join('\n');
+
       const input: PartnerBriefInput = {
         customerName: customerName.trim(),
         dealMotion: inputMode === 'brainstorm' ? 'other' : dealMotion,
-        industry: industry || undefined,
-        region: region || undefined,
         dealSizeBand: dealSizeBand || undefined,
-        timeline: timeline || undefined,
-        competitors: competitors.length > 0 ? competitors : undefined,
-        needsMost,
-        painPoints: painPoints || undefined,
-        applicationLandscape: applicationLandscape || undefined,
-        cloudFootprint: cloudFootprint || undefined,
-        knownLicenses: knownLicenses || undefined,
+        // Derive signals from bucket notes for the existing engine
+        applicationLandscape: bucketNotes['apps-deployment'] ? 'mixed' : undefined,
+        cloudFootprint: bucketNotes['platform-delivery'] ? 'hybrid' : undefined,
+        knownLicenses: bucketNotes['procurement'] ? 'm365-e5' : undefined,
+        painPoints: bucketNotes['use-cases'] || undefined,
+        needsMost: [],
         evidence: hasEvidence ? evidence : undefined,
-        // Colleague notes feed into brainstorm-style enrichment
-        brainstormNotes: colleagueNotes
-          ? (inputMode === 'brainstorm' ? `${brainstormNotes}\n\n--- Colleague notes ---\n${colleagueNotes}` : colleagueNotes)
-          : (inputMode === 'brainstorm' ? brainstormNotes : undefined),
-        // Scope, mode & persona
+        brainstormNotes: combinedNotes || undefined,
         briefScope,
         specificArea: briefScope === 'specific-area' ? specificArea : undefined,
         inputMode,
         personaType,
-        // AI-specific
-        aiUseCases: aiUseCases || undefined,
-        aiConstraints: aiConstraints.length > 0 ? aiConstraints : undefined,
-        aiConstraintNotes: aiConstraintNotes || undefined,
+        aiUseCases: bucketNotes['use-cases'] || undefined,
+        aiConstraints: bucketNotes['governance-risk'] ? ['security', 'governance'] : undefined,
+        aiConstraintNotes: bucketNotes['governance-risk'] || undefined,
       };
       const result = generatePartnerBrief(input);
       setOutput(result);
       setEditedSignals(result.extractedSignals);
       setIsGenerating(false);
       
-      // Save brief context for Expert Corners recommendations
       savePartnerBriefContext(input);
     }, 1500);
   };
@@ -221,66 +243,29 @@ export function CustomerBriefSection() {
     setShowCustomerError(false);
   };
 
-  const toggleCompetitor = (value: string) => {
-    setCompetitors(prev =>
-      prev.includes(value)
-        ? prev.filter(c => c !== value)
-        : [...prev, value]
-    );
-  };
-
-  const toggleNeed = (value: string) => {
-    setNeedsMost(prev =>
-      prev.includes(value)
-        ? prev.filter(n => n !== value)
-        : [...prev, value]
-    );
-  };
-
   const handleCopySection = (text: string) => {
     navigator.clipboard.writeText(text);
     toast.success('Copied to clipboard');
   };
 
-  const handleClearContext = () => {
-    setIndustry('');
-    setRegion('');
-    setDealSizeBand('');
-    setTimeline('');
-    setCompetitors([]);
-    setNeedsMost([]);
-    setPainPoints('');
-    setApplicationLandscape('');
-    setCloudFootprint('');
-    setKnownLicenses('');
-    setEvidence(createEmptyEvidence());
+  const handleAskColleagueForBucket = (tag: string) => {
+    toast.info(`"Ask colleague" pre-tagged: ${tag}`);
   };
 
   const handleReset = () => {
     setCustomerName('');
     setDealMotion('');
-    setIndustry('');
-    setRegion('');
     setDealSizeBand('');
-    setTimeline('');
-    setCompetitors([]);
-    setNeedsMost([]);
-    setPainPoints('');
-    setApplicationLandscape('');
-    setCloudFootprint('');
-    setKnownLicenses('');
     setEvidence(createEmptyEvidence());
     setBrainstormNotes('');
     setSpecificArea('');
     setBriefScope('entire-account');
     setInputMode('guided');
     setPersonaType('seller');
-    setAiUseCases('');
-    setAiConstraints([]);
-    setAiConstraintNotes('');
+    setBucketNotes({});
     setOutput(null);
     setEditedSignals(null);
-    setContextOpen(false);
+    setBucketsOpen(false);
     setColleagueNotes('');
   };
 
@@ -306,10 +291,10 @@ export function CustomerBriefSection() {
       <div>
         <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
           <Brain className="w-5 h-5 text-primary" />
-          AI Deal Brief
+          {currentTemplate.label}
         </h2>
         <p className="text-sm text-muted-foreground">
-          Turn messy AI deal context into a deal-ready plan in 5–10 minutes.
+          {currentTemplate.shortDescription}
         </p>
       </div>
 
@@ -321,8 +306,13 @@ export function CustomerBriefSection() {
         {/* Controls Bar */}
         <div className="p-5 border-b border-border/60">
           <div className="flex flex-col gap-4">
-            {/* Row 0: Scope, Mode & Persona Selectors */}
+            {/* Row 0: Template selector + Scope + Persona */}
             <div className="flex flex-wrap items-center gap-4">
+              <BriefTemplateSelector
+                value={selectedTemplate}
+                onChange={setSelectedTemplate}
+                availableTemplates={availableTemplates}
+              />
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-muted-foreground">Scope</span>
                 <SegmentedControl<BriefScope>
@@ -376,7 +366,7 @@ export function CustomerBriefSection() {
               </div>
             )}
 
-            {/* Row 1: Customer + Core Selectors */}
+            {/* Row 1: Customer + Deal Motion + Generate */}
             <div className="flex flex-col lg:flex-row gap-3">
               {/* Customer Name Input */}
               <div className="flex-1 lg:flex-initial lg:w-[220px]">
@@ -483,259 +473,36 @@ export function CustomerBriefSection() {
               </div>
             )}
 
-            {/* Guided Mode: Context Toggle */}
+            {/* Guided Mode: Template-Driven Checklist Buckets */}
             {inputMode === 'guided' && (
-              <Collapsible open={contextOpen} onOpenChange={setContextOpen} className="flex-1">
+              <Collapsible open={bucketsOpen} onOpenChange={setBucketsOpen} className="flex-1">
                 <div className="flex items-center gap-3">
                   <CollapsibleTrigger className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                    {contextOpen ? (
+                    {bucketsOpen ? (
                       <ChevronDown className="w-3.5 h-3.5" />
                     ) : (
                       <Plus className="w-3.5 h-3.5" />
                     )}
-                    Add context (optional)
+                    Add context ({currentTemplate.inputBuckets.length} areas)
                   </CollapsibleTrigger>
-                  {hasContext && !contextOpen && (
-                    <span className="text-xs text-primary">Context added</span>
+                  {filledBucketCount > 0 && !bucketsOpen && (
+                    <span className="text-xs text-primary">
+                      {filledBucketCount}/{currentTemplate.inputBuckets.length} filled
+                    </span>
                   )}
                 </div>
                 
                 <CollapsibleContent className="mt-4">
-                  <div className="space-y-4 p-4 rounded-xl bg-muted/20 border border-border/50">
-                    {/* Row: Industry, Region, Timeline */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                          Industry
-                        </label>
-                        <Select value={industry} onValueChange={setIndustry}>
-                          <SelectTrigger className="w-full h-9 bg-background border-border text-sm">
-                            <SelectValue placeholder="Select..." />
-                          </SelectTrigger>
-                          <SelectContent className="bg-popover border border-border z-50">
-                            {INDUSTRIES.map((i) => (
-                              <SelectItem key={i.value} value={i.value}>{i.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                          Region
-                        </label>
-                        <Select value={region} onValueChange={setRegion}>
-                          <SelectTrigger className="w-full h-9 bg-background border-border text-sm">
-                            <SelectValue placeholder="Select..." />
-                          </SelectTrigger>
-                          <SelectContent className="bg-popover border border-border z-50">
-                            {REGIONS.map((r) => (
-                              <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                          Timeline
-                        </label>
-                        <Select value={timeline} onValueChange={setTimeline}>
-                          <SelectTrigger className="w-full h-9 bg-background border-border text-sm">
-                            <SelectValue placeholder="Select..." />
-                          </SelectTrigger>
-                          <SelectContent className="bg-popover border border-border z-50">
-                            {TIMELINES.map((t) => (
-                              <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    {/* Competitors */}
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-2 block">
-                        Primary Competitor(s)
-                      </label>
-                      <div className="flex flex-wrap gap-2">
-                        {COMPETITORS.map((comp) => (
-                          <button
-                            key={comp.value}
-                            type="button"
-                            onClick={() => toggleCompetitor(comp.value)}
-                            className={cn(
-                              'px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
-                              'border',
-                              competitors.includes(comp.value)
-                                ? 'bg-primary text-primary-foreground border-primary'
-                                : 'bg-card text-foreground border-border hover:bg-secondary'
-                            )}
-                          >
-                            {comp.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Seller-known signals row */}
-                    <div className="pt-3 border-t border-border/50">
-                      <p className="text-xs font-medium text-muted-foreground mb-3 flex items-center gap-1.5">
-                        <TrendingUp className="w-3 h-3" />
-                        Seller-known signals (improves recommendations)
-                      </p>
-                      
-                      {/* Row: App Landscape, Cloud Footprint, Licenses */}
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
-                        <div>
-                          <label className="text-xs text-muted-foreground mb-1.5 block">
-                            Application Landscape
-                          </label>
-                          <Select value={applicationLandscape} onValueChange={setApplicationLandscape}>
-                            <SelectTrigger className="w-full h-9 bg-background border-border text-sm">
-                              <SelectValue placeholder="Select..." />
-                            </SelectTrigger>
-                            <SelectContent className="bg-popover border border-border z-50">
-                              {APPLICATION_LANDSCAPES.map((a) => (
-                                <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <label className="text-xs text-muted-foreground mb-1.5 block">
-                            Cloud Footprint
-                          </label>
-                          <Select value={cloudFootprint} onValueChange={setCloudFootprint}>
-                            <SelectTrigger className="w-full h-9 bg-background border-border text-sm">
-                              <SelectValue placeholder="Select..." />
-                            </SelectTrigger>
-                            <SelectContent className="bg-popover border border-border z-50">
-                              {CLOUD_FOOTPRINTS.map((c) => (
-                                <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <label className="text-xs text-muted-foreground mb-1.5 block">
-                            Known Licenses
-                          </label>
-                          <Select value={knownLicenses} onValueChange={setKnownLicenses}>
-                            <SelectTrigger className="w-full h-9 bg-background border-border text-sm">
-                              <SelectValue placeholder="Select..." />
-                            </SelectTrigger>
-                            <SelectContent className="bg-popover border border-border z-50">
-                              {KNOWN_LICENSES.map((l) => (
-                                <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-
-                      {/* Pain Points */}
-                      <div className="mb-3">
-                        <label className="text-xs text-muted-foreground mb-1.5 block">
-                          Known Pain Points / Challenges
-                        </label>
-                        <input
-                          type="text"
-                          value={painPoints}
-                          onChange={(e) => setPainPoints(e.target.value)}
-                          placeholder="e.g., Legacy system migration, cost reduction, security concerns..."
-                          className={cn(
-                            "w-full h-9 px-3 rounded-lg text-sm",
-                            "bg-background border border-border",
-                            "placeholder:text-muted-foreground/60",
-                            "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30"
-                          )}
-                        />
-                      </div>
-                    </div>
-
-                    {/* AI Use Cases & Constraints */}
-                    <div className="pt-3 border-t border-border/50">
-                      <p className="text-xs font-medium text-muted-foreground mb-3 flex items-center gap-1.5">
-                        <Brain className="w-3 h-3" />
-                        AI deal context
-                      </p>
-                      
-                      {/* AI Use Cases */}
-                      <div className="mb-3">
-                        <label className="text-xs text-muted-foreground mb-1.5 block">
-                          AI use case(s)
-                        </label>
-                        <input
-                          type="text"
-                          value={aiUseCases}
-                          onChange={(e) => setAiUseCases(e.target.value)}
-                          placeholder="e.g., Document processing, customer service automation, knowledge base..."
-                          className={cn(
-                            "w-full h-9 px-3 rounded-lg text-sm",
-                            "bg-background border border-border",
-                            "placeholder:text-muted-foreground/60",
-                            "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30"
-                          )}
-                        />
-                        {AI_USE_CASE_SUGGESTIONS.length > 0 && !aiUseCases && (
-                          <div className="flex flex-wrap gap-1.5 mt-2">
-                            {AI_USE_CASE_SUGGESTIONS.slice(0, 5).map((suggestion) => (
-                              <button
-                                key={suggestion}
-                                type="button"
-                                onClick={() => setAiUseCases(suggestion)}
-                                className="px-2 py-0.5 rounded text-[10px] text-muted-foreground border border-border hover:bg-secondary transition-colors"
-                              >
-                                {suggestion}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* AI Constraints */}
-                      <div className="mb-3">
-                        <label className="text-xs text-muted-foreground mb-2 block">
-                          Known constraints
-                        </label>
-                        <div className="flex flex-wrap gap-2">
-                          {AI_CONSTRAINTS.map((c) => (
-                            <button
-                              key={c.value}
-                              type="button"
-                              onClick={() => setAiConstraints(prev =>
-                                prev.includes(c.value) ? prev.filter(x => x !== c.value) : [...prev, c.value]
-                              )}
-                              className={cn(
-                                'px-2.5 py-1 rounded-lg text-xs font-medium transition-all border',
-                                aiConstraints.includes(c.value)
-                                  ? 'bg-primary text-primary-foreground border-primary'
-                                  : 'bg-card text-foreground border-border hover:bg-secondary'
-                              )}
-                            >
-                              {c.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Constraint notes */}
-                      {aiConstraints.length > 0 && (
-                        <div className="mb-3">
-                          <input
-                            type="text"
-                            value={aiConstraintNotes}
-                            onChange={(e) => setAiConstraintNotes(e.target.value)}
-                            placeholder="Any specifics? e.g., GDPR, on-prem only, no public cloud..."
-                            className={cn(
-                              "w-full h-9 px-3 rounded-lg text-sm",
-                              "bg-background border border-border",
-                              "placeholder:text-muted-foreground/60",
-                              "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30"
-                            )}
-                          />
-                        </div>
-                      )}
-                    </div>
+                  <div className="space-y-2">
+                    {currentTemplate.inputBuckets.map((bucket) => (
+                      <BriefBucketInput
+                        key={bucket.id}
+                        bucket={bucket}
+                        notes={bucketNotes[bucket.id] || ''}
+                        onNotesChange={(v) => handleBucketNote(bucket.id, v)}
+                        onAskColleague={handleAskColleagueForBucket}
+                      />
+                    ))}
 
                     {/* Evidence Upload Section */}
                     <div className="pt-3 border-t border-border/50">
@@ -745,35 +512,10 @@ export function CustomerBriefSection() {
                       />
                     </div>
 
-                    {/* What do you need most? */}
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-2 block">
-                        What do you need most?
-                      </label>
-                      <div className="flex flex-wrap gap-2">
-                        {NEEDS_MOST.map((need) => (
-                          <button
-                            key={need.value}
-                            type="button"
-                            onClick={() => toggleNeed(need.value)}
-                            className={cn(
-                              'px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
-                              'border',
-                              needsMost.includes(need.value)
-                                ? 'bg-primary text-primary-foreground border-primary'
-                                : 'bg-card text-foreground border-border hover:bg-secondary'
-                            )}
-                          >
-                            {need.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Clear Context */}
+                    {/* Clear All */}
                     <div className="flex justify-end pt-2">
                       <button
-                        onClick={handleClearContext}
+                        onClick={() => setBucketNotes({})}
                         className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                       >
                         Clear context
@@ -903,36 +645,11 @@ export function CustomerBriefSection() {
               </div>
             )}
 
-            {/* AI Readiness Score */}
-            <div className="rounded-xl border border-border bg-muted/10 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Gauge className="w-4 h-4 text-primary" />
-                  <h3 className="text-sm font-semibold text-foreground">AI Readiness</h3>
-                </div>
-                <span className={cn(
-                  "text-xs font-medium px-2 py-0.5 rounded-full",
-                  output.aiReadiness.score >= 60 ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-                )}>
-                  {output.aiReadiness.label} — {output.aiReadiness.score}/100
-                </span>
-              </div>
-              <Progress value={output.aiReadiness.score} className="h-2 mb-3" />
-              <div className="space-y-1.5">
-                {output.aiReadiness.missingChecklist.filter(c => !c.filled).slice(0, 5).map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-xs">
-                    <div className="w-3 h-3 rounded-sm border border-muted-foreground/40 flex-shrink-0" />
-                    <span className="text-muted-foreground">{item.category}: {item.item}</span>
-                  </div>
-                ))}
-                {output.aiReadiness.missingChecklist.filter(c => c.filled).slice(0, 3).map((item, idx) => (
-                  <div key={`f-${idx}`} className="flex items-center gap-2 text-xs">
-                    <CheckCircle2 className="w-3 h-3 text-primary flex-shrink-0" />
-                    <span className="text-foreground">{item.category}: {item.item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* Template-Driven Readiness Card */}
+            <BriefReadinessCard
+              score={maturityScore}
+              templateLabel={currentTemplate.label}
+            />
 
             {/* Seller-specific output */}
             {output.sellerOutput && (
@@ -1230,7 +947,6 @@ export function CustomerBriefSection() {
 
             {/* Who to Contact & Assets */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Who to Contact */}
               <div className="rounded-xl border border-border bg-muted/10 p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <Users className="w-4 h-4 text-muted-foreground" />
@@ -1238,10 +954,7 @@ export function CustomerBriefSection() {
                 </div>
                 <div className="flex flex-wrap gap-2 mb-3">
                   {output.routing.contacts.map((contact, idx) => (
-                    <span
-                      key={idx}
-                      className="px-2 py-1 bg-muted/50 rounded-md text-xs text-foreground"
-                    >
+                    <span key={idx} className="px-2 py-1 bg-muted/50 rounded-md text-xs text-foreground">
                       {contact}
                     </span>
                   ))}
@@ -1250,15 +963,12 @@ export function CustomerBriefSection() {
                   <p className="text-xs font-medium text-muted-foreground mb-2">Next Steps</p>
                   <ul className="space-y-1">
                     {output.routing.steps.map((step, idx) => (
-                      <li key={idx} className="text-xs text-foreground">
-                        {step}
-                      </li>
+                      <li key={idx} className="text-xs text-foreground">{step}</li>
                     ))}
                   </ul>
                 </div>
               </div>
 
-              {/* Assets */}
               <div className="rounded-xl border border-border bg-muted/10 p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <FileText className="w-4 h-4 text-muted-foreground" />

@@ -3,6 +3,10 @@
 // Guided scroll structure: Stories → Customer Brief → Deep Dives → Trending → Execution
 
 import { SpaceConfig } from './types';
+import { getDefaultBriefTemplatesConfig, BriefTemplatesConfig } from '@/data/briefTemplates';
+
+// Brief templates config (exported for use by partner components)
+export const partnerBriefTemplates: BriefTemplatesConfig = getDefaultBriefTemplatesConfig();
 
 export const partnerConfig: SpaceConfig = {
   spaceType: 'partner',
@@ -105,6 +109,7 @@ export const partnerConfig: SpaceConfig = {
     expertCorners: true, // Partner-only feature
     trendingPacks: true, // Partner-only feature
     capabilityBrand: true, // Partner-only: persona-aware branding
+    briefTemplatesEnabled: true, // Partner-only: template-driven briefs
   },
   
   // Only curated/approved story types
