@@ -56,6 +56,7 @@ export interface SpaceFeatures {
   expertCorners?: boolean; // Partner-only feature
   trendingPacks?: boolean; // Partner-only feature
   capabilityBrand?: boolean; // Partner-only: persona-aware branding
+  briefTemplatesEnabled?: boolean; // Partner-only: template-driven briefs
 }
 
 export interface SpaceConfig {
