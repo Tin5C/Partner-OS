@@ -5,3 +5,4 @@ export { VendorRow } from './VendorRow';
 export { PartnerProfileTab } from './PartnerProfileTab';
 export { VendorsApprovedTab } from './VendorsApprovedTab';
 export { VendorsTrendingTab } from './VendorsTrendingTab';
+export { StrategyShiftTab } from './StrategyShiftTab';
