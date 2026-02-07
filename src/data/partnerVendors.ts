@@ -2,6 +2,7 @@
 // Approved + Trending (Watchlist) + Deprecated lifecycle
 
 import type { CapabilityLevel } from './partnerProfile';
+import azureLogo from '@/assets/logos/azure.png';
 
 // ============= Types =============
 
@@ -41,12 +42,22 @@ export interface VendorCapabilityReq {
   level: CapabilityLevel;
 }
 
+export type VendorLogoSource = 'admin-upload' | 'vendor-provided' | 'public';
+
+export interface VendorLogo {
+  src?: string;
+  alt: string;
+  source: VendorLogoSource;
+  lastUpdatedAt?: string;
+}
+
 export interface Vendor {
   id: string;
   name: string;
   category: VendorCategory;
   status: VendorStatus;
   oneLiner: string;
+  logo?: VendorLogo;
   mappedPackages: string[];
   requiredCapabilities: VendorCapabilityReq[];
   deliveryNotes: VendorDeliveryNotes;
@@ -134,6 +145,7 @@ export const SEED_VENDORS: Vendor[] = [
     name: 'Anthropic (Claude)',
     category: 'llm',
     status: 'approved',
+    logo: { alt: 'Anthropic logo', source: 'public' },
     oneLiner: 'High-quality reasoning + long-context LLM option for governance-first and document-heavy enterprise workloads.',
     mappedPackages: ['pkg-governance', 'pkg-rag', 'pkg-security', 'pkg-readiness'],
     requiredCapabilities: [
@@ -162,6 +174,7 @@ export const SEED_VENDORS: Vendor[] = [
     name: 'Microsoft Azure OpenAI',
     category: 'llm',
     status: 'approved',
+    logo: { src: azureLogo, alt: 'Microsoft Azure OpenAI logo', source: 'public', lastUpdatedAt: '2026-01-15' },
     oneLiner: 'Microsoft-first managed access to leading models with enterprise controls and procurement alignment.',
     mappedPackages: ['pkg-governance', 'pkg-rag', 'pkg-copilot', 'pkg-security', 'pkg-finops'],
     requiredCapabilities: [
@@ -193,6 +206,7 @@ export const SEED_VENDORS: Vendor[] = [
     name: 'Microsoft Copilot Studio',
     category: 'agent-platform',
     status: 'approved',
+    logo: { src: azureLogo, alt: 'Microsoft Copilot Studio logo', source: 'public', lastUpdatedAt: '2026-01-20' },
     oneLiner: 'Enterprise-grade agent building and governance motion aligned to Copilot adoption.',
     mappedPackages: ['pkg-copilot', 'pkg-governance', 'pkg-security'],
     requiredCapabilities: [
@@ -224,6 +238,7 @@ export const SEED_VENDORS: Vendor[] = [
     name: 'Mistral',
     category: 'llm',
     status: 'approved',
+    logo: { alt: 'Mistral logo', source: 'public' },
     oneLiner: 'EU/sovereignty-friendly LLM option for regulated and residency-sensitive buyers.',
     mappedPackages: ['pkg-governance', 'pkg-rag', 'pkg-security'],
     requiredCapabilities: [
@@ -250,6 +265,7 @@ export const SEED_VENDORS: Vendor[] = [
     name: 'Cohere',
     category: 'llm',
     status: 'approved',
+    logo: { alt: 'Cohere logo', source: 'public' },
     oneLiner: 'Enterprise-focused model/provider with strong fit for controlled deployments and RAG-heavy use cases.',
     mappedPackages: ['pkg-rag', 'pkg-governance', 'pkg-security'],
     requiredCapabilities: [
@@ -276,6 +292,7 @@ export const SEED_VENDORS: Vendor[] = [
     name: 'LangChain / LangGraph',
     category: 'orchestration',
     status: 'approved',
+    logo: { alt: 'LangChain logo', source: 'public' },
     oneLiner: 'Open-source orchestration framework for building LLM-powered applications and agents.',
     mappedPackages: ['pkg-rag', 'pkg-readiness'],
     requiredCapabilities: [
@@ -307,6 +324,7 @@ export const SEED_VENDORS: Vendor[] = [
     name: 'Pinecone',
     category: 'vector-db',
     status: 'approved',
+    logo: { alt: 'Pinecone logo', source: 'public' },
     oneLiner: 'Managed vector retrieval layer for production RAG; standardizes performance and ops patterns.',
     mappedPackages: ['pkg-rag', 'pkg-finops'],
     requiredCapabilities: [
@@ -338,6 +356,7 @@ export const SEED_VENDORS: Vendor[] = [
     name: 'Weaviate',
     category: 'vector-db',
     status: 'approved',
+    logo: { alt: 'Weaviate logo', source: 'public' },
     oneLiner: 'Vector retrieval stack with flexible deployment options; common partner choice for RAG implementations.',
     mappedPackages: ['pkg-rag'],
     requiredCapabilities: [
@@ -363,6 +382,7 @@ export const SEED_VENDORS: Vendor[] = [
     name: 'Datadog (LLM Observability)',
     category: 'observability',
     status: 'approved',
+    logo: { alt: 'Datadog logo', source: 'public' },
     oneLiner: 'Operational visibility + monitoring patterns that reduce production risk for AI workloads.',
     mappedPackages: ['pkg-security', 'pkg-finops', 'pkg-rag'],
     requiredCapabilities: [
@@ -388,6 +408,7 @@ export const SEED_VENDORS: Vendor[] = [
     name: 'Weights & Biases',
     category: 'mlops',
     status: 'approved',
+    logo: { alt: 'Weights & Biases logo', source: 'public' },
     oneLiner: 'MLOps-lite discipline and evaluation workflows; strengthens delivery quality and repeatability.',
     mappedPackages: ['pkg-rag', 'pkg-readiness'],
     requiredCapabilities: [
@@ -413,6 +434,7 @@ export const SEED_VENDORS: Vendor[] = [
     name: 'Microsoft Purview',
     category: 'governance',
     status: 'approved',
+    logo: { src: azureLogo, alt: 'Microsoft Purview logo', source: 'public', lastUpdatedAt: '2026-01-18' },
     oneLiner: 'Governance controls for data + AI policy enforcement; reduces compliance friction in AI programs.',
     mappedPackages: ['pkg-governance', 'pkg-security'],
     requiredCapabilities: [
@@ -444,6 +466,7 @@ export const SEED_VENDORS: Vendor[] = [
     name: 'Microsoft Presidio',
     category: 'security',
     status: 'approved',
+    logo: { src: azureLogo, alt: 'Microsoft Presidio logo', source: 'public', lastUpdatedAt: '2026-01-12' },
     oneLiner: 'Open-source PII detection and anonymization for AI data pipelines.',
     mappedPackages: ['pkg-security', 'pkg-rag'],
     requiredCapabilities: [

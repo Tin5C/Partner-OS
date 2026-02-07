@@ -30,6 +30,7 @@ import {
 } from '@/data/partnerVendors';
 import { SEED_PACKAGES } from '@/data/partnerPackages';
 import { ToolFitPanel } from './ToolFitPanel';
+import { VendorLogo } from './VendorLogo';
 
 function VerificationBadge({ vendor }: { vendor: Vendor }) {
   const status = getVerificationStatus(vendor);
@@ -80,9 +81,9 @@ export function VendorsApprovedTab() {
             <div key={vendor.id} className="rounded-xl border border-border bg-card overflow-hidden">
               <button
                 onClick={() => setExpandedVendor(isExpanded ? null : vendor.id)}
-                className="w-full p-4 flex items-start gap-3 text-left hover:bg-muted/20 transition-colors"
+                className="w-full p-4 flex items-center gap-3 text-left hover:bg-muted/20 transition-colors"
               >
-                <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                <VendorLogo logo={vendor.logo} vendorName={vendor.name} size="md" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm font-semibold text-foreground">{vendor.name}</p>
