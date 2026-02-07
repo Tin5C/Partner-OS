@@ -78,6 +78,41 @@ import { BriefBucketInput } from './BriefBucketInput';
 import { BriefReadinessCard } from './BriefReadinessCard';
 import { BriefTemplateSelector } from './BriefTemplateSelector';
 import { savePartnerBriefContext } from './ExpertCornersRail';
+import { RecommendedPackages } from './packages/RecommendedPackages';
+
+// Helper to derive maturity gaps from brief output for package recommendations
+function getMaturityGapsFromOutput(output: PartnerBriefOutput): Record<string, number> {
+  const gaps: Record<string, number> = {};
+  // Map AI readiness checklist to dimension scores
+  const categoryMap: Record<string, string> = {
+    'Applications': 'apps-deployment',
+    'AI Vendor': 'ai-vendor-maturity',
+    'Organization': 'org-readiness',
+    'Data': 'data-readiness',
+    'Governance': 'governance-risk',
+    'Platform': 'platform-delivery',
+    'Use Cases': 'use-cases',
+    'Procurement': 'procurement',
+  };
+
+  for (const item of output.aiReadiness.missingChecklist) {
+    const dimKey = categoryMap[item.category] || item.category.toLowerCase().replace(/ /g, '-');
+    if (!item.filled) {
+      gaps[dimKey] = Math.min(gaps[dimKey] ?? 0, 0); // unknown
+    } else {
+      gaps[dimKey] = Math.max(gaps[dimKey] ?? 0, 2); // defined
+    }
+  }
+
+  // If readiness score is low, most dimensions are likely unknown/ad-hoc
+  if (output.aiReadiness.score < 40) {
+    for (const key of Object.values(categoryMap)) {
+      if (!(key in gaps)) gaps[key] = 0;
+    }
+  }
+
+  return gaps;
+}
 
 // Default empty evidence state
 const createEmptyEvidence = (): EvidenceState => ({
@@ -777,6 +812,15 @@ export function CustomerBriefSection() {
               colleagueNotes={colleagueNotes}
               onColleagueNotes={setColleagueNotes}
               hasNewContext={colleagueNotes.trim().length > 0}
+            />
+
+            {/* Recommended Packages */}
+            <RecommendedPackages
+              maturityGaps={getMaturityGapsFromOutput(output)}
+              briefId={customerName.trim()}
+              onPackageAdded={(pkgId, tier) => {
+                toast.success('Package added to deal plan');
+              }}
             />
 
             {/* AI Opportunity Map (Partner View) */}

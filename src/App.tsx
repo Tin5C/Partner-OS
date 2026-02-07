@@ -26,6 +26,7 @@ import WinWirePreview from "./pages/WinWirePreview";
 import MonthlyLearnings from "./pages/MonthlyLearnings";
 import RequestBriefing from "./pages/RequestBriefing";
 import AdminDashboard from "./pages/AdminDashboard";
+import PartnerStrategyPage from "./pages/PartnerStrategyPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -76,6 +77,7 @@ function AppRoutes() {
       {/* NEW: Space-based routes (Internal/Partner) with shared components */}
       <Route path="/internal" element={<InternalPage />} />
       <Route path="/partner" element={<PartnerPage />} />
+      <Route path="/partner/strategy" element={<PartnerStrategyPage />} />
       
       {/* LEGACY: Unified audience-based routes (seller/partner) */}
       {/* These share the same page template, differing only by config */}

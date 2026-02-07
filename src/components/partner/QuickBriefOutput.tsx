@@ -15,7 +15,9 @@ import {
   MessageSquare,
   Sparkles,
   Info,
+  Package,
 } from 'lucide-react';
+import { recommendPackages, AIPackage } from '@/data/partnerPackages';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -131,6 +133,17 @@ export function generateQuickBriefResult(
 
 export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: QuickBriefOutputProps) {
   const [activeTab, setActiveTab] = useState<PersonaTab>('seller');
+
+  // Quick package suggestion — max 1 based on generic maturity gaps
+  const suggestedPackage: AIPackage | null = (() => {
+    const genericGaps: Record<string, number> = {
+      'ai-vendor-maturity': 0,
+      'org-readiness': 1,
+      'use-cases': 0,
+    };
+    const recs = recommendPackages(genericGaps, 1);
+    return recs.length > 0 ? recs[0].package : null;
+  })();
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -359,6 +372,31 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
           </div>
         </div>
       </div>
+
+      {/* Suggested Package */}
+      {suggestedPackage && (
+        <div className="p-3 rounded-xl bg-muted/30 border border-border/60">
+          <div className="flex items-center gap-1.5 mb-2">
+            <Package className="w-3.5 h-3.5 text-primary" />
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              Suggested next step
+            </p>
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-foreground">{suggestedPackage.name}</p>
+              <p className="text-[11px] text-muted-foreground">{suggestedPackage.shortOutcome}</p>
+            </div>
+            <button
+              onClick={onPromoteToDealBrief}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-primary hover:bg-primary/5 transition-colors whitespace-nowrap"
+            >
+              Add via Deal Brief
+              <ChevronRight className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Promote to AI Deal Brief */}
       <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
