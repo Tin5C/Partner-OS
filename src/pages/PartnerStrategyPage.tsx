@@ -345,12 +345,8 @@ export default function PartnerStrategyPage() {
 
       {/* Content */}
       <main className="max-w-[1140px] mx-auto px-5 lg:px-8 py-6">
-        <Tabs defaultValue="strategy-shift" className="space-y-6">
+        <Tabs defaultValue="profile" className="space-y-6">
           <TabsList className="bg-muted/50 border border-border w-full justify-start overflow-x-auto">
-            <TabsTrigger value="strategy-shift" className="gap-1.5">
-              <Compass className="w-3.5 h-3.5" />
-              Strategy Shift
-            </TabsTrigger>
             <TabsTrigger value="profile" className="gap-1.5">
               <Building2 className="w-3.5 h-3.5" />
               Partner Profile
@@ -371,11 +367,11 @@ export default function PartnerStrategyPage() {
               <Wrench className="w-3.5 h-3.5" />
               Tools & Agents
             </TabsTrigger>
+            <TabsTrigger value="strategy-shift" className="gap-1.5">
+              <Compass className="w-3.5 h-3.5" />
+              Strategy Shift
+            </TabsTrigger>
           </TabsList>
-
-          <TabsContent value="strategy-shift">
-            <StrategyShiftTab />
-          </TabsContent>
 
           <TabsContent value="profile">
             <PartnerProfileTab />
@@ -395,6 +391,10 @@ export default function PartnerStrategyPage() {
 
           <TabsContent value="tools">
             <ToolsAgentsTab />
+          </TabsContent>
+
+          <TabsContent value="strategy-shift">
+            <StrategyShiftTab />
           </TabsContent>
         </Tabs>
       </main>

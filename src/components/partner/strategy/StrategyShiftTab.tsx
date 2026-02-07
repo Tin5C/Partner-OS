@@ -1,5 +1,5 @@
-// Strategy Shift Tab — SI business model change surface (admin-only)
-// 3 capped sections, action-anchored to Packages / Profile / Vendors / Tools
+// Strategy Shift Tab — visually aligned with Trending Packs card language
+// Signal chips → Impact line → Single CTA, grouped by category
 
 import { useState } from 'react';
 import {
@@ -11,7 +11,6 @@ import {
   Building2,
   TrendingUp,
   Wrench,
-  ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -20,20 +19,18 @@ import {
   StrategyCardCategory,
   getStrategyCardsByCategory,
   STRATEGY_CATEGORY_LABELS,
+  STRATEGY_CATEGORY_SUBTITLES,
   STRATEGY_ACTION_LABELS,
 } from '@/data/partnerStrategyShift';
+import { Tag } from '@/components/Tag';
 
-// ── Section config ─────────────────────────────────────
+// ── Icons ──────────────────────────────────────────────
 
-const SECTIONS: {
-  category: StrategyCardCategory;
-  icon: React.ReactNode;
-  maxVisible: number;
-}[] = [
-  { category: 'economics', icon: <TrendingDown className="w-4 h-4" />, maxVisible: 3 },
-  { category: 'roadmap', icon: <Map className="w-4 h-4" />, maxVisible: 3 },
-  { category: 'vendors', icon: <Layers className="w-4 h-4" />, maxVisible: 3 },
-];
+const CATEGORY_ICONS: Record<StrategyCardCategory, React.ReactNode> = {
+  economics: <TrendingDown className="w-4 h-4" />,
+  roadmap: <Map className="w-4 h-4" />,
+  vendors: <Layers className="w-4 h-4" />,
+};
 
 const ACTION_ICONS: Record<string, React.ReactNode> = {
   'create-package': <Package className="w-3.5 h-3.5" />,
@@ -42,6 +39,8 @@ const ACTION_ICONS: Record<string, React.ReactNode> = {
   'attach-tool': <Wrench className="w-3.5 h-3.5" />,
 };
 
+const SECTION_ORDER: StrategyCardCategory[] = ['economics', 'roadmap', 'vendors'];
+
 // ── Time filter ────────────────────────────────────────
 
 type TimeRange = 'month' | 'quarter';
@@ -49,17 +48,12 @@ type TimeRange = 'month' | 'quarter';
 function isWithinRange(dateStr: string, range: TimeRange): boolean {
   const d = new Date(dateStr);
   const now = new Date();
-  if (range === 'month') {
-    const cutoff = new Date(now);
-    cutoff.setMonth(cutoff.getMonth() - 1);
-    return d >= cutoff;
-  }
   const cutoff = new Date(now);
-  cutoff.setMonth(cutoff.getMonth() - 3);
+  cutoff.setMonth(cutoff.getMonth() - (range === 'month' ? 1 : 3));
   return d >= cutoff;
 }
 
-// ── Strategy Card Component ────────────────────────────
+// ── Strategy Card (matches Trending Pack card style) ───
 
 function StrategyCardView({ card }: { card: StrategyCard }) {
   const actionLabel = STRATEGY_ACTION_LABELS[card.recommendedAction.type];
@@ -68,7 +62,7 @@ function StrategyCardView({ card }: { card: StrategyCard }) {
   const handleAction = () => {
     switch (card.recommendedAction.type) {
       case 'create-package':
-        toast.success(`Package draft "${card.recommendedAction.suggestedName}" queued for creation`, {
+        toast.success(`Package draft "${card.recommendedAction.suggestedName}" queued`, {
           description: 'Open the Packages tab to complete the draft.',
         });
         break;
@@ -90,116 +84,112 @@ function StrategyCardView({ card }: { card: StrategyCard }) {
     }
   };
 
+  // Emphasize first word of impact line
+  const impactParts = card.impactLine.split(': ');
+  const impactPrefix = impactParts.length > 1 ? impactParts[0] + ': ' : '';
+  const impactBody = impactParts.length > 1 ? impactParts.slice(1).join(': ') : card.impactLine;
+
   return (
-    <div className="rounded-xl border border-border bg-card p-4 space-y-3 hover:shadow-sm transition-shadow">
+    <div
+      className={cn(
+        'group relative flex flex-col p-4 rounded-xl',
+        'border border-border bg-card',
+        'hover:shadow-md hover:border-border/80 transition-all duration-200',
+      )}
+    >
+      {/* Header: category icon + timestamp */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-muted/60 flex items-center justify-center text-muted-foreground">
+          {CATEGORY_ICONS[card.category]}
+        </div>
+        <span className="text-[10px] text-muted-foreground">
+          {card.updatedAt}
+        </span>
+      </div>
+
       {/* Title */}
-      <p className="text-sm font-semibold text-foreground leading-snug">{card.title}</p>
+      <h3 className="text-sm font-semibold text-foreground line-clamp-2 mb-3">
+        {card.title}
+      </h3>
 
-      {/* What changed */}
-      <div>
-        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
-          What changed
-        </p>
-        <ul className="space-y-1">
-          {card.whatChanged.map((bullet, i) => (
-            <li key={i} className="text-xs text-foreground leading-relaxed flex items-start gap-1.5">
-              <span className="text-muted-foreground mt-1 flex-shrink-0">•</span>
-              {bullet}
-            </li>
-          ))}
-        </ul>
+      {/* Signal chips */}
+      <div className="flex flex-wrap gap-1.5 mb-3">
+        {card.signals.map((signal) => (
+          <Tag key={signal} variant="default" size="sm">
+            {signal}
+          </Tag>
+        ))}
       </div>
 
-      {/* So what */}
-      <div>
-        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
-          So what for partners
-        </p>
-        <ul className="space-y-1">
-          {card.soWhatForPartners.map((bullet, i) => (
-            <li key={i} className="text-xs text-foreground leading-relaxed flex items-start gap-1.5">
-              <ChevronRight className="w-3 h-3 text-primary mt-0.5 flex-shrink-0" />
-              {bullet}
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* Decision prompt */}
-      <div className="bg-muted/40 rounded-lg px-3 py-2">
-        <p className="text-xs text-foreground italic leading-relaxed">
-          {card.decisionPrompt}
-        </p>
-      </div>
-
-      {/* Primary CTA */}
-      <button
-        onClick={handleAction}
-        className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-      >
-        {actionIcon}
-        {actionLabel}
-        <ArrowRight className="w-3 h-3" />
-      </button>
-
-      {/* Meta */}
-      <p className="text-[10px] text-muted-foreground text-right">
-        Updated {card.updatedAt}
+      {/* Impact line */}
+      <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+        <span className="font-semibold text-foreground">{impactPrefix}</span>
+        {impactBody}
       </p>
+
+      {/* Single CTA */}
+      <div className="mt-auto pt-3 border-t border-border/50">
+        <button
+          onClick={handleAction}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-primary hover:bg-primary/5 transition-colors"
+        >
+          {actionIcon}
+          {actionLabel}
+          <ArrowRight className="w-3 h-3" />
+        </button>
+      </div>
     </div>
   );
 }
 
-// ── Section Component ──────────────────────────────────
+// ── Section (horizontal row of max 3 cards) ────────────
 
 function StrategySection({
   category,
-  icon,
-  maxVisible,
   timeRange,
 }: {
   category: StrategyCardCategory;
-  icon: React.ReactNode;
-  maxVisible: number;
   timeRange: TimeRange;
 }) {
   const [showAll, setShowAll] = useState(false);
-  const allCards = getStrategyCardsByCategory(category).filter(c =>
+  const allCards = getStrategyCardsByCategory(category).filter((c) =>
     isWithinRange(c.updatedAt, timeRange),
   );
+  const maxVisible = 3;
   const visible = showAll ? allCards : allCards.slice(0, maxVisible);
   const hasMore = allCards.length > maxVisible;
-  const label = STRATEGY_CATEGORY_LABELS[category];
 
   if (allCards.length === 0) return null;
 
   return (
-    <div className="space-y-3">
+    <section className="space-y-4">
       {/* Section header */}
-      <div className="flex items-center gap-2">
-        <span className="text-muted-foreground">{icon}</span>
-        <h3 className="text-sm font-semibold text-foreground">{label}</h3>
-        <span className="text-[10px] text-muted-foreground/60 font-medium">{allCards.length}</span>
-        <div className="flex-1 border-t border-border/40" />
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">
+            {STRATEGY_CATEGORY_LABELS[category]}
+          </h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {STRATEGY_CATEGORY_SUBTITLES[category]}
+          </p>
+        </div>
+        {hasMore && (
+          <button
+            onClick={() => setShowAll(!showAll)}
+            className="text-xs font-medium text-primary hover:underline"
+          >
+            {showAll ? 'Show fewer' : `View all ${allCards.length}`}
+          </button>
+        )}
       </div>
 
-      {/* Cards grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {visible.map(card => (
+      {/* Horizontal card grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {visible.map((card) => (
           <StrategyCardView key={card.id} card={card} />
         ))}
       </div>
-
-      {/* View all toggle */}
-      {hasMore && (
-        <button
-          onClick={() => setShowAll(!showAll)}
-          className="text-xs text-primary font-medium hover:underline"
-        >
-          {showAll ? 'Show fewer' : `View all ${allCards.length}`}
-        </button>
-      )}
-    </div>
+    </section>
   );
 }
 
@@ -209,21 +199,19 @@ export function StrategyShiftTab() {
   const [timeRange, setTimeRange] = useState<TimeRange>('quarter');
 
   return (
-    <div className="space-y-6">
-      {/* Intro + time filter */}
+    <div className="space-y-8">
+      {/* Intro + time filter pill */}
       <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground">
-            What's changing in SI economics — and what to build next.
-          </p>
-        </div>
-        <div className="flex items-center gap-1 bg-muted/50 rounded-lg border border-border p-0.5">
-          {(['month', 'quarter'] as const).map(range => (
+        <p className="text-sm text-muted-foreground">
+          What's changing in SI economics — and what to build next.
+        </p>
+        <div className="flex items-center gap-1 bg-muted/50 rounded-full border border-border p-0.5">
+          {(['month', 'quarter'] as const).map((range) => (
             <button
               key={range}
               onClick={() => setTimeRange(range)}
               className={cn(
-                'px-3 py-1.5 rounded-md text-xs font-medium transition-all',
+                'px-3 py-1.5 rounded-full text-xs font-medium transition-all',
                 timeRange === range
                   ? 'bg-background text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground',
@@ -236,12 +224,10 @@ export function StrategyShiftTab() {
       </div>
 
       {/* Sections */}
-      {SECTIONS.map(section => (
+      {SECTION_ORDER.map((category) => (
         <StrategySection
-          key={section.category}
-          category={section.category}
-          icon={section.icon}
-          maxVisible={section.maxVisible}
+          key={category}
+          category={category}
           timeRange={timeRange}
         />
       ))}
