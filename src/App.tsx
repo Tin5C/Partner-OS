@@ -27,6 +27,7 @@ import MonthlyLearnings from "./pages/MonthlyLearnings";
 import RequestBriefing from "./pages/RequestBriefing";
 import AdminDashboard from "./pages/AdminDashboard";
 import PartnerStrategyPage from "./pages/PartnerStrategyPage";
+import PartnerProfilePage from "./pages/PartnerProfilePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -78,6 +79,7 @@ function AppRoutes() {
       <Route path="/internal" element={<InternalPage />} />
       <Route path="/partner" element={<PartnerPage />} />
       <Route path="/partner/strategy" element={<PartnerStrategyPage />} />
+      <Route path="/partner/profile" element={<PartnerProfilePage />} />
       
       {/* LEGACY: Unified audience-based routes (seller/partner) */}
       {/* These share the same page template, differing only by config */}

@@ -40,6 +40,8 @@ import {
 } from '@/data/partnerPackages';
 import { PackageDetailPanel } from '@/components/partner/packages/PackageDetailPanel';
 import { SellerKitPanel } from '@/components/partner/packages/SellerKitPanel';
+import { ProfileSummaryBlock } from '@/components/partner/strategy/ProfileSummaryBlock';
+import { ToolFitPanel } from '@/components/partner/strategy/ToolFitPanel';
 
 const STATUS_CONFIG: Record<PackageStatus, { label: string; icon: React.ReactNode; color: string }> = {
   approved: { label: 'Approved', icon: <CheckCircle2 className="w-3.5 h-3.5" />, color: 'text-green-600' },
@@ -115,6 +117,9 @@ function StrategySnapshot() {
           ))}
         </div>
       </div>
+
+      {/* Partner Profile Summary + Derived Recommendations */}
+      <ProfileSummaryBlock />
     </div>
   );
 }
@@ -365,6 +370,9 @@ function ToolsAgentsTab() {
                       })}
                     </div>
                   </div>
+
+                  {/* Partner Profile Fit */}
+                  <ToolFitPanel mappedPackageIds={tool.mappedPackages} />
                 </div>
               )}
             </div>
