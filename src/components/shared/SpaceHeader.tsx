@@ -1,7 +1,7 @@
 // Space Header - Header component for /internal and /partner routes
 // Uses SpaceContext instead of ExperienceContext
 
-import { Search, ArrowLeftRight, Sparkles, Building2, Briefcase, User } from 'lucide-react';
+import { Search, ArrowLeftRight, Sparkles, Building2, Briefcase } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSpace } from '@/contexts/SpaceContext';
 import { cn } from '@/lib/utils';
@@ -109,16 +109,10 @@ export function SpaceHeader({
                 Switch space
               </DropdownMenuItem>
               {spaceType === 'partner' && (
-                <>
-                  <DropdownMenuItem onClick={() => navigate('/partner/strategy')} className="rounded-lg">
-                    <Briefcase className="w-4 h-4 mr-2" />
-                    AI Services Strategy
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/partner/profile')} className="rounded-lg">
-                    <User className="w-4 h-4 mr-2" />
-                    Partner Profile
-                  </DropdownMenuItem>
-                </>
+                <DropdownMenuItem onClick={() => navigate('/partner/strategy')} className="rounded-lg">
+                  <Briefcase className="w-4 h-4 mr-2" />
+                  AI Services Strategy
+                </DropdownMenuItem>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
