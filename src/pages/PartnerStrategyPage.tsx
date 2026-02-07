@@ -1,5 +1,5 @@
-// AI Services Strategy — Admin Page (Partner-only)
-// Tabs: Strategy Snapshot, Packages (Factory), Approved Tools & Agents
+// AI Services Strategy — Single Admin Cockpit (Partner-only)
+// Tabs: Partner Profile, Packages, Vendors Approved, Vendors Trending, Tools & Agents
 
 import { useState } from 'react';
 import {
@@ -23,6 +23,8 @@ import {
   Copy,
   ChevronDown,
   ChevronRight,
+  Building2,
+  Globe,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
@@ -40,89 +42,16 @@ import {
 } from '@/data/partnerPackages';
 import { PackageDetailPanel } from '@/components/partner/packages/PackageDetailPanel';
 import { SellerKitPanel } from '@/components/partner/packages/SellerKitPanel';
-import { ProfileSummaryBlock } from '@/components/partner/strategy/ProfileSummaryBlock';
 import { ToolFitPanel } from '@/components/partner/strategy/ToolFitPanel';
+import { PartnerProfileTab } from '@/components/partner/strategy/PartnerProfileTab';
+import { VendorsApprovedTab } from '@/components/partner/strategy/VendorsApprovedTab';
+import { VendorsTrendingTab } from '@/components/partner/strategy/VendorsTrendingTab';
 
 const STATUS_CONFIG: Record<PackageStatus, { label: string; icon: React.ReactNode; color: string }> = {
   approved: { label: 'Approved', icon: <CheckCircle2 className="w-3.5 h-3.5" />, color: 'text-green-600' },
   draft: { label: 'Draft', icon: <Clock className="w-3.5 h-3.5" />, color: 'text-amber-500' },
   retired: { label: 'Retired', icon: <Archive className="w-3.5 h-3.5" />, color: 'text-muted-foreground' },
 };
-
-function StrategySnapshot() {
-  const approved = SEED_PACKAGES.filter(p => p.status === 'approved');
-  const recurring = approved.filter(p => p.recurringModel !== 'none');
-  const categories = [...new Set(approved.map(p => p.category))];
-
-  return (
-    <div className="space-y-6">
-      {/* KPIs */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {[
-          { label: 'Approved Packages', value: approved.length, icon: <Package className="w-4 h-4 text-primary" /> },
-          { label: 'Categories Covered', value: categories.length, icon: <Target className="w-4 h-4 text-primary" /> },
-          { label: 'Recurring Models', value: recurring.length, icon: <TrendingUp className="w-4 h-4 text-primary" /> },
-          { label: 'Approved Tools', value: SEED_TOOLS.filter(t => t.status === 'approved').length, icon: <Wrench className="w-4 h-4 text-primary" /> },
-        ].map((kpi) => (
-          <div key={kpi.label} className="p-4 rounded-xl border border-border bg-card">
-            <div className="flex items-center gap-2 mb-2">
-              {kpi.icon}
-              <span className="text-xs text-muted-foreground">{kpi.label}</span>
-            </div>
-            <p className="text-2xl font-bold text-foreground">{kpi.value}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Category coverage */}
-      <div className="p-5 rounded-xl border border-border bg-card">
-        <h3 className="text-sm font-semibold text-foreground mb-3">Category Coverage</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {Object.entries(PACKAGE_CATEGORY_LABELS).map(([key, label]) => {
-            const count = approved.filter(p => p.category === key).length;
-            return (
-              <div key={key} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                <span className="text-sm text-foreground">{label}</span>
-                <span className={cn(
-                  "text-sm font-semibold",
-                  count > 0 ? "text-green-600" : "text-muted-foreground"
-                )}>
-                  {count}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Recurring revenue opportunities */}
-      <div className="p-5 rounded-xl border border-border bg-card">
-        <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-primary" />
-          Recurring Revenue Opportunities
-        </h3>
-        <div className="space-y-2">
-          {recurring.map(pkg => (
-            <div key={pkg.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-              <div>
-                <p className="text-sm font-medium text-foreground">{pkg.name}</p>
-                <p className="text-xs text-muted-foreground capitalize">
-                  {pkg.recurringModel.replace(/-/g, ' ')}
-                </p>
-              </div>
-              <span className="text-xs px-2 py-1 rounded-md bg-primary/10 text-primary font-medium">
-                {pkg.pricingTiers[2]?.indicativeRange || 'TBD'}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Partner Profile Summary + Derived Recommendations */}
-      <ProfileSummaryBlock />
-    </div>
-  );
-}
 
 function PackagesFactory() {
   const [selectedPackage, setSelectedPackage] = useState<AIPackage | null>(null);
@@ -404,7 +333,7 @@ export default function PartnerStrategyPage() {
                 AI Services Strategy
               </h1>
               <p className="text-xs text-muted-foreground">
-                Manage packages, tools, and service strategy
+                Single admin cockpit — profile, packages, vendors, and tools
               </p>
             </div>
           </div>
@@ -413,15 +342,23 @@ export default function PartnerStrategyPage() {
 
       {/* Content */}
       <main className="max-w-[1140px] mx-auto px-5 lg:px-8 py-6">
-        <Tabs defaultValue="snapshot" className="space-y-6">
-          <TabsList className="bg-muted/50 border border-border">
-            <TabsTrigger value="snapshot" className="gap-1.5">
-              <TrendingUp className="w-3.5 h-3.5" />
-              Strategy Snapshot
+        <Tabs defaultValue="profile" className="space-y-6">
+          <TabsList className="bg-muted/50 border border-border w-full justify-start overflow-x-auto">
+            <TabsTrigger value="profile" className="gap-1.5">
+              <Building2 className="w-3.5 h-3.5" />
+              Partner Profile
             </TabsTrigger>
             <TabsTrigger value="packages" className="gap-1.5">
               <Package className="w-3.5 h-3.5" />
               Packages
+            </TabsTrigger>
+            <TabsTrigger value="vendors-approved" className="gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Vendors — Approved
+            </TabsTrigger>
+            <TabsTrigger value="vendors-trending" className="gap-1.5">
+              <TrendingUp className="w-3.5 h-3.5" />
+              Vendors — Trending
             </TabsTrigger>
             <TabsTrigger value="tools" className="gap-1.5">
               <Wrench className="w-3.5 h-3.5" />
@@ -429,12 +366,20 @@ export default function PartnerStrategyPage() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="snapshot">
-            <StrategySnapshot />
+          <TabsContent value="profile">
+            <PartnerProfileTab />
           </TabsContent>
 
           <TabsContent value="packages">
             <PackagesFactory />
+          </TabsContent>
+
+          <TabsContent value="vendors-approved">
+            <VendorsApprovedTab />
+          </TabsContent>
+
+          <TabsContent value="vendors-trending">
+            <VendorsTrendingTab />
           </TabsContent>
 
           <TabsContent value="tools">

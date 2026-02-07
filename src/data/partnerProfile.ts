@@ -13,6 +13,34 @@ export type RiskAppetite = 'conservative' | 'balanced' | 'experimental';
 export type VendorPosture = 'microsoft-first' | 'vendor-neutral' | 'mixed';
 export type RevenueMixType = 'mostly-project' | 'balanced' | 'mostly-managed';
 
+// Vendor Posture types
+export type VendorPreferencePriority = 1 | 2 | 3;
+export type VendorPreferenceReason = 'alliance' | 'delivery' | 'commercials' | 'demand' | 'other';
+export type VendorMaturityLevel = 'exploring' | 'delivering' | 'expert';
+export type VendorDisallowReason = 'compliance' | 'legal' | 'strategy' | 'bad-experience' | 'other';
+
+export interface VendorPreference {
+  vendorId: string;
+  priority: VendorPreferencePriority;
+  reason: VendorPreferenceReason;
+}
+
+export interface VendorCurrentEntry {
+  vendorId: string;
+  maturity: VendorMaturityLevel;
+}
+
+export interface VendorDisallowedEntry {
+  vendorId: string;
+  reason: VendorDisallowReason;
+}
+
+export interface VendorPostureConfig {
+  preferredVendors: VendorPreference[];
+  currentVendors: VendorCurrentEntry[];
+  disallowedVendors: VendorDisallowedEntry[];
+}
+
 export interface ExistingService {
   id: string;
   name: string;
@@ -60,6 +88,9 @@ export interface PartnerProfile {
   // 6) Revenue mix
   revenueMix: RevenueMixType;
   topServiceLines: string[];
+
+  // 7) Vendor posture (admin-confirmed)
+  vendorPostureConfig: VendorPostureConfig;
 
   updatedAt: string;
 }
@@ -142,6 +173,28 @@ export const REVENUE_MIX_LABELS: Record<RevenueMixType, string> = {
   'mostly-managed': 'Mostly managed',
 };
 
+export const VENDOR_PREFERENCE_REASON_LABELS: Record<VendorPreferenceReason, string> = {
+  alliance: 'Alliance',
+  delivery: 'Delivery',
+  commercials: 'Commercials',
+  demand: 'Demand',
+  other: 'Other',
+};
+
+export const VENDOR_MATURITY_LEVEL_LABELS: Record<VendorMaturityLevel, string> = {
+  exploring: 'Exploring',
+  delivering: 'Delivering',
+  expert: 'Expert',
+};
+
+export const VENDOR_DISALLOW_REASON_LABELS: Record<VendorDisallowReason, string> = {
+  compliance: 'Compliance',
+  legal: 'Legal',
+  strategy: 'Strategy',
+  'bad-experience': 'Bad experience',
+  other: 'Other',
+};
+
 // ============= Seed Data =============
 
 export const SEED_PARTNER_PROFILE: PartnerProfile = {
@@ -209,6 +262,18 @@ export const SEED_PARTNER_PROFILE: PartnerProfile = {
   vendorPosture: 'microsoft-first',
   revenueMix: 'balanced',
   topServiceLines: ['Managed Cloud Operations', 'Security Operations Center', 'M365 Deployment & Adoption'],
+  vendorPostureConfig: {
+    preferredVendors: [
+      { vendorId: 'vendor-azure-openai', priority: 1, reason: 'alliance' },
+      { vendorId: 'vendor-langchain', priority: 2, reason: 'delivery' },
+    ],
+    currentVendors: [
+      { vendorId: 'vendor-azure-openai', maturity: 'expert' },
+      { vendorId: 'vendor-purview', maturity: 'delivering' },
+      { vendorId: 'vendor-langchain', maturity: 'exploring' },
+    ],
+    disallowedVendors: [],
+  },
   updatedAt: '2026-02-01',
 };
 
