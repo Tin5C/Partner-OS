@@ -1,5 +1,5 @@
 // AI Services Strategy — Single Admin Cockpit (Partner-only)
-// Tabs: Partner Profile, Packages, Vendors Approved, Vendors Trending, Tools & Agents
+// Tabs: Strategy Shift, Partner Profile, Packages, Vendors Approved, Vendors Trending, Tools & Agents
 
 import { useState } from 'react';
 import {
@@ -16,6 +16,7 @@ import {
   Shield,
   Settings,
   TrendingUp,
+  TrendingDown,
   Users,
   DollarSign,
   Target,
@@ -25,6 +26,7 @@ import {
   ChevronRight,
   Building2,
   Globe,
+  Compass,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
@@ -46,6 +48,7 @@ import { ToolFitPanel } from '@/components/partner/strategy/ToolFitPanel';
 import { PartnerProfileTab } from '@/components/partner/strategy/PartnerProfileTab';
 import { VendorsApprovedTab } from '@/components/partner/strategy/VendorsApprovedTab';
 import { VendorsTrendingTab } from '@/components/partner/strategy/VendorsTrendingTab';
+import { StrategyShiftTab } from '@/components/partner/strategy/StrategyShiftTab';
 
 const STATUS_CONFIG: Record<PackageStatus, { label: string; icon: React.ReactNode; color: string }> = {
   approved: { label: 'Approved', icon: <CheckCircle2 className="w-3.5 h-3.5" />, color: 'text-green-600' },
@@ -342,8 +345,12 @@ export default function PartnerStrategyPage() {
 
       {/* Content */}
       <main className="max-w-[1140px] mx-auto px-5 lg:px-8 py-6">
-        <Tabs defaultValue="profile" className="space-y-6">
+        <Tabs defaultValue="strategy-shift" className="space-y-6">
           <TabsList className="bg-muted/50 border border-border w-full justify-start overflow-x-auto">
+            <TabsTrigger value="strategy-shift" className="gap-1.5">
+              <Compass className="w-3.5 h-3.5" />
+              Strategy Shift
+            </TabsTrigger>
             <TabsTrigger value="profile" className="gap-1.5">
               <Building2 className="w-3.5 h-3.5" />
               Partner Profile
@@ -365,6 +372,10 @@ export default function PartnerStrategyPage() {
               Tools & Agents
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="strategy-shift">
+            <StrategyShiftTab />
+          </TabsContent>
 
           <TabsContent value="profile">
             <PartnerProfileTab />
