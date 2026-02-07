@@ -15,10 +15,13 @@ export type VendorCategory =
   | 'observability'
   | 'security'
   | 'governance'
+  | 'agent-platform'
+  | 'mlops'
   | 'other';
 
 export type IntegrationComplexity = 'low' | 'medium' | 'high';
 export type CommercialModel = 'resell' | 'referral' | 'services-attach' | 'unknown';
+export type DisplacementRisk = 'low' | 'medium' | 'high';
 
 export interface VendorSecurityNotes {
   deploymentModel: string;
@@ -54,8 +57,10 @@ export interface Vendor {
   verificationSourceLinks: string[];
   ownerName: string;
   ownerRole: string;
-  expiryAt?: string; // required for Trending
-  recommendedNextAction?: string; // required for Trending
+  expiryAt?: string;
+  recommendedNextAction?: string;
+  displacementRisk?: DisplacementRisk;
+  reviewCadence?: string;
 }
 
 // ============= Constants =============
@@ -68,6 +73,8 @@ export const VENDOR_CATEGORY_LABELS: Record<VendorCategory, string> = {
   observability: 'Observability',
   security: 'Security',
   governance: 'Governance',
+  'agent-platform': 'Agent Platform',
+  mlops: 'MLOps',
   other: 'Other',
 };
 
@@ -90,16 +97,73 @@ export const INTEGRATION_COMPLEXITY_LABELS: Record<IntegrationComplexity, string
   high: 'High',
 };
 
+// ============= Verification Helper =============
+
+export type VerificationStatus = 'verified' | 'partially-verified' | 'unverified';
+
+export function getVerificationStatus(vendor: Vendor): VerificationStatus {
+  const hasDataNeededSecurity = vendor.securityNotes === 'DATA_NEEDED';
+  const hasDataNeededEconomics = vendor.partnerEconomics.toUpperCase().includes('DATA NEEDED');
+  const hasDataNeededCommercial = vendor.commercialModel === 'unknown';
+  const hasVerifiedAt = !!vendor.lastVerifiedAt;
+  const hasSources = vendor.verificationSourceLinks.length > 0;
+
+  const hasAnyDataNeeded = hasDataNeededSecurity || hasDataNeededEconomics || hasDataNeededCommercial;
+
+  if (hasVerifiedAt && hasSources && !hasAnyDataNeeded) {
+    return 'verified';
+  }
+  if (hasVerifiedAt || hasSources) {
+    return 'partially-verified';
+  }
+  return 'unverified';
+}
+
+export const VERIFICATION_STATUS_LABELS: Record<VerificationStatus, string> = {
+  verified: 'Verified',
+  'partially-verified': 'Partially verified',
+  unverified: 'Not verified',
+};
+
 // ============= Seed Vendors =============
 
 export const SEED_VENDORS: Vendor[] = [
+  // ─── APPROVED ───────────────────────────────────────────
   {
-    id: 'vendor-azure-openai',
-    name: 'Azure OpenAI Service',
+    id: 'vendor-anthropic',
+    name: 'Anthropic (Claude)',
     category: 'llm',
     status: 'approved',
-    oneLiner: 'Enterprise-grade GPT models with Azure compliance, residency, and networking controls.',
-    mappedPackages: ['pkg-rag', 'pkg-copilot', 'pkg-readiness'],
+    oneLiner: 'High-quality reasoning + long-context LLM option for governance-first and document-heavy enterprise workloads.',
+    mappedPackages: ['pkg-governance', 'pkg-rag', 'pkg-security', 'pkg-readiness'],
+    requiredCapabilities: [
+      { dimensionKey: 'governance-risk', level: 2 },
+      { dimensionKey: 'security-identity', level: 2 },
+      { dimensionKey: 'data-engineering', level: 2 },
+      { dimensionKey: 'architecture-rag-agents', level: 2 },
+      { dimensionKey: 'mlops-observability', level: 2 },
+    ],
+    deliveryNotes: {
+      requiredRolesSkills: ['AI Architect/SE', 'Security/Compliance lead', 'Data Engineer', 'AI Ops/Evals (optional)'],
+      typicalTimebox: 'Pilot 2–4 weeks; production 4–8+ weeks depending on data + governance',
+      integrationComplexity: 'medium',
+    },
+    securityNotes: 'DATA_NEEDED',
+    commercialModel: 'unknown',
+    partnerEconomics: 'DATA NEEDED',
+    verificationSourceLinks: [],
+    ownerName: 'TBD — Admin sets owner',
+    ownerRole: 'Alliance Lead / AI Practice Lead',
+    displacementRisk: 'medium',
+    reviewCadence: 'Quarterly',
+  },
+  {
+    id: 'vendor-azure-openai',
+    name: 'Microsoft Azure OpenAI',
+    category: 'llm',
+    status: 'approved',
+    oneLiner: 'Microsoft-first managed access to leading models with enterprise controls and procurement alignment.',
+    mappedPackages: ['pkg-governance', 'pkg-rag', 'pkg-copilot', 'pkg-security', 'pkg-finops'],
     requiredCapabilities: [
       { dimensionKey: 'architecture-rag-agents', level: 1 },
       { dimensionKey: 'security-identity', level: 2 },
@@ -121,6 +185,91 @@ export const SEED_VENDORS: Vendor[] = [
     verificationSourceLinks: ['https://learn.microsoft.com/azure/ai-services/openai/'],
     ownerName: 'Marcus Steiner',
     ownerRole: 'Alliance Manager — Microsoft',
+    displacementRisk: 'low',
+    reviewCadence: 'Quarterly',
+  },
+  {
+    id: 'vendor-copilot-studio',
+    name: 'Microsoft Copilot Studio',
+    category: 'agent-platform',
+    status: 'approved',
+    oneLiner: 'Enterprise-grade agent building and governance motion aligned to Copilot adoption.',
+    mappedPackages: ['pkg-copilot', 'pkg-governance', 'pkg-security'],
+    requiredCapabilities: [
+      { dimensionKey: 'architecture-rag-agents', level: 1 },
+      { dimensionKey: 'governance-risk', level: 1 },
+    ],
+    deliveryNotes: {
+      requiredRolesSkills: ['Power Platform Developer', 'AI Architect', 'Copilot Coach'],
+      typicalTimebox: '2–6 weeks',
+      integrationComplexity: 'medium',
+    },
+    securityNotes: {
+      deploymentModel: 'Microsoft 365 SaaS (Azure-backed)',
+      dataHandlingSummary: 'Data stays within M365 tenant boundary; DLP policies apply.',
+      ssoScimAudit: 'Azure AD SSO; audit via M365 Compliance Center.',
+      residencyNotes: 'Available in all M365 regions including Switzerland.',
+    },
+    commercialModel: 'services-attach',
+    partnerEconomics: 'M365 licensing revenue + implementation/adoption services.',
+    lastVerifiedAt: '2026-01-20',
+    verificationSourceLinks: ['https://learn.microsoft.com/microsoft-copilot-studio/'],
+    ownerName: 'Marcus Steiner',
+    ownerRole: 'Alliance Manager — Microsoft',
+    displacementRisk: 'low',
+    reviewCadence: 'Quarterly',
+  },
+  {
+    id: 'vendor-mistral',
+    name: 'Mistral',
+    category: 'llm',
+    status: 'approved',
+    oneLiner: 'EU/sovereignty-friendly LLM option for regulated and residency-sensitive buyers.',
+    mappedPackages: ['pkg-governance', 'pkg-rag', 'pkg-security'],
+    requiredCapabilities: [
+      { dimensionKey: 'architecture-rag-agents', level: 2 },
+      { dimensionKey: 'security-identity', level: 2 },
+      { dimensionKey: 'governance-risk', level: 1 },
+    ],
+    deliveryNotes: {
+      requiredRolesSkills: ['AI Engineer', 'Security/Compliance Lead'],
+      typicalTimebox: 'Pilot 2–4 weeks; production 4–8 weeks',
+      integrationComplexity: 'medium',
+    },
+    securityNotes: 'DATA_NEEDED',
+    commercialModel: 'unknown',
+    partnerEconomics: 'DATA NEEDED',
+    verificationSourceLinks: ['https://mistral.ai/'],
+    ownerName: 'TBD — Admin sets owner',
+    ownerRole: 'AI Practice Lead',
+    displacementRisk: 'medium',
+    reviewCadence: 'Quarterly',
+  },
+  {
+    id: 'vendor-cohere',
+    name: 'Cohere',
+    category: 'llm',
+    status: 'approved',
+    oneLiner: 'Enterprise-focused model/provider with strong fit for controlled deployments and RAG-heavy use cases.',
+    mappedPackages: ['pkg-rag', 'pkg-governance', 'pkg-security'],
+    requiredCapabilities: [
+      { dimensionKey: 'architecture-rag-agents', level: 2 },
+      { dimensionKey: 'data-engineering', level: 2 },
+      { dimensionKey: 'security-identity', level: 1 },
+    ],
+    deliveryNotes: {
+      requiredRolesSkills: ['AI Engineer', 'Data Engineer', 'Security Lead'],
+      typicalTimebox: 'Pilot 2–4 weeks; production 4–8 weeks',
+      integrationComplexity: 'medium',
+    },
+    securityNotes: 'DATA_NEEDED',
+    commercialModel: 'unknown',
+    partnerEconomics: 'DATA NEEDED',
+    verificationSourceLinks: ['https://cohere.com/'],
+    ownerName: 'TBD — Admin sets owner',
+    ownerRole: 'AI Practice Lead',
+    displacementRisk: 'medium',
+    reviewCadence: 'Quarterly',
   },
   {
     id: 'vendor-langchain',
@@ -150,14 +299,16 @@ export const SEED_VENDORS: Vendor[] = [
     verificationSourceLinks: ['https://langchain.com/', 'https://github.com/langchain-ai/langchain'],
     ownerName: 'Anja Müller',
     ownerRole: 'Practice Lead — AI Engineering',
+    displacementRisk: 'low',
+    reviewCadence: 'Quarterly',
   },
   {
     id: 'vendor-pinecone',
     name: 'Pinecone',
     category: 'vector-db',
     status: 'approved',
-    oneLiner: 'Managed vector database for high-performance similarity search in RAG pipelines.',
-    mappedPackages: ['pkg-rag'],
+    oneLiner: 'Managed vector retrieval layer for production RAG; standardizes performance and ops patterns.',
+    mappedPackages: ['pkg-rag', 'pkg-finops'],
     requiredCapabilities: [
       { dimensionKey: 'data-engineering', level: 2 },
       { dimensionKey: 'architecture-rag-agents', level: 1 },
@@ -179,13 +330,90 @@ export const SEED_VENDORS: Vendor[] = [
     verificationSourceLinks: ['https://www.pinecone.io/'],
     ownerName: 'Anja Müller',
     ownerRole: 'Practice Lead — AI Engineering',
+    displacementRisk: 'low',
+    reviewCadence: 'Quarterly',
+  },
+  {
+    id: 'vendor-weaviate',
+    name: 'Weaviate',
+    category: 'vector-db',
+    status: 'approved',
+    oneLiner: 'Vector retrieval stack with flexible deployment options; common partner choice for RAG implementations.',
+    mappedPackages: ['pkg-rag'],
+    requiredCapabilities: [
+      { dimensionKey: 'data-engineering', level: 2 },
+      { dimensionKey: 'architecture-rag-agents', level: 1 },
+    ],
+    deliveryNotes: {
+      requiredRolesSkills: ['Data Engineer', 'Backend Developer'],
+      typicalTimebox: '1–3 weeks',
+      integrationComplexity: 'low',
+    },
+    securityNotes: 'DATA_NEEDED',
+    commercialModel: 'unknown',
+    partnerEconomics: 'DATA NEEDED',
+    verificationSourceLinks: ['https://weaviate.io/'],
+    ownerName: 'TBD — Admin sets owner',
+    ownerRole: 'AI Practice Lead',
+    displacementRisk: 'low',
+    reviewCadence: 'Quarterly',
+  },
+  {
+    id: 'vendor-datadog-llm',
+    name: 'Datadog (LLM Observability)',
+    category: 'observability',
+    status: 'approved',
+    oneLiner: 'Operational visibility + monitoring patterns that reduce production risk for AI workloads.',
+    mappedPackages: ['pkg-security', 'pkg-finops', 'pkg-rag'],
+    requiredCapabilities: [
+      { dimensionKey: 'mlops-observability', level: 2 },
+      { dimensionKey: 'security-identity', level: 1 },
+    ],
+    deliveryNotes: {
+      requiredRolesSkills: ['DevOps/SRE Engineer', 'AI Engineer'],
+      typicalTimebox: '1–3 weeks',
+      integrationComplexity: 'low',
+    },
+    securityNotes: 'DATA_NEEDED',
+    commercialModel: 'referral',
+    partnerEconomics: 'DATA NEEDED',
+    verificationSourceLinks: ['https://docs.datadoghq.com/llm_observability/'],
+    ownerName: 'TBD — Admin sets owner',
+    ownerRole: 'Practice Lead — DevOps/AI Ops',
+    displacementRisk: 'low',
+    reviewCadence: 'Quarterly',
+  },
+  {
+    id: 'vendor-wandb',
+    name: 'Weights & Biases',
+    category: 'mlops',
+    status: 'approved',
+    oneLiner: 'MLOps-lite discipline and evaluation workflows; strengthens delivery quality and repeatability.',
+    mappedPackages: ['pkg-rag', 'pkg-readiness'],
+    requiredCapabilities: [
+      { dimensionKey: 'mlops-observability', level: 2 },
+      { dimensionKey: 'architecture-rag-agents', level: 1 },
+    ],
+    deliveryNotes: {
+      requiredRolesSkills: ['AI/ML Engineer', 'Data Scientist'],
+      typicalTimebox: '1–3 weeks',
+      integrationComplexity: 'low',
+    },
+    securityNotes: 'DATA_NEEDED',
+    commercialModel: 'unknown',
+    partnerEconomics: 'DATA NEEDED',
+    verificationSourceLinks: ['https://wandb.ai/'],
+    ownerName: 'TBD — Admin sets owner',
+    ownerRole: 'AI Practice Lead',
+    displacementRisk: 'low',
+    reviewCadence: 'Quarterly',
   },
   {
     id: 'vendor-purview',
     name: 'Microsoft Purview',
     category: 'governance',
     status: 'approved',
-    oneLiner: 'Unified governance for data cataloging, classification, and compliance across AI workloads.',
+    oneLiner: 'Governance controls for data + AI policy enforcement; reduces compliance friction in AI programs.',
     mappedPackages: ['pkg-governance', 'pkg-security'],
     requiredCapabilities: [
       { dimensionKey: 'governance-risk', level: 2 },
@@ -208,6 +436,8 @@ export const SEED_VENDORS: Vendor[] = [
     verificationSourceLinks: ['https://learn.microsoft.com/purview/'],
     ownerName: 'Marcus Steiner',
     ownerRole: 'Alliance Manager — Microsoft',
+    displacementRisk: 'low',
+    reviewCadence: 'Quarterly',
   },
   {
     id: 'vendor-presidio',
@@ -237,8 +467,11 @@ export const SEED_VENDORS: Vendor[] = [
     verificationSourceLinks: ['https://github.com/microsoft/presidio'],
     ownerName: 'Lukas Weber',
     ownerRole: 'Practice Lead — Security',
+    displacementRisk: 'low',
+    reviewCadence: 'Quarterly',
   },
-  // --- Trending ---
+
+  // ─── TRENDING (WATCHLIST) ───────────────────────────────
   {
     id: 'vendor-promptfoo',
     name: 'Promptfoo',
@@ -294,7 +527,8 @@ export const SEED_VENDORS: Vendor[] = [
     expiryAt: '2026-03-15',
     recommendedNextAction: 'Negotiate partner pricing and confirm EU self-hosted deployment option.',
   },
-  // --- Deprecated ---
+
+  // ─── DEPRECATED ─────────────────────────────────────────
   {
     id: 'vendor-chroma-legacy',
     name: 'ChromaDB (legacy eval)',

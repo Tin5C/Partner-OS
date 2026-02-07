@@ -14,17 +14,47 @@ import {
   Plus,
   AlertTriangle,
   BarChart3,
+  ShieldCheck,
+  ShieldAlert,
+  ShieldX,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Vendor,
   getApprovedVendors,
+  getVerificationStatus,
   VENDOR_CATEGORY_LABELS,
   COMMERCIAL_MODEL_LABELS,
   INTEGRATION_COMPLEXITY_LABELS,
+  VERIFICATION_STATUS_LABELS,
 } from '@/data/partnerVendors';
 import { SEED_PACKAGES } from '@/data/partnerPackages';
 import { ToolFitPanel } from './ToolFitPanel';
+
+function VerificationBadge({ vendor }: { vendor: Vendor }) {
+  const status = getVerificationStatus(vendor);
+  const label = VERIFICATION_STATUS_LABELS[status];
+
+  if (status === 'verified') {
+    return (
+      <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 font-medium flex items-center gap-0.5">
+        <ShieldCheck className="w-3 h-3" /> {label}
+      </span>
+    );
+  }
+  if (status === 'partially-verified') {
+    return (
+      <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 font-medium flex items-center gap-0.5">
+        <ShieldAlert className="w-3 h-3" /> {label}
+      </span>
+    );
+  }
+  return (
+    <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 font-medium flex items-center gap-0.5">
+      <ShieldX className="w-3 h-3" /> {label}
+    </span>
+  );
+}
 
 export function VendorsApprovedTab() {
   const [expandedVendor, setExpandedVendor] = useState<string | null>(null);
@@ -62,6 +92,7 @@ export function VendorsApprovedTab() {
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 font-medium">
                       Approved
                     </span>
+                    <VerificationBadge vendor={vendor} />
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">{vendor.oneLiner}</p>
                 </div>
@@ -128,6 +159,16 @@ export function VendorsApprovedTab() {
                         <p className="text-xs text-foreground">
                           Economics: {vendor.partnerEconomics}
                         </p>
+                        {vendor.displacementRisk && (
+                          <p className="text-xs text-foreground">
+                            Displacement risk: <span className="capitalize">{vendor.displacementRisk}</span>
+                          </p>
+                        )}
+                        {vendor.reviewCadence && (
+                          <p className="text-xs text-foreground">
+                            Review cadence: {vendor.reviewCadence}
+                          </p>
+                        )}
                       </div>
                     </div>
 
