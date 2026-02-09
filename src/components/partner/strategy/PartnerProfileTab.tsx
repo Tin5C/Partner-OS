@@ -103,8 +103,8 @@ function ScaleSelector({ value, onChange }: { value: AttachScale; onChange: (v: 
           className={cn("px-2 py-1 rounded text-[11px] font-medium transition-all",
             value === s
               ? s === 'high' ? "bg-green-600 text-white"
-              : s === 'medium' ? "bg-amber-500 text-white"
-              : s === 'low' ? "bg-orange-400 text-white"
+              : s === 'medium' ? "bg-[#6D6AF6] text-white"
+              : s === 'low' ? "bg-[#C7CCFF] text-[#4F46E5]"
               : "bg-muted text-muted-foreground"
               : "bg-muted/30 text-muted-foreground hover:bg-muted"
           )}>
@@ -125,7 +125,7 @@ function CapabilitySlider({ value, onChange }: { value: CapabilityLevel; onChang
             value === l
               ? l === 3 ? "bg-green-600 text-white"
               : l === 2 ? "bg-primary text-primary-foreground"
-              : l === 1 ? "bg-amber-500 text-white"
+              : l === 1 ? "bg-[#C7CCFF] text-[#4F46E5]"
               : "bg-muted text-muted-foreground"
               : "bg-muted/30 text-muted-foreground hover:bg-muted"
           )}>
@@ -433,8 +433,8 @@ export function PartnerProfileTab() {
       <SectionCard title="Vendor Posture" subtitle="Admin-confirmed vendor preferences for recommendations."
         icon={<Shield className="w-4 h-4 text-primary" />}>
         {allVendors.length === 0 ? (
-          <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-800/30">
-            <p className="text-xs text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
+          <div className="p-4 rounded-lg bg-[#EEF0FF] dark:bg-indigo-900/10 border border-[#C7CCFF]/50 dark:border-indigo-800/30">
+            <p className="text-xs text-[#4F46E5] dark:text-indigo-300 flex items-center gap-1.5">
               <AlertTriangle className="w-3.5 h-3.5" />
               DATA NEEDED: Add vendors in the Vendors tab first.
             </p>

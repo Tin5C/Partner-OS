@@ -78,14 +78,14 @@ export function VendorsTrendingTab() {
                     onClick={() => setExpandedVendor(isExpanded ? null : vendor.id)}
                     className="w-full p-4 flex items-start gap-3 text-left hover:bg-muted/20 transition-colors"
                   >
-                    <TrendingUp className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                    <TrendingUp className="w-4 h-4 text-[#6D6AF6] mt-0.5 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-sm font-semibold text-foreground">{vendor.name}</p>
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
                           {VENDOR_CATEGORY_LABELS[vendor.category]}
                         </span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 font-medium">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#EEF0FF] text-[#4F46E5] dark:bg-indigo-900/30 dark:text-indigo-300 font-medium">
                           Trending
                         </span>
                         {daysLeft !== null && (
@@ -143,7 +143,7 @@ export function VendorsTrendingTab() {
                         <div>
                           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Security</p>
                           {vendor.securityNotes === 'DATA_NEEDED' ? (
-                            <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                            <p className="text-xs text-[#6D6AF6] dark:text-indigo-400 flex items-center gap-1">
                               <AlertTriangle className="w-3 h-3" /> DATA NEEDED — required before promotion
                             </p>
                           ) : (

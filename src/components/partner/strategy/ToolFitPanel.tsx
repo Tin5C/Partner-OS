@@ -21,19 +21,19 @@ interface ToolFitPanelProps {
 
 const EFFORT_CONFIG: Record<string, { label: string; color: string }> = {
   low: { label: 'Low', color: 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-300' },
-  medium: { label: 'Medium', color: 'text-amber-600 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-300' },
+  medium: { label: 'Medium', color: 'text-[#4F46E5] bg-[#EEF0FF] dark:bg-indigo-900/30 dark:text-indigo-300' },
   high: { label: 'High', color: 'text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-300' },
 };
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   watch: { label: 'Watch', color: 'text-muted-foreground bg-muted' },
-  pilot: { label: 'Pilot', color: 'text-amber-600 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-300' },
+  pilot: { label: 'Pilot', color: 'text-[#4F46E5] bg-[#EEF0FF] dark:bg-indigo-900/30 dark:text-indigo-300' },
   approved: { label: 'Approved', color: 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-300' },
 };
 
 const CAP_LEVEL_COLORS: Record<CapabilityLevel, string> = {
   0: 'text-muted-foreground',
-  1: 'text-amber-600 dark:text-amber-400',
+  1: 'text-[#6D6AF6] dark:text-indigo-400',
   2: 'text-primary',
   3: 'text-green-600 dark:text-green-400',
 };
@@ -66,7 +66,7 @@ export function ToolFitPanel({ mappedPackageIds }: ToolFitPanelProps) {
                   {CAPABILITY_LEVEL_LABELS[cap.partnerLevel]}
                 </span>
                 {gap ? (
-                  <AlertTriangle className="w-3 h-3 text-amber-500" />
+                  <AlertTriangle className="w-3 h-3 text-[#6D6AF6]/70" />
                 ) : (
                   <CheckCircle2 className="w-3 h-3 text-green-600" />
                 )}

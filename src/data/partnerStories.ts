@@ -52,13 +52,13 @@ export function getActivePartnerStories(stories: PartnerStory[]): PartnerStory[]
 // Signal type styling
 export const signalTypeColors: Record<PartnerSignalType, string> = {
   Vendor: 'bg-blue-50/90 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-700',
-  Regulatory: 'bg-amber-50/90 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-700',
+  Regulatory: 'bg-[#EEF0FF] text-[#4F46E5] border-[#C7CCFF] dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-700',
   LocalMarket: 'bg-emerald-50/90 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-700',
 };
 
 export const signalTypeGradients: Record<PartnerSignalType, string> = {
   Vendor: 'from-blue-500 to-blue-700',
-  Regulatory: 'from-amber-500 to-amber-700',
+  Regulatory: 'from-[#6D6AF6] to-[#4F46E5]',
   LocalMarket: 'from-emerald-500 to-emerald-700',
 };
 

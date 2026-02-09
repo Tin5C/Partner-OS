@@ -57,7 +57,7 @@ function VerificationBadge({ vendor }: { vendor: Vendor }) {
       Icon: ShieldCheck,
     },
     'partially-verified': {
-      badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+      badge: 'bg-[#EEF0FF] text-[#4F46E5] dark:bg-indigo-900/30 dark:text-indigo-300',
       Icon: ShieldAlert,
     },
     unverified: {
@@ -154,7 +154,7 @@ export function VendorRow({ vendor, isExpanded, onToggle }: VendorRowProps) {
             <div>
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Security</p>
               {vendor.securityNotes === 'DATA_NEEDED' ? (
-                <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                <p className="text-xs text-[#6D6AF6] dark:text-indigo-400 flex items-center gap-1">
                   <AlertTriangle className="w-3 h-3" /> DATA NEEDED
                 </p>
               ) : (
@@ -246,7 +246,7 @@ export function VendorRow({ vendor, isExpanded, onToggle }: VendorRowProps) {
                 ) : null;
               })}
               {vendor.mappedPackages.length === 0 && (
-                <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                <p className="text-xs text-[#6D6AF6] dark:text-indigo-400 flex items-center gap-1">
                   <AlertTriangle className="w-3 h-3" /> Must be mapped to ≥1 package
                 </p>
               )}

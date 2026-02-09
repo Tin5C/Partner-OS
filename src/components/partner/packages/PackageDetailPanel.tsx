@@ -127,11 +127,11 @@ export function PackageDetailPanel({
           </Section>
 
           {/* When NOT to sell */}
-          <Section title="When not to sell" icon={<AlertTriangle className="w-3.5 h-3.5 text-amber-500" />}>
+          <Section title="When not to sell" icon={<AlertTriangle className="w-3.5 h-3.5 text-[#6D6AF6]/70" />}>
             <ul className="space-y-1.5">
               {pkg.whenNotToSell.map((item, i) => (
                 <li key={i} className="text-sm text-foreground flex items-start gap-2">
-                  <AlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
+                  <AlertTriangle className="w-3.5 h-3.5 text-[#6D6AF6]/70 mt-0.5 flex-shrink-0" />
                   {item}
                 </li>
               ))}
@@ -221,7 +221,7 @@ export function PackageDetailPanel({
                 <ul className="space-y-1">
                   {pkg.proofKit.riskClauses.map((item, i) => (
                     <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
-                      <AlertTriangle className="w-3 h-3 text-amber-500 mt-0.5 flex-shrink-0" />
+                      <AlertTriangle className="w-3 h-3 text-[#6D6AF6]/70 mt-0.5 flex-shrink-0" />
                       {item}
                     </li>
                   ))}
@@ -255,7 +255,7 @@ export function PackageDetailPanel({
                           <p className="text-[10px] font-medium text-muted-foreground mb-1">Security</p>
                           {tool.securityNotes.map((note, i) => (
                             <p key={i} className="text-[11px] text-muted-foreground flex items-start gap-1">
-                              <Shield className="w-2.5 h-2.5 text-amber-500 mt-0.5 flex-shrink-0" />
+                              <Shield className="w-2.5 h-2.5 text-[#6D6AF6]/70 mt-0.5 flex-shrink-0" />
                               {note}
                             </p>
                           ))}

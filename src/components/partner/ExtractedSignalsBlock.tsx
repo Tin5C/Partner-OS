@@ -22,7 +22,7 @@ function ConfidenceBadge({ confidence }: { confidence: ExtractedSignal['confiden
     <span className={cn(
       "text-[9px] font-medium px-1 py-0.5 rounded",
       confidence === 'High' && "bg-green-100 text-green-700",
-      confidence === 'Medium' && "bg-amber-100 text-amber-700",
+      confidence === 'Medium' && "bg-[#EEF0FF] text-[#4F46E5]",
       confidence === 'Low' && "bg-red-100 text-red-700"
     )}>
       {confidence}
