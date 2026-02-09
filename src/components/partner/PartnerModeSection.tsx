@@ -36,7 +36,7 @@ export function PartnerModeSection() {
             className={cn(
               "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
               mode === 'quick-brief'
-                ? "bg-amber-500 text-white shadow-sm"
+                ? "bg-[#6D6AF6] text-white shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >

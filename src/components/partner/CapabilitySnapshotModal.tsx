@@ -122,7 +122,7 @@ export function CapabilitySnapshotModal({
                   currentScore.level === 'High' 
                     ? "bg-emerald-500/10" 
                     : currentScore.level === 'Medium' 
-                    ? "bg-amber-500/10" 
+                    ? "bg-[#EEF0FF]" 
                     : "bg-muted/50"
                 )}>
                   <TrendingUp className={cn(
@@ -130,7 +130,7 @@ export function CapabilitySnapshotModal({
                     currentScore.level === 'High' 
                       ? "text-emerald-600" 
                       : currentScore.level === 'Medium' 
-                      ? "text-amber-600" 
+                      ? "text-[#6D6AF6]" 
                       : "text-muted-foreground"
                   )} />
                 </div>
@@ -142,7 +142,7 @@ export function CapabilitySnapshotModal({
                       currentScore.level === 'High' 
                         ? "bg-emerald-500/10 text-emerald-700" 
                         : currentScore.level === 'Medium' 
-                        ? "bg-amber-500/10 text-amber-700" 
+                        ? "bg-[#EEF0FF] text-[#4F46E5]" 
                         : "bg-muted text-muted-foreground"
                     )}>
                       {currentScore.level}
@@ -154,7 +154,7 @@ export function CapabilitySnapshotModal({
                       className={cn(
                         "h-2 flex-1 max-w-[200px]",
                         currentScore.level === 'High' && "[&>div]:bg-emerald-500",
-                        currentScore.level === 'Medium' && "[&>div]:bg-amber-500"
+                        currentScore.level === 'Medium' && "[&>div]:bg-[#6D6AF6]"
                       )} 
                     />
                     <span className="text-sm font-semibold text-foreground">

@@ -178,7 +178,7 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
   const confidenceColor = result.confidence.score >= 60
     ? 'text-green-600'
     : result.confidence.score >= 40
-      ? 'text-amber-600'
+      ? 'text-[#6D6AF6]'
       : 'text-red-500';
 
   return (
@@ -186,7 +186,7 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
       {/* Header Row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Zap className="w-4 h-4 text-amber-500" />
+          <Zap className="w-4 h-4 text-[#6D6AF6]" />
           <h3 className="text-sm font-semibold text-foreground">
             Quick Brief: {result.customerName}
           </h3>
@@ -365,7 +365,7 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
           <div className="space-y-1.5">
             {result.whatsMissing.map((item, idx) => (
               <div key={idx} className="flex items-start gap-2 text-xs">
-                <AlertTriangle className="w-3 h-3 text-amber-500 mt-0.5 flex-shrink-0" />
+                <AlertTriangle className="w-3 h-3 text-[#6D6AF6]/70 mt-0.5 flex-shrink-0" />
                 <p className="text-muted-foreground">{item}</p>
               </div>
             ))}

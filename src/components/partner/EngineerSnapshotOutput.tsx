@@ -56,7 +56,7 @@ export function EngineerSnapshotOutput({ output }: EngineerSnapshotOutputProps) 
       <div className="p-4 rounded-xl border border-border bg-card">
         <div className="flex items-start justify-between gap-3 mb-3">
           <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-500" />
+            <AlertTriangle className="w-4 h-4 text-[#6D6AF6]/70" />
             Risks & assumptions you typically cover
           </h4>
           <Button
@@ -75,7 +75,7 @@ export function EngineerSnapshotOutput({ output }: EngineerSnapshotOutputProps) 
         <ol className="space-y-2">
           {output.risksAssumptions.map((risk, idx) => (
             <li key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">
-              <span className="w-5 h-5 rounded bg-amber-500/10 flex items-center justify-center text-[10px] text-amber-700 flex-shrink-0 mt-0.5">
+              <span className="w-5 h-5 rounded bg-[#EEF0FF] flex items-center justify-center text-[10px] text-[#4F46E5] flex-shrink-0 mt-0.5">
                 {idx + 1}
               </span>
               {risk}

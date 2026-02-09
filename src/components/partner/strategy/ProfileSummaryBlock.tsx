@@ -27,15 +27,15 @@ import {
 
 const CAP_COLORS: Record<CapabilityLevel, string> = {
   0: 'bg-muted text-muted-foreground',
-  1: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+  1: 'bg-[#EEF0FF] text-[#4F46E5] dark:bg-indigo-900/30 dark:text-indigo-300',
   2: 'bg-primary/10 text-primary',
   3: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
 };
 
 const SCALE_COLORS: Record<AttachScale, string> = {
   none: 'bg-muted text-muted-foreground',
-  low: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
-  medium: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+  low: 'bg-[#EEF0FF] text-[#4F46E5] dark:bg-indigo-900/30 dark:text-indigo-300',
+  medium: 'bg-[#C7CCFF]/30 text-[#4F46E5] dark:bg-indigo-900/30 dark:text-indigo-300',
   high: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
 };
 
@@ -161,15 +161,15 @@ export function ProfileSummaryBlock() {
         {/* Net-New */}
         {recs.netNew.length > 0 && (
           <div>
-            <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 mb-2 flex items-center gap-1.5">
+            <p className="text-xs font-semibold text-[#4F46E5] dark:text-indigo-400 mb-2 flex items-center gap-1.5">
               <AlertTriangle className="w-3.5 h-3.5" />
               Net-New Capability ({recs.netNew.length})
             </p>
             <div className="space-y-2">
               {recs.netNew.map(rec => (
-                <div key={rec.package.id} className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-800/30">
+                <div key={rec.package.id} className="p-3 rounded-lg bg-[#EEF0FF] dark:bg-indigo-900/10 border border-[#C7CCFF]/50 dark:border-indigo-800/30">
                   <div className="flex items-center gap-2 mb-1">
-                    <Package className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                    <Package className="w-3.5 h-3.5 text-[#6D6AF6] dark:text-indigo-400" />
                     <p className="text-sm font-medium text-foreground">{rec.package.name}</p>
                   </div>
                   <p className="text-xs text-muted-foreground">{rec.reason}</p>

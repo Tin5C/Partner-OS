@@ -88,7 +88,7 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
       {/* Section Header */}
       <div>
         <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-          <Zap className="w-5 h-5 text-amber-500" />
+          <Zap className="w-5 h-5 text-[#6D6AF6]" />
           Quick Brief
         </h2>
         <p className="text-sm text-muted-foreground">
@@ -96,7 +96,7 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
         </p>
       </div>
       <div className={cn(
-        "rounded-2xl border-2 border-dashed border-amber-300/50 bg-amber-50/20 dark:bg-amber-950/10",
+        "rounded-2xl border border-[#E0E3FF] bg-[#F6F7FF] dark:bg-[#6D6AF6]/5",
         "shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
         output && "border-solid border-border bg-card"
       )}>
@@ -178,8 +178,8 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
                 disabled={!canGenerate || isGenerating}
                 className={cn(
                   "flex items-center gap-2 px-4 py-2 rounded-xl",
-                  "bg-amber-500 text-white font-medium text-sm",
-                  "shadow-sm hover:bg-amber-600 transition-all",
+                  "bg-[#6D6AF6] text-white font-medium text-sm",
+                  "shadow-sm hover:bg-[#5B59E0] transition-all",
                   "disabled:opacity-50 disabled:cursor-not-allowed"
                 )}
               >

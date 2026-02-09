@@ -96,7 +96,7 @@ export function SellerKitPanel({ pkg, open, onOpenChange }: SellerKitPanelProps)
           {/* Objections & Responses */}
           <KitSection
             title="Objections & Responses"
-            icon={<Shield className="w-3.5 h-3.5 text-amber-500" />}
+            icon={<Shield className="w-3.5 h-3.5 text-[#6D6AF6]/70" />}
             count={kit.objections.length}
             onCopy={() => handleCopy(
               kit.objections.map(o => `Q: ${o.objection}\nA: ${o.response}`).join('\n\n'),

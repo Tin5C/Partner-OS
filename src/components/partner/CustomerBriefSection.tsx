@@ -315,7 +315,7 @@ export function CustomerBriefSection() {
   const getEffortBadge = (effort: AIOpportunity['effortVsImpact']) => {
     switch (effort) {
       case 'Low': return <span className="text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded">Low effort</span>;
-      case 'Medium': return <span className="text-[10px] px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded">Medium effort</span>;
+      case 'Medium': return <span className="text-[10px] px-1.5 py-0.5 bg-[#EEF0FF] text-[#4F46E5] rounded">Medium effort</span>;
       case 'High': return <span className="text-[10px] px-1.5 py-0.5 bg-red-100 text-red-700 rounded">High effort</span>;
     }
   };
@@ -587,9 +587,9 @@ export function CustomerBriefSection() {
 
             {/* Mode disclaimer for Brainstorm */}
             {output.inputMode === 'brainstorm' && (
-              <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-50/50 border border-amber-200/50">
-                <Zap className="w-4 h-4 text-amber-600" />
-                <span className="text-xs text-amber-700">
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-[#EEF0FF]/50 border border-[#C7CCFF]/50">
+                <Zap className="w-4 h-4 text-[#6D6AF6]" />
+                <span className="text-xs text-[#4F46E5]">
                   Generated from pasted notes and extracted signals.
                 </span>
               </div>
@@ -606,7 +606,7 @@ export function CustomerBriefSection() {
                   <span className={cn(
                     "text-xs font-medium px-2 py-0.5 rounded-full",
                     output.signalCoverage.confidence === 'High' && "bg-green-100 text-green-700",
-                    output.signalCoverage.confidence === 'Medium' && "bg-amber-100 text-amber-700",
+                    output.signalCoverage.confidence === 'Medium' && "bg-[#EEF0FF] text-[#4F46E5]",
                     output.signalCoverage.confidence === 'Low' && "bg-red-100 text-red-700"
                   )}>
                     {output.signalCoverage.confidence} confidence
@@ -852,9 +852,9 @@ export function CustomerBriefSection() {
 
             {/* Conditional Refinements */}
             {output.conditionalRefinements.length > 0 && (
-              <div className="rounded-xl border border-amber-200/50 bg-amber-50/30 p-4">
+              <div className="rounded-xl border border-[#C7CCFF]/50 bg-[#EEF0FF]/30 p-4">
                 <div className="flex items-center gap-2 mb-3">
-                  <Lightbulb className="w-4 h-4 text-amber-600" />
+                  <Lightbulb className="w-4 h-4 text-[#6D6AF6]" />
                   <h3 className="text-sm font-semibold text-foreground">If we had more signal, we'd refine like this</h3>
                 </div>
                 <div className="space-y-3">

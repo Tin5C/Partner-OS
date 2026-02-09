@@ -19,7 +19,7 @@ export function BriefReadinessCard({ score, templateLabel }: BriefReadinessCardP
       : score.overall >= 50
         ? 'text-primary'
         : score.overall >= 25
-          ? 'text-amber-600'
+          ? 'text-[#6D6AF6]'
           : 'text-muted-foreground';
 
   return (
@@ -48,7 +48,7 @@ export function BriefReadinessCard({ score, templateLabel }: BriefReadinessCardP
       {score.topBlockers.length > 0 && (
         <div className="mb-3">
           <p className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
-            <AlertTriangle className="w-3 h-3 text-amber-500" />
+            <AlertTriangle className="w-3 h-3 text-[#6D6AF6]/70" />
             Top blockers
           </p>
           <div className="space-y-1">

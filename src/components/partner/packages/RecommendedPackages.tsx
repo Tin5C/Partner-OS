@@ -43,7 +43,7 @@ const FIT_CONFIG: Record<PackageFitType, { label: string; icon: React.ReactNode;
   'net-new': {
     label: 'Net-new build',
     icon: <AlertTriangle className="w-3 h-3" />,
-    chipClass: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+    chipClass: 'bg-[#EEF0FF] text-[#4F46E5] dark:bg-indigo-900/30 dark:text-indigo-300',
   },
 };
 
@@ -116,8 +116,8 @@ export function RecommendedPackages({
 
               {/* Why recommended — maturity gap */}
               <div className="flex items-center gap-1.5 mb-1">
-                <Sparkles className="w-3 h-3 text-amber-500" />
-                <p className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">{reason}</p>
+                <Sparkles className="w-3 h-3 text-[#6D6AF6]" />
+                <p className="text-[11px] text-[#4F46E5] dark:text-indigo-400 font-medium">{reason}</p>
               </div>
 
               {/* Partner Profile fit reason */}
@@ -125,7 +125,7 @@ export function RecommendedPackages({
                 {fit.fitType === 'easy-attach' ? (
                   <Zap className="w-3 h-3 text-green-600 dark:text-green-400" />
                 ) : (
-                  <AlertTriangle className="w-3 h-3 text-amber-500" />
+                  <AlertTriangle className="w-3 h-3 text-[#6D6AF6]/70" />
                 )}
                 <p className="text-[11px] text-muted-foreground">{fit.reason}</p>
               </div>
