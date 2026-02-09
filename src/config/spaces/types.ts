@@ -14,7 +14,8 @@ export type SectionType =
   | 'quickBrief'
   | 'expertCorners'
   | 'trendingPacks'
-  | 'capabilityBrand';
+  | 'capabilityBrand'
+  | 'partnerMode';
 
 export type SectionVariant = 'primary' | 'secondary' | 'tertiary';
 

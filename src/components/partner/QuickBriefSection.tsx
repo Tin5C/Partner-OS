@@ -11,9 +11,6 @@ import {
   Shield,
   TrendingUp,
   MessageSquare,
-  Lock,
-  Calendar,
-  Database,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -98,35 +95,24 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
           Fast situational refresh before a call or meeting — 60 seconds.
         </p>
       </div>
-
-      {/* Card */}
       <div className={cn(
         "rounded-2xl border-2 border-dashed border-amber-300/50 bg-amber-50/20 dark:bg-amber-950/10",
         "shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
         output && "border-solid border-border bg-card"
       )}>
-        {!output ? (
+      {!output ? (
           /* ─── Input Phase ─── */
           <div className="p-5 space-y-4">
-            {/* Blurred Calendar Hint */}
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/30 border border-border/50">
-              <Lock className="w-3.5 h-3.5 text-muted-foreground/60" />
-              <Calendar className="w-3.5 h-3.5 text-muted-foreground/60" />
-              <p className="text-[11px] text-muted-foreground/70">
-                Upcoming meeting context will auto-load here once calendar is connected.
-              </p>
-            </div>
-
             {/* Row: Customer + Situation */}
             <div className="flex flex-col sm:flex-row gap-3">
-              <div className="sm:w-[220px] space-y-1">
+              <div className="sm:w-[220px]">
                 <div className="relative">
                   <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <input
                     type="text"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="Customer (auto-detected from CRM / calendar later)"
+                    placeholder="Customer"
                     className={cn(
                       "w-full h-10 pl-9 pr-3 rounded-lg text-sm",
                       "bg-background border border-border",
@@ -135,21 +121,13 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
                     )}
                   />
                 </div>
-                {/* Blurred CRM Hint */}
-                <div className="flex items-center gap-1.5 px-1">
-                  <Lock className="w-3 h-3 text-muted-foreground/50" />
-                  <Database className="w-3 h-3 text-muted-foreground/50" />
-                  <p className="text-[10px] text-muted-foreground/50">
-                    CRM account history and contacts will appear here when connected.
-                  </p>
-                </div>
               </div>
               <div className="flex-1">
                 <input
                   type="text"
                   value={situation}
                   onChange={(e) => setSituation(e.target.value)}
-                  placeholder="What's the situation? e.g. Follow-up after Copilot demo with IT + Security"
+                  placeholder="What's happening? e.g. Follow-up after Copilot demo with IT + Security"
                   className={cn(
                     "w-full h-10 px-3 rounded-lg text-sm",
                     "bg-background border border-border",
