@@ -26,6 +26,7 @@ import { PartnerGrowthSection } from '@/components/partner/PartnerGrowthSection'
 import { TrendingPacksSection } from '@/components/partner/TrendingPacksSection';
 import { PartnerStoriesRow } from '@/components/partner/PartnerStoriesRow';
 import { QuickBriefSection } from '@/components/partner/QuickBriefSection';
+import { PartnerModeSection } from '@/components/partner/PartnerModeSection';
 import { CapabilitySnapshotCard } from '@/components/partner/CapabilitySnapshotCard';
 import { usePresenceSources } from '@/hooks/usePresenceSources';
 import { PackContent } from '@/config/contentModel';
@@ -309,6 +310,13 @@ export function HomeRenderer() {
             />
           </div>
         ) : null;
+
+      case 'partnerMode':
+        return (
+          <div id="section-partner-mode" key={section.id}>
+            <PartnerModeSection />
+          </div>
+        );
 
       case 'expertCorners':
         return spaceConfig.features.expertCorners ? (

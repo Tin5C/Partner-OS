@@ -22,21 +22,12 @@ export const partnerConfig: SpaceConfig = {
       variant: 'primary',
       enabled: true,
     },
-    // 2. QUICK BRIEF — fast situational refresh (60–120 sec)
+    // 2. PARTNER MODE — Quick Brief ↔ Deal Planning (replaces separate sections)
     {
-      id: 'quick-brief',
-      type: 'quickBrief',
-      title: 'Quick Brief',
-      subtitle: 'Fast situational refresh before a call or meeting — 60 seconds.',
-      variant: 'secondary',
-      enabled: true,
-    },
-    // 3. DEAL PLANNING — AI Deal Brief (5–10 min commitment)
-    {
-      id: 'customer-brief',
-      type: 'customerBrief',
-      title: 'AI Deal Brief',
-      subtitle: 'Turn messy AI deal context into a deal-ready plan in 5–10 minutes.',
+      id: 'partner-mode',
+      type: 'partnerMode',
+      title: 'Execution Mode',
+      subtitle: 'Choose how deep you want to go — fast or thorough.',
       variant: 'primary',
       enabled: true,
     },
