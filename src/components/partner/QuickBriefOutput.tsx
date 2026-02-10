@@ -52,6 +52,7 @@ export interface QuickBriefResult {
     responses: string[];
     proofArtifact?: string;
   }[];
+  contextLine?: string; // Optional context attribution line
 }
 
 type PersonaTab = 'seller' | 'engineer';
