@@ -5,6 +5,7 @@ import type {
   HubOrg,
   Vendor,
   FocusEntity,
+  FocusTouchpointContext,
   ExtractionRun,
   DerivedArtifact,
   ArtifactType,
@@ -64,6 +65,11 @@ export class DemoFocusDataProvider implements FocusDataProvider {
 
   listFocusEntities(): FocusEntity[] {
     return DEMO_FOCUS_ENTITIES;
+  }
+
+  getFocusTouchpoints(focusId: string): FocusTouchpointContext | null {
+    const entity = DEMO_FOCUS_ENTITIES.find(e => e.id === focusId);
+    return entity?.touchpointContext ?? null;
   }
 
   getActiveRun(params: {

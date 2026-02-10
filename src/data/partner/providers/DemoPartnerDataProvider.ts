@@ -6,6 +6,7 @@ import type {
   PersonaType,
   PlayType,
   FocusEntity,
+  FocusTouchpointContext,
   QuickBriefV1,
   StoryCardsV1,
   DealBriefV1,
@@ -74,6 +75,11 @@ export class DemoPartnerDataProvider implements PartnerDataProvider {
 
   listFocusEntities(): FocusEntity[] {
     return DEMO_FOCUS_ENTITIES;
+  }
+
+  getFocusTouchpoints(focusId: string): FocusTouchpointContext | null {
+    const entity = DEMO_FOCUS_ENTITIES.find(e => e.id === focusId);
+    return entity?.touchpointContext ?? null;
   }
 
   getMicrocastByType(focusId: string, microcastType: MicrocastType): DerivedArtifact<MicrocastV1> | null {

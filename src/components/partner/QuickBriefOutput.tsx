@@ -52,6 +52,7 @@ export interface QuickBriefResult {
     responses: string[];
     proofArtifact?: string;
   }[];
+  contextLine?: string; // Optional context attribution line
 }
 
 type PersonaTab = 'seller' | 'engineer';
@@ -357,6 +358,13 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
           <ChevronRight className="w-3 h-3" />
         </button>
       </div>
+
+      {/* Context attribution */}
+      {result.contextLine && (
+        <p className="text-[11px] text-muted-foreground/70 text-center italic">
+          {result.contextLine}
+        </p>
+      )}
 
       {/* Reset */}
       <div className="flex justify-center pt-1">

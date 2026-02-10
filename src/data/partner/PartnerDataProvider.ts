@@ -7,6 +7,7 @@ import type {
   PersonaType,
   PlayType,
   FocusEntity,
+  FocusTouchpointContext,
   MotionType,
   MicrocastType,
   MicrocastV1,
@@ -38,6 +39,8 @@ export interface PartnerDataProvider {
   listArtifacts(runId: string): DerivedArtifact[];
 
   listFocusEntities(): FocusEntity[];
+
+  getFocusTouchpoints(focusId: string): FocusTouchpointContext | null;
 
   getMicrocastByType(focusId: string, microcastType: MicrocastType): DerivedArtifact<MicrocastV1> | null;
 

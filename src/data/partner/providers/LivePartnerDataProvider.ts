@@ -4,6 +4,7 @@
 import type {
   DerivedArtifact,
   FocusEntity,
+  FocusTouchpointContext,
   MicrocastV1,
   MicrocastType,
 } from '../contracts';
@@ -24,6 +25,10 @@ export class LivePartnerDataProvider implements PartnerDataProvider {
 
   listFocusEntities(): FocusEntity[] {
     return [];
+  }
+
+  getFocusTouchpoints(): FocusTouchpointContext | null {
+    return null;
   }
 
   getMicrocastByType(): DerivedArtifact<MicrocastV1> | null {

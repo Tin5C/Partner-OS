@@ -2,7 +2,7 @@
 // Wired to PartnerDataProvider artifacts
 // Input form generates from demo artifacts, output renders QuickBriefV1
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Zap,
   Sparkles,
@@ -11,12 +11,19 @@ import {
   Shield,
   TrendingUp,
   MessageSquare,
+  Info,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QuickBriefOutput } from './QuickBriefOutput';
 import type { QuickBriefResult, QuickBriefNeed } from './QuickBriefOutput';
 import { usePartnerData } from '@/contexts/FocusDataContext';
 import type { QuickBriefV1, DealBriefV1, PlayV1 } from '@/data/partner/contracts';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 const NEED_OPTIONS: { value: QuickBriefNeed; label: string; icon: React.ReactNode }[] = [
   { value: 'meeting-prep', label: 'Meeting prep', icon: <Target className="w-3.5 h-3.5" /> },
@@ -41,6 +48,20 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
   const [selectedNeeds, setSelectedNeeds] = useState<QuickBriefNeed[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [output, setOutput] = useState<QuickBriefResult | null>(null);
+
+  // Get touchpoint context for the selected focus
+  const touchpoints = useMemo(() => {
+    if (!ctx) return null;
+    return provider.getFocusTouchpoints(ctx.focusId);
+  }, [provider, ctx]);
+
+  // Build situation placeholder from touchpoint context
+  const situationPlaceholder = useMemo(() => {
+    if (!touchpoints?.lastTouchpoint) {
+      return "What's happening? e.g. Follow-up after Copilot demo with IT + Security";
+    }
+    return `e.g. Follow-up: ${touchpoints.lastTouchpoint.summary.split('—')[0].trim()}`;
+  }, [touchpoints]);
 
   const canGenerate = customerName.trim() && selectedNeeds.length > 0;
 
@@ -159,6 +180,9 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
           title: recommendedPlay.title,
         } : undefined,
         objections,
+        contextLine: touchpoints
+          ? 'Context used: last touchpoint + upcoming meeting (simulated in demo).'
+          : undefined,
       };
 
       setOutput(result);
@@ -205,12 +229,28 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
                     onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="Customer"
                     className={cn(
-                      "w-full h-10 pl-9 pr-3 rounded-lg text-sm",
+                      "w-full h-10 pl-9 pr-8 rounded-lg text-sm",
                       "bg-background border border-border",
                       "placeholder:text-muted-foreground/60",
                       "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30"
                     )}
                   />
+                  <TooltipProvider delayDuration={200}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                          tabIndex={-1}
+                        >
+                          <Info className="w-3.5 h-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-[240px] text-xs">
+                        Some context can auto-fill from CRM & calendar when connected. In this demo, results are based on simulated Dialogue activity.
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               </div>
               <div className="flex-1">
@@ -218,7 +258,7 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
                   type="text"
                   value={situation}
                   onChange={(e) => setSituation(e.target.value)}
-                  placeholder="What's happening? e.g. Follow-up after Copilot demo with IT + Security"
+                  placeholder={situationPlaceholder}
                   className={cn(
                     "w-full h-10 px-3 rounded-lg text-sm",
                     "bg-background border border-border",
