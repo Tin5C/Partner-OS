@@ -10,6 +10,11 @@ export * from './briefingArtifactStore';
 // Engagement tracking
 export * from './engagementStore';
 
+// Canonical intelligence collections
+export * from './accountSignalStore';
+export * from './objectionStore';
+export * from './partnerProfileStore';
+
 // Legacy exports (kept for backward compat during migration)
 export type { FocusDataProvider } from './FocusDataProvider';
 export { LiveFocusDataProvider } from './FocusDataProvider';
