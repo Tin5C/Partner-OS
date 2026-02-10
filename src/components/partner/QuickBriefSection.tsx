@@ -2,7 +2,7 @@
 // Wired to PartnerDataProvider artifacts
 // Input form generates from demo artifacts, output renders QuickBriefV1
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Zap,
   Sparkles,
@@ -11,12 +11,19 @@ import {
   Shield,
   TrendingUp,
   MessageSquare,
+  Info,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QuickBriefOutput } from './QuickBriefOutput';
 import type { QuickBriefResult, QuickBriefNeed } from './QuickBriefOutput';
 import { usePartnerData } from '@/contexts/FocusDataContext';
 import type { QuickBriefV1, DealBriefV1, PlayV1 } from '@/data/partner/contracts';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 const NEED_OPTIONS: { value: QuickBriefNeed; label: string; icon: React.ReactNode }[] = [
   { value: 'meeting-prep', label: 'Meeting prep', icon: <Target className="w-3.5 h-3.5" /> },
