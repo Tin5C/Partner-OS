@@ -33,6 +33,10 @@ function adaptCardToStory(card: StoryCardV1): PartnerStory {
     signalType,
     headline: card.title,
     soWhat: card.whyItMatters,
+    whatChanged: card.whatChanged,
+    whatChangedBullets: card.whatChangedBullets,
+    whoCares: card.whoCares,
+    nextMove: card.nextMove,
     primaryAction: {
       actionType: 'AddToQuickBrief',
       actionLabel: card.suggestedAction,
@@ -196,6 +200,11 @@ export function PartnerStoriesRow({
         onCreateBrief={onCreateBrief}
         onCreateQuickBrief={onCreateQuickBrief}
         onListenMicrocast={handleListenMicrocast}
+        onPromoteToDealPlanning={(story) => {
+          // Switch to Deal Planning mode — scroll to partner-mode section
+          const el = document.getElementById('section-partner-mode');
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }}
       />
 
       {/* Microcast Viewer */}
