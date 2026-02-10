@@ -1,43 +1,46 @@
-// Partner Focus Data Context
-// Provides FocusDataProvider to all partner UI components via React context
+// Partner Data Context
+// Provides PartnerDataProvider to all partner UI components via React context
 
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
-import type { FocusDataProvider } from '@/data/partner/FocusDataProvider';
-import { DemoFocusDataProvider } from '@/data/partner/DemoFocusDataProvider';
-import { LiveFocusDataProvider } from '@/data/partner/FocusDataProvider';
+import type { PartnerDataProvider } from '@/data/partner/PartnerDataProvider';
+import { DemoPartnerDataProvider, LivePartnerDataProvider } from '@/data/partner/providers';
 
-interface FocusDataContextValue {
-  provider: FocusDataProvider;
+interface PartnerDataContextValue {
+  provider: PartnerDataProvider;
   demoMode: boolean;
 }
 
-const FocusDataContext = createContext<FocusDataContextValue | null>(null);
+const PartnerDataContext = createContext<PartnerDataContextValue | null>(null);
 
-export function FocusDataProviderWrapper({
+export function PartnerDataProviderWrapper({
   demoMode = true,
   children,
 }: {
   demoMode?: boolean;
   children: ReactNode;
 }) {
-  const value = useMemo<FocusDataContextValue>(() => {
+  const value = useMemo<PartnerDataContextValue>(() => {
     const provider = demoMode
-      ? new DemoFocusDataProvider()
-      : new LiveFocusDataProvider();
+      ? new DemoPartnerDataProvider()
+      : new LivePartnerDataProvider();
     return { provider, demoMode };
   }, [demoMode]);
 
   return (
-    <FocusDataContext.Provider value={value}>
+    <PartnerDataContext.Provider value={value}>
       {children}
-    </FocusDataContext.Provider>
+    </PartnerDataContext.Provider>
   );
 }
 
-export function useFocusData(): FocusDataContextValue {
-  const ctx = useContext(FocusDataContext);
+export function usePartnerData(): PartnerDataContextValue {
+  const ctx = useContext(PartnerDataContext);
   if (!ctx) {
-    throw new Error('useFocusData must be used within a FocusDataProviderWrapper');
+    throw new Error('usePartnerData must be used within a PartnerDataProviderWrapper');
   }
   return ctx;
 }
+
+// Backward compatibility alias
+export const FocusDataProviderWrapper = PartnerDataProviderWrapper;
+export const useFocusData = usePartnerData;
