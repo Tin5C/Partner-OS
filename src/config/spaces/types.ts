@@ -83,9 +83,7 @@ export interface SpaceConfig {
 
 // Get space config by type
 export function getSpaceConfig(spaceType: SpaceType): SpaceConfig {
-  // Dynamic import would happen here in production
-  // For now, we use the configs directly
-  return spaceType === 'internal' 
-    ? require('./internal').internalConfig 
-    : require('./partner').partnerConfig;
+  if (spaceType === 'internal') return require('./internal').internalConfig;
+  if (spaceType === 'vendor') return require('./vendor').vendorConfig;
+  return require('./partner').partnerConfig;
 }
