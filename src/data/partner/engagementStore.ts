@@ -45,18 +45,23 @@ export interface EngagementEvent {
 
 // ============= EngagementSignal =============
 
+export type EngagementConfidence = 'Low' | 'Medium' | 'High';
+
 export interface EngagementSignal {
   id: string;
   org_id: string;
   account_id: string;
   created_at: string; // ISO
+  actor_role?: string;
   title: string;
   so_what: string;
+  interpretation?: string;
   what_changed?: string[];
   who_cares?: string[];
   next_move?: string;
+  recommended_next_moves?: string[];
   proof_to_ask_for?: string;
-  confidence?: number; // 0–100
+  confidence?: number | EngagementConfidence; // 0–100 or enum
   source_event_refs?: string[];
   tags?: string[];
 }
