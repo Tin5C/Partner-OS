@@ -47,6 +47,11 @@ export interface QuickBriefResult {
     playType: string;
     title: string;
   };
+  objections?: {
+    theme: string;
+    responses: string[];
+    proofArtifact?: string;
+  }[];
 }
 
 type PersonaTab = 'seller' | 'engineer';
@@ -286,22 +291,44 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
         </div>
       </div>
 
+      {/* Objection Help (when chip selected) */}
+      {result.objections && result.objections.length > 0 && (
+        <div className="p-3 rounded-xl bg-muted/30 border border-border/60 space-y-3">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+            <Shield className="w-3.5 h-3.5" /> Objection Help
+          </p>
+          <div className="space-y-3">
+            {result.objections.map((obj, idx) => (
+              <div key={idx} className="space-y-1">
+                <p className="text-sm font-medium text-foreground">{obj.theme}</p>
+                {obj.responses.map((r, ri) => (
+                  <p key={ri} className="text-xs text-muted-foreground ml-3">→ {r}</p>
+                ))}
+                {obj.proofArtifact && (
+                  <p className="text-[11px] text-primary ml-3">📎 {obj.proofArtifact}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Recommended Play */}
       {result.recommendedPlay && (
         <div className="p-3 rounded-xl bg-muted/30 border border-border/60">
           <div className="flex items-center gap-1.5 mb-2">
             <Play className="w-3.5 h-3.5 text-primary" />
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Recommended play
+              Recommended briefing
             </p>
           </div>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-foreground">{result.recommendedPlay.title}</p>
-              <p className="text-[11px] text-muted-foreground capitalize">{result.recommendedPlay.playType} play</p>
+              <p className="text-[11px] text-muted-foreground capitalize">{result.recommendedPlay.playType}</p>
             </div>
             <button
-              onClick={() => toast.info('Play audio coming soon')}
+              onClick={() => toast.info('Briefing viewer coming soon')}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-primary hover:bg-primary/5 transition-colors whitespace-nowrap"
             >
               Open (read)

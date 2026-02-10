@@ -32,3 +32,4 @@ export { ContextRequestModal } from './ContextRequestModal';
 export { QuickBriefSection } from './QuickBriefSection';
 export { QuickBriefOutput } from './QuickBriefOutput';
 export { PartnerModeSection } from './PartnerModeSection';
+export { OnDemandBriefingsSection } from './OnDemandBriefingsSection';
