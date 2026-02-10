@@ -545,7 +545,8 @@ export const CANONICAL_PACKAGES: CanonicalPackage[] = [
 
 // ============= All Artifacts =============
 
-export const DEMO_ARTIFACTS: DerivedArtifact[] = [
+// Default: hand-crafted demo artifacts
+const HANDCRAFTED_ARTIFACTS: DerivedArtifact[] = [
   DEMO_STORY_CARDS,
   DEMO_QB_SELLER,
   DEMO_QB_ENGINEER,
@@ -555,3 +556,10 @@ export const DEMO_ARTIFACTS: DerivedArtifact[] = [
   DEMO_PLAY_OBJECTION,
   DEMO_PACKAGE_RECS,
 ];
+
+// ============= Bundle Import (paste & uncomment to swap) =============
+// import { normalizeBundle } from './importArtifactBundle';
+// const IMPORTED_ARTIFACTS = normalizeBundle({ ...paste bundle JSON here... });
+
+export const DEMO_ARTIFACTS: DerivedArtifact[] = HANDCRAFTED_ARTIFACTS;
+// To use an imported bundle instead: export const DEMO_ARTIFACTS = IMPORTED_ARTIFACTS;
