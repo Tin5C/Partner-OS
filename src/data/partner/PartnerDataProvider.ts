@@ -7,6 +7,7 @@ import type {
   PersonaType,
   PlayType,
   FocusEntity,
+  FocusTouchpointContext,
   MotionType,
   MicrocastType,
   MicrocastV1,
