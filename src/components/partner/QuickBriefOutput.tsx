@@ -359,6 +359,13 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
         </button>
       </div>
 
+      {/* Context attribution */}
+      {result.contextLine && (
+        <p className="text-[11px] text-muted-foreground/70 text-center italic">
+          {result.contextLine}
+        </p>
+      )}
+
       {/* Reset */}
       <div className="flex justify-center pt-1">
         <button

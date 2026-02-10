@@ -180,6 +180,9 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
           title: recommendedPlay.title,
         } : undefined,
         objections,
+        contextLine: touchpoints
+          ? 'Context used: last touchpoint + upcoming meeting (simulated in demo).'
+          : undefined,
       };
 
       setOutput(result);
