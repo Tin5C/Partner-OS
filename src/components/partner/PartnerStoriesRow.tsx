@@ -33,6 +33,10 @@ function adaptCardToStory(card: StoryCardV1): PartnerStory {
     signalType,
     headline: card.title,
     soWhat: card.whyItMatters,
+    whatChanged: card.whatChanged,
+    whatChangedBullets: card.whatChangedBullets,
+    whoCares: card.whoCares,
+    nextMove: card.nextMove,
     primaryAction: {
       actionType: 'AddToQuickBrief',
       actionLabel: card.suggestedAction,

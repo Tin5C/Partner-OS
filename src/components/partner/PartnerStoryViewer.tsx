@@ -1,7 +1,7 @@
-// Partner Story Viewer - 1-tap execution viewer
-// Shows headline, "so what", and primary action button + Listen CTA for microcasts
+// Partner Story Viewer - Actionable story detail modal
+// Shows headline, "so what", what changed, who cares, next move + CTAs
 
-import { X, ChevronLeft, ChevronRight, ExternalLink, Plus, FileText, TrendingUp, Zap, Headphones } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Zap, FileText, Headphones, Users } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { PartnerStory, signalTypeColors } from '@/data/partnerStories';
@@ -27,6 +27,7 @@ interface PartnerStoryViewerProps {
   onCreateBrief?: () => void;
   onCreateQuickBrief?: () => void;
   onListenMicrocast?: (microcastType: MicrocastType) => void;
+  onPromoteToDealPlanning?: (story: PartnerStory) => void;
 }
 
 export function PartnerStoryViewer({
@@ -41,85 +42,44 @@ export function PartnerStoryViewer({
   hasPrev = false,
   currentIndex = 0,
   totalCount = 1,
-  hasCustomerBrief = false,
-  onAddToBrief,
-  onOpenTrendingPack,
-  onCreateBrief,
   onCreateQuickBrief,
   onListenMicrocast,
+  onPromoteToDealPlanning,
 }: PartnerStoryViewerProps) {
   if (!story) return null;
 
-  const handlePrimaryAction = () => {
-    const { actionType, trendingPackId } = story.primaryAction;
-
-    switch (actionType) {
-      case 'AddToBrief':
-      case 'ApplyToProject':
-        if (hasCustomerBrief && onAddToBrief) {
-          onAddToBrief(story);
-          toast.success('Added to your AI Deal Brief', {
-            description: 'Signal saved under "Signals to use"',
-          });
-          onMarkListened(story.id);
-        } else if (onCreateBrief) {
-          toast.info('Create an AI Deal Brief first', {
-            description: 'Start a brief to save signals for your deal.',
-            action: {
-              label: 'Create Brief',
-              onClick: onCreateBrief,
-            },
-          });
-        }
-        break;
-
-      case 'OpenTrendingPack':
-        if (trendingPackId && onOpenTrendingPack) {
-          onOpenTrendingPack(trendingPackId);
-          onClose();
-        }
-        break;
-
-      case 'CreateBrief':
-        if (onCreateBrief) {
-          onCreateBrief();
-          onClose();
-        }
-        break;
-
-      case 'CreateQuickBrief':
-      case 'AddToQuickBrief':
-        if (onCreateQuickBrief) {
-          onCreateQuickBrief();
-          toast.success('Opening Quick Brief');
-          onClose();
-        }
-        break;
-    }
-  };
-
-  const getActionIcon = () => {
-    switch (story.primaryAction.actionType) {
-      case 'AddToBrief':
-      case 'ApplyToProject':
-        return <Plus className="h-4 w-4 mr-2" />;
-      case 'OpenTrendingPack':
-        return <TrendingUp className="h-4 w-4 mr-2" />;
-      case 'CreateBrief':
-        return <FileText className="h-4 w-4 mr-2" />;
-      case 'CreateQuickBrief':
-      case 'AddToQuickBrief':
-        return <Zap className="h-4 w-4 mr-2" />;
-    }
-  };
-
-  const needsBrief = 
-    (story.primaryAction.actionType === 'AddToBrief' || 
-     story.primaryAction.actionType === 'ApplyToProject') && 
-    !hasCustomerBrief;
-
-  // Get CTAs from the adapted story (stored in _ctas field)
   const ctas: StoryCardCTA[] = (story as any)._ctas ?? [];
+
+  const handleAddToQuickBrief = () => {
+    if (onCreateQuickBrief) {
+      onCreateQuickBrief();
+      toast.success('Added to Quick Brief', {
+        description: 'Signal context transferred.',
+      });
+      onMarkListened(story.id);
+      onClose();
+    }
+  };
+
+  const handlePromoteToDealPlanning = () => {
+    if (onPromoteToDealPlanning) {
+      onPromoteToDealPlanning(story);
+      toast.success('Promoted to Deal Planning', {
+        description: 'Signal evidence added to planning workspace.',
+      });
+      onMarkListened(story.id);
+      onClose();
+    } else if (onCreateQuickBrief) {
+      // Fallback: open quick brief if no deal planning handler
+      onCreateQuickBrief();
+      onClose();
+    }
+  };
+
+  const whatChangedBullets = story.whatChangedBullets ?? 
+    (story.whatChanged ? [story.whatChanged] : []);
+  const whoCares = story.whoCares;
+  const nextMove = story.nextMove;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -161,41 +121,83 @@ export function PartnerStoryViewer({
         </div>
 
         {/* Main content */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-5">
+        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+          {/* Headline */}
           <h2 className="text-xl font-semibold leading-tight">{story.headline}</h2>
 
-          <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
+          {/* So what callout */}
+          <div className="p-3.5 rounded-xl bg-primary/5 border border-primary/10">
             <p className="text-sm leading-relaxed">
               <span className="font-semibold text-primary">So what: </span>
               {story.soWhat}
             </p>
           </div>
 
-          {/* Listen CTAs */}
-          {ctas.length > 0 && onListenMicrocast && (
-            <div className="flex flex-wrap gap-2">
-              {ctas.map((cta, i) => (
-                <button
-                  key={i}
-                  onClick={() => {
-                    onListenMicrocast(cta.microcastType);
-                    onClose();
-                  }}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium",
-                    "bg-primary/10 text-primary border border-primary/20",
-                    "hover:bg-primary/15 transition-colors"
-                  )}
-                >
-                  <Headphones className="w-3.5 h-3.5" />
-                  {cta.label}
-                </button>
-              ))}
-            </div>
-          )}
+          {/* What changed */}
+          <div className="space-y-1.5">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">What changed</h3>
+            {whatChangedBullets.length > 0 ? (
+              <ul className="space-y-1">
+                {whatChangedBullets.slice(0, 2).map((bullet, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm">
+                    <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary/60 shrink-0" />
+                    <span className="text-foreground/90">{bullet}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">DATA NEEDED</p>
+            )}
+          </div>
 
+          {/* Who cares */}
+          <div className="space-y-1.5">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <Users className="h-3 w-3" />
+              Who cares
+            </h3>
+            {whoCares && whoCares.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {whoCares.slice(0, 4).map((role, i) => (
+                  <span
+                    key={i}
+                    className="px-2.5 py-1 text-xs font-medium rounded-full bg-secondary text-secondary-foreground border border-border/50"
+                  >
+                    {role}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">DATA NEEDED</p>
+            )}
+          </div>
+
+          {/* Next move */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Next move</h3>
+            {nextMove ? (
+              <div className="space-y-2">
+                <div className="p-3 rounded-lg bg-secondary/50 border border-border/40">
+                  <p className="text-sm">
+                    <span className="font-medium text-foreground">Talk track: </span>
+                    <span className="italic text-foreground/80">"{nextMove.talkTrack}"</span>
+                  </p>
+                </div>
+                <div className="p-3 rounded-lg bg-muted/50 border border-border/40">
+                  <p className="text-sm">
+                    <span className="font-medium text-foreground">Proof to ask for: </span>
+                    <span className="text-foreground/80">{nextMove.proofToAsk}</span>
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">DATA NEEDED</p>
+            )}
+          </div>
+
+          {/* Tags */}
           {story.tags && story.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5 pt-1">
               {story.tags.map((tag, idx) => (
                 <span
                   key={idx}
@@ -206,45 +208,41 @@ export function PartnerStoryViewer({
               ))}
             </div>
           )}
-
-          {story.sourceName && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>Source:</span>
-              {story.sourceUrl ? (
-                <a
-                  href={story.sourceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline flex items-center gap-1"
-                >
-                  {story.sourceName}
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              ) : (
-                <span className="text-foreground">{story.sourceName}</span>
-              )}
-            </div>
-          )}
         </div>
 
-        {/* Footer with primary action */}
-        <div className="p-4 border-t border-border/50 space-y-3">
-          {needsBrief ? (
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground text-center">
-                Create an AI Deal Brief to save this signal
-              </p>
-              <Button className="w-full" onClick={onCreateBrief}>
-                <FileText className="h-4 w-4 mr-2" />
-                Create AI Deal Brief
-              </Button>
-            </div>
-          ) : (
-            <Button className="w-full" size="lg" onClick={handlePrimaryAction}>
-              {getActionIcon()}
-              {story.primaryAction.actionLabel}
+        {/* Footer CTAs */}
+        <div className="p-4 border-t border-border/50 space-y-2.5">
+          {/* Primary: Add to Quick Brief */}
+          <Button className="w-full" size="lg" onClick={handleAddToQuickBrief}>
+            <Zap className="h-4 w-4 mr-2" />
+            Add to Quick Brief
+          </Button>
+
+          {/* Secondary row: Promote + Listen */}
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="flex-1 text-sm"
+              onClick={handlePromoteToDealPlanning}
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Promote to Deal Planning
             </Button>
-          )}
+
+            {ctas.length > 0 && onListenMicrocast && (
+              <Button
+                variant="ghost"
+                className="text-sm text-primary"
+                onClick={() => {
+                  onListenMicrocast(ctas[0].microcastType);
+                  onClose();
+                }}
+              >
+                <Headphones className="h-4 w-4 mr-1.5" />
+                Listen
+              </Button>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
