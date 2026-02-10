@@ -5,31 +5,27 @@ import { useState } from 'react';
 import {
   Zap,
   Copy,
-  CheckCircle2,
   ChevronRight,
   ArrowUpRight,
   AlertTriangle,
   Shield,
   Target,
-  TrendingUp,
   MessageSquare,
-  Sparkles,
   Info,
-  Package,
+  Play,
 } from 'lucide-react';
-import { recommendPackages, AIPackage } from '@/data/partnerPackages';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
-type QuickBriefNeed = 'meeting-prep' | 'objection-help' | 'competitive-position' | 'intro-email' | 'value-pitch';
+export type QuickBriefNeed = 'meeting-prep' | 'objection-help' | 'competitive-position' | 'intro-email' | 'value-pitch';
 
-interface WhatChangedBullet {
+export interface WhatChangedBullet {
   headline: string;
   soWhat: string;
   whatToDo: string;
 }
 
-interface QuickBriefResult {
+export interface QuickBriefResult {
   customerName: string;
   needs: QuickBriefNeed[];
   whatChanged: WhatChangedBullet[];
@@ -47,6 +43,10 @@ interface QuickBriefResult {
     reason: string;
   };
   whatsMissing: string[];
+  recommendedPlay?: {
+    playType: string;
+    title: string;
+  };
 }
 
 type PersonaTab = 'seller' | 'engineer';
@@ -57,93 +57,10 @@ interface QuickBriefOutputProps {
   onReset: () => void;
 }
 
-export type { QuickBriefNeed, WhatChangedBullet, QuickBriefResult };
-
-export function generateQuickBriefResult(
-  customerName: string,
-  situation: string,
-  needs: QuickBriefNeed[]
-): QuickBriefResult {
-  const hasEmail = needs.includes('intro-email');
-  const hasCompetitive = needs.includes('competitive-position');
-  const hasMeetingPrep = needs.includes('meeting-prep');
-  const hasObjection = needs.includes('objection-help');
-
-  return {
-    customerName,
-    needs,
-    whatChanged: [
-      {
-        headline: `${customerName} exploring AI for operations`,
-        soWhat: 'They are in active evaluation — timing is right to position practical outcomes.',
-        whatToDo: 'Lead with a 30-day pilot framing to reduce perceived risk.',
-      },
-      {
-        headline: 'Competitive pressure from hyperscaler-native offers',
-        soWhat: 'Buyers are comparing you against bundled AI from platform vendors.',
-        whatToDo: hasCompetitive
-          ? 'Differentiate on implementation speed and local services capability.'
-          : 'Reference specific customer wins where you outperformed bundled alternatives.',
-      },
-      {
-        headline: 'Budget cycle closing in 6–8 weeks',
-        soWhat: 'Any proposal needs to land within the current approval window.',
-        whatToDo: 'Push for a decision meeting within 2 weeks to fit procurement timelines.',
-      },
-    ],
-    sellerView: {
-      talkTrack: [
-        `Open with business outcomes — ${customerName} cares about measurable impact.`,
-        'Reference their existing stack to show homework, not rip-and-replace.',
-        'Position around a quick win (30-day pilot) to lower entry barrier.',
-        hasObjection
-          ? 'If they say "we tried AI before" — ask what stalled and why, then reframe.'
-          : 'Gauge budget early — is this funded or exploratory?',
-        'Close with a concrete next step: "Can we schedule a brief architecture session?"',
-      ],
-      emailDraft: hasEmail
-        ? `Subject: Quick thought on AI for ${customerName}\n\nHi [Name],\n\nI noticed ${customerName} is exploring [area]. We've helped similar companies get from idea to working prototype in 4–6 weeks — without requiring a massive upfront commitment.\n\nWorth a 15-minute call to see if there's a fit?\n\nBest,\n[Your name]`
-        : undefined,
-    },
-    engineerView: {
-      technicalContext: [
-        `Likely hybrid environment — check cloud vs on-prem split before proposing architecture.`,
-        'Data residency requirements probable — confirm before any design.',
-        hasCompetitive
-          ? 'Competitor likely proposing a platform-native approach — counter with interoperability.'
-          : 'Focus on integration with existing stack, not greenfield.',
-        'Recommend starting with RAG pattern if unstructured data is available.',
-      ],
-      architectureNotes: `For ${customerName}, consider a lightweight PoC architecture: managed AI service + existing data layer + simple API integration. Avoid over-engineering — the goal is proof of value in 4 weeks.`,
-    },
-    confidence: {
-      score: situation.trim() ? 55 : 35,
-      label: situation.trim() ? 'Moderate' : 'Low',
-      reason: situation.trim()
-        ? 'Based on your Dialogue activity. Add a Deal Brief for higher confidence.'
-        : 'Limited context. Add situation details or create a Deal Brief for better results.',
-    },
-    whatsMissing: [
-      'Decision-maker role and authority level',
-      'Current vendor relationships and contracts',
-      'Specific use case or pain point details',
-    ],
-  };
-}
+// Legacy generator removed — output now comes from provider artifacts
 
 export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: QuickBriefOutputProps) {
   const [activeTab, setActiveTab] = useState<PersonaTab>('seller');
-
-  // Quick package suggestion — max 1 based on generic maturity gaps
-  const suggestedPackage: AIPackage | null = (() => {
-    const genericGaps: Record<string, number> = {
-      'ai-vendor-maturity': 0,
-      'org-readiness': 1,
-      'use-cases': 0,
-    };
-    const recs = recommendPackages(genericGaps, 1);
-    return recs.length > 0 ? recs[0].package : null;
-  })();
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -157,10 +74,10 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
       '── What changed ──',
       ...result.whatChanged.flatMap((b, i) => [
         `${i + 1}. ${b.headline}`,
-        `   So what: ${b.soWhat}`,
+        b.soWhat ? `   So what: ${b.soWhat}` : '',
         `   Action: ${b.whatToDo}`,
         '',
-      ]),
+      ].filter(Boolean)),
       activeTab === 'seller' ? '── Talk track (Seller) ──' : '── Technical context (Engineer) ──',
       ...(activeTab === 'seller'
         ? result.sellerView.talkTrack.map((t, i) => `${i + 1}. ${t}`)
@@ -223,9 +140,11 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
               <p className="text-sm font-medium text-foreground">{bullet.headline}</p>
             </div>
             <div className="ml-[30px] space-y-1">
-              <p className="text-xs text-muted-foreground">
-                <span className="font-medium text-foreground/80">So what:</span> {bullet.soWhat}
-              </p>
+              {bullet.soWhat && (
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground/80">So what:</span> {bullet.soWhat}
+                </p>
+              )}
               <p className="text-xs text-muted-foreground">
                 <span className="font-medium text-foreground/80">Action:</span> {bullet.whatToDo}
               </p>
@@ -265,7 +184,6 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
 
         {activeTab === 'seller' ? (
           <div className="space-y-3">
-            {/* Talk Track */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
@@ -288,7 +206,6 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
               ))}
             </div>
 
-            {/* Email Draft (if intro-email selected) */}
             {result.sellerView.emailDraft && (
               <div className="p-3 rounded-xl bg-primary/5 border border-primary/10">
                 <div className="flex items-center justify-between mb-1.5">
@@ -311,7 +228,6 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
           </div>
         ) : (
           <div className="space-y-3">
-            {/* Technical Context */}
             <div className="space-y-2">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 Technical context
@@ -326,7 +242,6 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
               ))}
             </div>
 
-            {/* Architecture Notes */}
             <div className="p-3 rounded-xl bg-primary/5 border border-primary/10">
               <p className="text-xs font-semibold text-primary mb-1.5">Architecture notes</p>
               <p className="text-sm text-foreground leading-relaxed">
@@ -339,7 +254,6 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
 
       {/* Confidence + What's Missing */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {/* Confidence */}
         <div className="p-3 rounded-xl bg-muted/30 border border-border/60">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
             Confidence
@@ -357,7 +271,6 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
           </p>
         </div>
 
-        {/* What's Missing */}
         <div className="p-3 rounded-xl bg-muted/30 border border-border/60">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
             What's missing
@@ -373,25 +286,25 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
         </div>
       </div>
 
-      {/* Suggested Package */}
-      {suggestedPackage && (
+      {/* Recommended Play */}
+      {result.recommendedPlay && (
         <div className="p-3 rounded-xl bg-muted/30 border border-border/60">
           <div className="flex items-center gap-1.5 mb-2">
-            <Package className="w-3.5 h-3.5 text-primary" />
+            <Play className="w-3.5 h-3.5 text-primary" />
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Suggested next step
+              Recommended play
             </p>
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-foreground">{suggestedPackage.name}</p>
-              <p className="text-[11px] text-muted-foreground">{suggestedPackage.shortOutcome}</p>
+              <p className="text-sm font-medium text-foreground">{result.recommendedPlay.title}</p>
+              <p className="text-[11px] text-muted-foreground capitalize">{result.recommendedPlay.playType} play</p>
             </div>
             <button
-              onClick={onPromoteToDealBrief}
+              onClick={() => toast.info('Play audio coming soon')}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-primary hover:bg-primary/5 transition-colors whitespace-nowrap"
             >
-              Add via Deal Brief
+              Open (read)
               <ChevronRight className="w-3 h-3" />
             </button>
           </div>

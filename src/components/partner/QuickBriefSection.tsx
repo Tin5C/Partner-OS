@@ -1,8 +1,8 @@
 // Quick Brief Section (Partner-only)
-// Fast situational refresh in 60 seconds
-// MVP: blurred CRM/calendar hints, max 2 chips, persona output
+// Wired to PartnerDataProvider artifacts
+// Input form generates from demo artifacts, output renders QuickBriefV1
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Zap,
   Sparkles,
@@ -13,12 +13,10 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  QuickBriefOutput,
-  generateQuickBriefResult,
-  QuickBriefNeed,
-  QuickBriefResult,
-} from './QuickBriefOutput';
+import { QuickBriefOutput } from './QuickBriefOutput';
+import type { QuickBriefResult, QuickBriefNeed } from './QuickBriefOutput';
+import { usePartnerData } from '@/contexts/FocusDataContext';
+import type { QuickBriefV1, DealBriefV1, PlayV1 } from '@/data/partner/contracts';
 
 const NEED_OPTIONS: { value: QuickBriefNeed; label: string; icon: React.ReactNode }[] = [
   { value: 'meeting-prep', label: 'Meeting prep', icon: <Target className="w-3.5 h-3.5" /> },
@@ -35,6 +33,9 @@ interface QuickBriefSectionProps {
 }
 
 export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
+  const { provider } = usePartnerData();
+  const ctx = provider.getActiveContext();
+
   const [customerName, setCustomerName] = useState('');
   const [situation, setSituation] = useState('');
   const [selectedNeeds, setSelectedNeeds] = useState<QuickBriefNeed[]>([]);
@@ -45,34 +46,111 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
 
   const handleToggleNeed = (value: QuickBriefNeed) => {
     setSelectedNeeds((prev) => {
-      if (prev.includes(value)) {
-        return prev.filter((n) => n !== value);
-      }
-      if (prev.length >= MAX_CHIPS) {
-        // Replace the last one
-        return [...prev.slice(0, MAX_CHIPS - 1), value];
-      }
+      if (prev.includes(value)) return prev.filter((n) => n !== value);
+      if (prev.length >= MAX_CHIPS) return [...prev.slice(0, MAX_CHIPS - 1), value];
       return [...prev, value];
     });
   };
 
+  // Pick recommended play based on story tags / needs
+  const recommendedPlay = useMemo(() => {
+    if (!ctx) return null;
+    // Check deal brief for recommended plays
+    const dealArt = provider.getArtifact({ runId: ctx.runId, artifactType: 'dealBrief' });
+    if (!dealArt) return null;
+    const deal = dealArt.content as DealBriefV1;
+    if (!deal.recommendedPlays?.length) return null;
+
+    // Simple heuristic: objection if needs include objection-help, competitive if competitive, else product
+    const hasObjection = selectedNeeds.includes('objection-help');
+    const hasCompetitive = selectedNeeds.includes('competitive-position');
+
+    const pick = hasObjection
+      ? deal.recommendedPlays.find(p => p.playType === 'objection')
+      : hasCompetitive
+        ? deal.recommendedPlays.find(p => p.playType === 'competitive')
+        : deal.recommendedPlays.find(p => p.playType === 'product');
+
+    return pick || deal.recommendedPlays[0];
+  }, [ctx, provider, selectedNeeds]);
+
   const handleGenerate = () => {
-    if (!canGenerate) return;
+    if (!canGenerate || !ctx) return;
     setIsGenerating(true);
 
     setTimeout(() => {
-      const result = generateQuickBriefResult(
-        customerName.trim(),
-        situation.trim(),
-        selectedNeeds
-      );
+      // Determine persona — default seller
+      const persona = 'seller';
+      const artifact = provider.getArtifact({
+        runId: ctx.runId,
+        artifactType: 'quickBrief',
+        persona,
+      });
+
+      if (!artifact) {
+        setIsGenerating(false);
+        return;
+      }
+
+      const qb = artifact.content as QuickBriefV1;
+      const hasEmail = selectedNeeds.includes('intro-email');
+
+      const result: QuickBriefResult = {
+        customerName: customerName.trim(),
+        needs: selectedNeeds,
+        whatChanged: qb.whatChanged.map((wc, i) => ({
+          headline: wc,
+          soWhat: i === 0 ? qb.soWhat : '',
+          whatToDo: qb.actions[i] || '',
+        })),
+        sellerView: {
+          talkTrack: qb.actions,
+          emailDraft: hasEmail && qb.optionalEmail
+            ? `Subject: ${qb.optionalEmail.subject}\n\n${qb.optionalEmail.body}`
+            : undefined,
+        },
+        engineerView: {
+          technicalContext: (() => {
+            const engArt = provider.getArtifact({
+              runId: ctx.runId,
+              artifactType: 'quickBrief',
+              persona: 'engineer',
+            });
+            if (!engArt) return ['Technical context not available.'];
+            const engQb = engArt.content as QuickBriefV1;
+            return engQb.actions;
+          })(),
+          architectureNotes: (() => {
+            const engArt = provider.getArtifact({
+              runId: ctx.runId,
+              artifactType: 'quickBrief',
+              persona: 'engineer',
+            });
+            if (!engArt) return '';
+            const engQb = engArt.content as QuickBriefV1;
+            return engQb.soWhat;
+          })(),
+        },
+        confidence: {
+          score: qb.confidence === 'High' ? 75 : qb.confidence === 'Medium' ? 55 : 30,
+          label: qb.confidence,
+          reason: qb.confidence === 'High'
+            ? 'Strong signal coverage from multiple sources.'
+            : 'Based on available signals. Add a Deal Brief for higher confidence.',
+        },
+        whatsMissing: [...qb.whatsMissing],
+        recommendedPlay: recommendedPlay ? {
+          playType: recommendedPlay.playType,
+          title: recommendedPlay.title,
+        } : undefined,
+      };
+
       setOutput(result);
       setIsGenerating(false);
     }, 800);
   };
 
   const handlePromoteToDealBrief = () => {
-    // Scroll to deal brief and hand off context
     onOpenDealBrief?.();
   };
 
@@ -85,7 +163,6 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
 
   return (
     <section className="space-y-4">
-      {/* Section Header */}
       <div>
         <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
           <Zap className="w-5 h-5 text-[#6D6AF6]" />
@@ -101,9 +178,7 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
         output && "border-solid border-border bg-card"
       )}>
       {!output ? (
-          /* ─── Input Phase ─── */
           <div className="p-5 space-y-4">
-            {/* Row: Customer + Situation */}
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="sm:w-[220px]">
                 <div className="relative">
@@ -138,7 +213,6 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
               </div>
             </div>
 
-            {/* Need selector — max 2 */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs font-medium text-muted-foreground">What do you need?</p>
@@ -168,7 +242,6 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
               </div>
             </div>
 
-            {/* Generate */}
             <div className="flex items-center justify-between">
               <p className="text-[11px] text-muted-foreground">
                 For deeper planning, use the AI Deal Brief below.
@@ -198,7 +271,6 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
             </div>
           </div>
         ) : (
-          /* ─── Output Phase ─── */
           <QuickBriefOutput
             result={output}
             onPromoteToDealBrief={handlePromoteToDealBrief}

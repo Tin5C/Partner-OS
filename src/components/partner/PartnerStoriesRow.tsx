@@ -1,16 +1,40 @@
 // Partner Stories Row - Partner-only stories section
-// Capped at 8, with expiry, "View all" for browse
+// Wired to PartnerDataProvider artifacts
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { PartnerStoryTile } from './PartnerStoryTile';
 import { PartnerStoryViewer } from './PartnerStoryViewer';
-import { PartnerStory, getHomepagePartnerStories, getActivePartnerStories, partnerStories } from '@/data/partnerStories';
+import { PartnerStory, PartnerSignalType, signalTypeColors, signalTypeGradients } from '@/data/partnerStories';
 import { useStoryState } from '@/hooks/useStoryState';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { usePartnerData } from '@/contexts/FocusDataContext';
+import type { StoryCardsV1, StoryCardV1 } from '@/data/partner/contracts';
+
+// Adapter: convert StoryCardV1 → PartnerStory for existing tile/viewer components
+function adaptCardToStory(card: StoryCardV1): PartnerStory {
+  // Derive signalType from tags
+  const signalType: PartnerSignalType = 
+    card.tags.includes('Regulatory') ? 'Regulatory' :
+    card.tags.includes('LocalMarket') ? 'LocalMarket' : 'Vendor';
+
+  return {
+    id: card.cardId,
+    signalType,
+    headline: card.title,
+    soWhat: card.whyItMatters,
+    primaryAction: {
+      actionType: 'AddToQuickBrief',
+      actionLabel: card.suggestedAction,
+    },
+    publishedAt: new Date().toISOString(),
+    expiresAt: card.expiresAt,
+    tags: card.tags,
+  };
+}
 
 interface PartnerStoriesRowProps {
   className?: string;
@@ -27,9 +51,19 @@ export function PartnerStoriesRow({
   onOpenTrendingPack,
   onCreateQuickBrief,
 }: PartnerStoriesRowProps) {
-  const homepageStories = getHomepagePartnerStories(8);
-  const allActiveStories = getActivePartnerStories(partnerStories);
-  const hasMore = allActiveStories.length > 8;
+  const { provider } = usePartnerData();
+  const ctx = provider.getActiveContext();
+
+  // Get stories from provider artifact
+  const homepageStories = useMemo<PartnerStory[]>(() => {
+    if (!ctx) return [];
+    const artifact = provider.getArtifact({ runId: ctx.runId, artifactType: 'storyCards' });
+    if (!artifact) return [];
+    const content = artifact.content as StoryCardsV1;
+    return content.cards.slice(0, 6).map(adaptCardToStory);
+  }, [provider, ctx]);
+
+  const hasMore = homepageStories.length > 6;
 
   const [selectedStory, setSelectedStory] = useState<PartnerStory | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -74,9 +108,6 @@ export function PartnerStoriesRow({
   }, [selectedIndex, currentPlaylist]);
 
   const handleAddToBrief = (story: PartnerStory) => {
-    // In a real app, this would add to the user's Customer Brief
-    console.log('Adding to brief:', story.headline);
-    // For MVP, just mark as listened
     markListened(story.id);
   };
 
@@ -142,19 +173,19 @@ export function PartnerStoriesRow({
           <SheetHeader className="mb-6">
             <SheetTitle>All AI Selling Signals</SheetTitle>
             <p className="text-sm text-muted-foreground">
-              {allActiveStories.length} active signals
+              {homepageStories.length} active signals
             </p>
           </SheetHeader>
 
           <div className="grid grid-cols-2 gap-4">
-            {allActiveStories.map((story) => (
+            {homepageStories.map((story) => (
               <PartnerStoryTile
                 key={story.id}
                 story={story}
                 listenedState={getState(story.id)}
                 onClick={() => {
                   setBrowseOpen(false);
-                  handleStoryClick(story, allActiveStories);
+                  handleStoryClick(story, homepageStories);
                 }}
               />
             ))}
