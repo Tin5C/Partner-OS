@@ -111,6 +111,11 @@ export interface StoryCardV1 {
   relevance_summary?: string;
   relevance_score?: number; // 0–100
   relevance_reasons?: string[];
+
+  // Linking fields (optional, for cross-referencing)
+  linked_accountSignalIds?: string[];
+  linked_objectionIds?: string[];
+  linked_briefingArtifactIds?: string[];
 }
 
 export interface StoryCardsV1 {
