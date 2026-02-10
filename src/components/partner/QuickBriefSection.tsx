@@ -2,7 +2,7 @@
 // Wired to PartnerDataProvider artifacts
 // Input form generates from demo artifacts, output renders QuickBriefV1
 
-import { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Zap,
   Sparkles,
@@ -15,9 +15,11 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QuickBriefOutput } from './QuickBriefOutput';
-import type { QuickBriefResult, QuickBriefNeed } from './QuickBriefOutput';
+import type { QuickBriefResult, QuickBriefNeed, QuickBriefSignal, SignalBriefingRef } from './QuickBriefOutput';
 import { usePartnerData } from '@/contexts/FocusDataContext';
 import type { QuickBriefV1, DealBriefV1, PlayV1 } from '@/data/partner/contracts';
+import { listAccountSignals } from '@/data/partner/accountSignalStore';
+import { listBriefingArtifacts } from '@/data/partner/briefingArtifactStore';
 import {
   Tooltip,
   TooltipContent,
@@ -114,7 +116,6 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
       }
 
       const qb = artifact.content as QuickBriefV1;
-      const hasEmail = selectedNeeds.includes('intro-email');
       const hasObjection = selectedNeeds.includes('objection-help');
 
       // Build objections from play artifact if "Objection help" chip selected
@@ -131,9 +132,67 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
         }
       }
 
+      // Build per-signal data from account signals
+      const accountSignals = listAccountSignals('demo_helioworks', { account_id: 'acct_schindler' });
+      const briefingArts = listBriefingArtifacts('demo_helioworks', { account_id: 'acct_schindler' });
+
+
+      // Engineer artifact for engineer context
+      const engArt = provider.getArtifact({
+        runId: ctx.runId,
+        artifactType: 'quickBrief',
+        persona: 'engineer',
+      });
+      const engQb = engArt ? (engArt.content as QuickBriefV1) : null;
+
+      const signals: QuickBriefSignal[] = qb.whatChanged.map((wc, i) => {
+        const acctSig = accountSignals[i];
+        const slug = wc.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40);
+        const signalId = acctSig?.id ?? `qb-sig-${slug}`;
+
+        // Map briefing artifacts relevant to this signal
+        const relBriefings: SignalBriefingRef[] = [];
+        if (i === 0 && briefingArts.length > 0) {
+          const ba = briefingArts.find(b => b.type === 'account_microcast');
+          if (ba) relBriefings.push({ id: ba.id, title: ba.title, type: ba.type });
+        }
+        if (i === 1) {
+          const ba = briefingArts.find(b => b.type === 'objection_briefing');
+          if (ba) relBriefings.push({ id: ba.id, title: ba.title, type: ba.type });
+        }
+        if (i === 2) {
+          const ba = briefingArts.find(b => b.type === 'industry_microcast');
+          if (ba) relBriefings.push({ id: ba.id, title: ba.title, type: ba.type });
+        }
+
+        return {
+          id: signalId,
+          headline: wc,
+          soWhat: i === 0 ? qb.soWhat : (acctSig?.why_it_converts ?? ''),
+          whatToDo: qb.actions[i] || '',
+          sellerTalkTrack: [qb.actions[i] || ''].filter(Boolean),
+          engineerContext: engQb ? [engQb.actions[i] || ''].filter(Boolean) : ['Technical context not available.'],
+          confidence: {
+            score: acctSig
+              ? (acctSig.confidence === 'High' ? 75 : acctSig.confidence === 'Medium' ? 55 : 30)
+              : (qb.confidence === 'High' ? 75 : qb.confidence === 'Medium' ? 55 : 30),
+            label: acctSig?.confidence ?? qb.confidence,
+            reason: acctSig?.why_it_converts ?? qb.soWhat,
+          },
+          whatsMissing: acctSig?.gaps ?? [qb.whatsMissing[i] || ''].filter(Boolean),
+          proofToRequest: acctSig?.proof_artifacts_needed ?? [],
+          recommendedBriefings: relBriefings,
+          sources: (qb.sources ?? []).map(s => ({ label: s.label, sourceType: s.sourceType })),
+        };
+      });
+
+      const hasEmail = selectedNeeds.includes('intro-email');
+
       const result: QuickBriefResult = {
         customerName: customerName.trim(),
         needs: selectedNeeds,
+        accountId: 'acct_schindler',
+        signals,
         whatChanged: qb.whatChanged.map((wc, i) => ({
           headline: wc,
           soWhat: i === 0 ? qb.soWhat : '',
@@ -146,26 +205,8 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
             : undefined,
         },
         engineerView: {
-          technicalContext: (() => {
-            const engArt = provider.getArtifact({
-              runId: ctx.runId,
-              artifactType: 'quickBrief',
-              persona: 'engineer',
-            });
-            if (!engArt) return ['Technical context not available.'];
-            const engQb = engArt.content as QuickBriefV1;
-            return engQb.actions;
-          })(),
-          architectureNotes: (() => {
-            const engArt = provider.getArtifact({
-              runId: ctx.runId,
-              artifactType: 'quickBrief',
-              persona: 'engineer',
-            });
-            if (!engArt) return '';
-            const engQb = engArt.content as QuickBriefV1;
-            return engQb.soWhat;
-          })(),
+          technicalContext: engQb?.actions ?? ['Technical context not available.'],
+          architectureNotes: engQb?.soWhat ?? '',
         },
         confidence: {
           score: qb.confidence === 'High' ? 75 : qb.confidence === 'Medium' ? 55 : 30,
