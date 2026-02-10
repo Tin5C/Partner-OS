@@ -4,12 +4,16 @@
 
 import { SpaceConfig } from './types';
 import { getDefaultBriefTemplatesConfig, BriefTemplatesConfig } from '@/data/briefTemplates';
+import type { BriefingSourceMode } from '@/data/partner/briefingContracts';
 
 // Brief templates config (exported for use by partner components)
 export const partnerBriefTemplates: BriefTemplatesConfig = getDefaultBriefTemplatesConfig();
 
 // Demo mode switch — true = precomputed artifacts (Option A), false = live generation (Option B)
 export const partnerDemoMode: boolean = true;
+
+// Briefing source mode — controls On-Demand Briefings behavior
+export const briefingSourceMode: BriefingSourceMode = 'seeded_only';
 
 export const partnerConfig: SpaceConfig = {
   spaceType: 'partner',
@@ -43,27 +47,14 @@ export const partnerConfig: SpaceConfig = {
       variant: 'primary',
       enabled: true,
     },
-    // 5. TRENDING PACKS — What's hot right now / what buyers care about
+    // 5. ON-DEMAND BRIEFINGS — replaces Trending Packs + Plays
     {
-      id: 'trending-packs',
-      type: 'trendingPacks',
-      title: 'Trending Packs',
-      subtitle: 'What partners are talking about right now',
+      id: 'on-demand-briefings',
+      type: 'onDemandBriefings',
+      title: 'On-Demand Briefings',
+      subtitle: 'Generate short briefings when you need them — audio or read.',
       variant: 'primary',
       enabled: true,
-    },
-    // 6. PLAYS (renamed from Execution Packs)
-    {
-      id: 'briefings',
-      type: 'packGrid',
-      title: 'Plays',
-      subtitle: 'Talk tracks, objection handling, and competitive positioning.',
-      variant: 'primary',
-      enabled: true,
-      packs: ['product-focus', 'competitive-overview', 'objection-handling'],
-      copyOverrides: {
-        'objection-handling-subtitle': 'Approved objection responses',
-      },
     },
     // 7. CAPABILITY & BRAND
     {
@@ -93,8 +84,8 @@ export const partnerConfig: SpaceConfig = {
     storiesSubtitle: 'What changed, why it matters, what to do.',
     accountPrepTitle: 'AI Deal Brief',
     accountPrepSubtitle: 'Turn messy AI deal context into a deal-ready plan in 5–10 minutes.',
-    briefingsTitle: 'Plays',
-    briefingsSubtitle: 'Talk tracks, objection handling, and competitive positioning.',
+    briefingsTitle: 'On-Demand Briefings',
+    briefingsSubtitle: 'Generate short briefings when you need them — audio or read.',
     growthTitle: 'Enablement',
     reputationTitle: 'Enablement Progress',
     reputationSubtitle: 'Track your partner certification and training.',
@@ -111,7 +102,8 @@ export const partnerConfig: SpaceConfig = {
     customerBrief: true, // Partner-only: full AI Deal Brief
     quickBrief: true, // Partner-only: fast 60-sec situational brief
     expertCorners: true, // Partner-only feature
-    trendingPacks: true, // Partner-only feature
+    trendingPacks: false, // Replaced by On-Demand Briefings
+    onDemandBriefings: true, // Partner-only: unified briefing system
     capabilityBrand: true, // Partner-only: persona-aware branding
     briefTemplatesEnabled: true, // Partner-only: template-driven briefs
   },
@@ -119,11 +111,8 @@ export const partnerConfig: SpaceConfig = {
   // Only curated/approved story types
   allowedStoryTypes: ['voice', 'competitor', 'product', 'success', 'winwire'],
   
-  // Partner-approved packs only
+  // Available content items
   availablePacks: [
-    'product-focus',
-    'competitive-overview',
-    'objection-handling',
     'skill-of-week',
   ],
 };

@@ -3,7 +3,7 @@
 // Deal Planning expanded state renders from DealBriefV1 artifact
 
 import { useState } from 'react';
-import { Zap, Brain, Info, Users, AlertTriangle, Target, CheckCircle2, HelpCircle, Play, Copy } from 'lucide-react';
+import { Zap, Brain, Info, Users, AlertTriangle, Target, CheckCircle2, HelpCircle, Play, Copy, Shield, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QuickBriefSection } from './QuickBriefSection';
 import { CustomerBriefSection } from './CustomerBriefSection';
@@ -147,6 +147,8 @@ function DealPlanningMode({
 
 // Render a DealBriefV1 artifact as structured read-only view
 function DealBriefArtifactView({ deal }: { deal: DealBriefV1 }) {
+  const [objectionsOpen, setObjectionsOpen] = useState(false);
+  
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
     toast.success('Copied to clipboard');
@@ -282,28 +284,28 @@ function DealBriefArtifactView({ deal }: { deal: DealBriefV1 }) {
         </div>
       )}
 
-      {/* Recommended Plays */}
+      {/* Recommended Briefings */}
       {deal.recommendedPlays.length > 0 && (
         <div>
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1.5">
-            <Play className="w-3.5 h-3.5" /> Recommended plays
+            <Play className="w-3.5 h-3.5" /> Recommended briefings
           </p>
           <div className="space-y-2">
-            {deal.recommendedPlays.map((play, i) => (
+            {deal.recommendedPlays.map((item, i) => (
               <div key={i} className="flex items-center justify-between p-2.5 rounded-lg bg-muted/30 border border-border/60">
                 <div>
-                  <p className="text-sm font-medium text-foreground">{play.title}</p>
-                  <p className="text-[11px] text-muted-foreground capitalize">{play.playType} play</p>
+                  <p className="text-sm font-medium text-foreground">{item.title}</p>
+                  <p className="text-[11px] text-muted-foreground capitalize">{item.playType}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => toast.info('Play audio coming soon')}
+                    onClick={() => toast.info('Briefing audio coming soon')}
                     className="text-xs text-muted-foreground hover:text-foreground"
                   >
                     Play (audio)
                   </button>
                   <button
-                    onClick={() => toast.info('Play reader coming soon')}
+                    onClick={() => toast.info('Briefing reader coming soon')}
                     className="text-xs text-primary font-medium hover:text-primary/80"
                   >
                     Open (read)
@@ -314,6 +316,44 @@ function DealBriefArtifactView({ deal }: { deal: DealBriefV1 }) {
           </div>
         </div>
       )}
+
+      {/* Objections & Proof (collapsed by default) */}
+      <div className="border border-border/60 rounded-xl overflow-hidden">
+        <button
+          onClick={() => setObjectionsOpen(!objectionsOpen)}
+          className="w-full flex items-center justify-between p-3 hover:bg-muted/30 transition-colors"
+        >
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+            <Shield className="w-3.5 h-3.5" /> Objections & Proof
+          </p>
+          {objectionsOpen ? (
+            <ChevronUp className="w-4 h-4 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+          )}
+        </button>
+        {objectionsOpen && (
+          <div className="px-3 pb-3 space-y-3">
+            {/* Top 5 objection themes from the Play artifacts */}
+            {[
+              { theme: 'Not ready for AI', response: 'Readiness isn\'t binary. Propose an AI Readiness Assessment as the logical first step.', proof: 'AI Readiness Assessment sample output', stakeholder: 'CTO Office' },
+              { theme: 'Data residency concerns', response: 'Azure OpenAI is now GA in Switzerland North — all processing stays in-country.', proof: 'Azure region availability matrix', stakeholder: 'CISO' },
+              { theme: 'Data quality insufficient', response: 'You don\'t need perfect data. The assessment identifies gaps and prioritizes what to fix first.', proof: 'Data readiness framework', stakeholder: 'VP Operations' },
+              { theme: 'Competitor chose Google Cloud', response: 'Kone\'s use case (consumer analytics) differs from your predictive maintenance needs. Azure is purpose-built for industrial IoT.', proof: 'Kone use case differentiation', stakeholder: 'CTO Office' },
+              { theme: 'No board approval for AI', response: 'The readiness assessment produces exactly the business case your board needs — ROI, risk, and phased roadmap.', proof: 'Board-ready business case template', stakeholder: 'VP Operations' },
+            ].map((obj, i) => (
+              <div key={i} className="p-2.5 rounded-lg bg-muted/20 border border-border/40 space-y-1">
+                <p className="text-sm font-medium text-foreground">{obj.theme}</p>
+                <p className="text-xs text-muted-foreground">{obj.response}</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-[11px] text-primary">📎 {obj.proof}</p>
+                  <p className="text-[10px] text-muted-foreground">Confirm with: {obj.stakeholder}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Open Questions */}
       {deal.openQuestions.length > 0 && (

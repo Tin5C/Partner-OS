@@ -1,5 +1,5 @@
 // Partner Stories Row - Partner-only stories section
-// Wired to PartnerDataProvider artifacts
+// Wired to PartnerDataProvider artifacts + BriefingProvider for Listen CTAs
 
 import { useState, useCallback, useMemo } from 'react';
 import { ChevronRight } from 'lucide-react';
@@ -14,6 +14,13 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { usePartnerData } from '@/contexts/FocusDataContext';
 import type { StoryCardsV1, StoryCardV1, MicrocastV1, MicrocastType } from '@/data/partner/contracts';
+import {
+  createBriefingRequest,
+  generateBriefingArtifactFromRequest,
+} from '@/data/partner/briefingProvider';
+import { briefingSourceMode } from '@/config/spaces/partner';
+import type { BriefingArtifact } from '@/data/partner/briefingContracts';
+import { toast } from 'sonner';
 
 // Adapter: convert StoryCardV1 → PartnerStory for existing tile/viewer components
 function adaptCardToStory(card: StoryCardV1): PartnerStory {

@@ -94,6 +94,21 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
 
       const qb = artifact.content as QuickBriefV1;
       const hasEmail = selectedNeeds.includes('intro-email');
+      const hasObjection = selectedNeeds.includes('objection-help');
+
+      // Build objections from play artifact if "Objection help" chip selected
+      let objections: QuickBriefResult['objections'] = undefined;
+      if (hasObjection && ctx) {
+        const playArt = provider.getArtifact({ runId: ctx.runId, artifactType: 'play', playType: 'objection' });
+        if (playArt) {
+          const play = playArt.content as PlayV1;
+          objections = play.objections.slice(0, 3).map((o) => ({
+            theme: o.objection,
+            responses: [o.response],
+            proofArtifact: o.proofArtifact,
+          }));
+        }
+      }
 
       const result: QuickBriefResult = {
         customerName: customerName.trim(),
@@ -143,6 +158,7 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
           playType: recommendedPlay.playType,
           title: recommendedPlay.title,
         } : undefined,
+        objections,
       };
 
       setOutput(result);

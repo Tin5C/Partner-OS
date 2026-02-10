@@ -15,7 +15,8 @@ export type SectionType =
   | 'expertCorners'
   | 'trendingPacks'
   | 'capabilityBrand'
-  | 'partnerMode';
+  | 'partnerMode'
+  | 'onDemandBriefings';
 
 export type SectionVariant = 'primary' | 'secondary' | 'tertiary';
 
@@ -60,6 +61,7 @@ export interface SpaceFeatures {
   trendingPacks?: boolean; // Partner-only feature
   capabilityBrand?: boolean; // Partner-only: persona-aware branding
   briefTemplatesEnabled?: boolean; // Partner-only: template-driven briefs
+  onDemandBriefings?: boolean; // Partner-only: unified briefing system
 }
 
 export interface SpaceConfig {
