@@ -91,3 +91,15 @@ export function promoteSignalsToDealPlan(
 
   return results;
 }
+
+/**
+ * Remove a signal from deal plan by signalId + accountId.
+ */
+export function removeDealPlanSelection(accountId: string, signalId: string): boolean {
+  const idx = store.findIndex(
+    (s) => s.accountId === accountId && s.signalId === signalId,
+  );
+  if (idx === -1) return false;
+  store.splice(idx, 1);
+  return true;
+}
