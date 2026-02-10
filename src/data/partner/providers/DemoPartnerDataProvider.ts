@@ -1,5 +1,4 @@
 // Demo Partner Data Provider (Option A — precomputed artifacts)
-// Reads from demoDataset.ts and validates on construction
 
 import type {
   DerivedArtifact,
@@ -10,15 +9,17 @@ import type {
   QuickBriefV1,
   StoryCardsV1,
   DealBriefV1,
+  PlayV1,
 } from '../contracts';
 import type { PartnerDataProvider, ActiveContext } from '../PartnerDataProvider';
 import {
   assertQuickBriefV1,
   assertStoryCardsV1,
   assertDealBriefV1,
+  assertPlayV1,
 } from '../validation';
 import {
-  DEMO_EXTRACTION_RUN,
+  DEMO_CONTEXT,
   DEMO_ARTIFACTS,
   DEMO_FOCUS_ENTITIES,
 } from '../demo/demoDataset';
@@ -28,30 +29,17 @@ export class DemoPartnerDataProvider implements PartnerDataProvider {
   private context: ActiveContext;
 
   constructor() {
-    const run = DEMO_EXTRACTION_RUN;
-    this.context = {
-      runId: run.runId,
-      hubOrgId: run.hubOrgId,
-      focusId: run.focusId,
-      primaryVendorId: run.primaryVendorId,
-      weekOfDate: run.weekOfDate,
-      motionType: run.motionType,
-    };
+    this.context = DEMO_CONTEXT;
     this.artifacts = DEMO_ARTIFACTS;
     this.validate();
   }
 
   private validate(): void {
-    for (const artifact of this.artifacts) {
-      if (artifact.artifactType === 'quickBrief') {
-        assertQuickBriefV1(artifact.content as QuickBriefV1);
-      }
-      if (artifact.artifactType === 'storyCards') {
-        assertStoryCardsV1(artifact.content as StoryCardsV1);
-      }
-      if (artifact.artifactType === 'dealBrief') {
-        assertDealBriefV1(artifact.content as DealBriefV1);
-      }
+    for (const a of this.artifacts) {
+      if (a.artifactType === 'quickBrief') assertQuickBriefV1(a.content as QuickBriefV1);
+      if (a.artifactType === 'storyCards') assertStoryCardsV1(a.content as StoryCardsV1);
+      if (a.artifactType === 'dealBrief') assertDealBriefV1(a.content as DealBriefV1);
+      if (a.artifactType === 'play') assertPlayV1(a.content as PlayV1);
     }
   }
 
