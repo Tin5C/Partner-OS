@@ -49,6 +49,20 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [output, setOutput] = useState<QuickBriefResult | null>(null);
 
+  // Get touchpoint context for the selected focus
+  const touchpoints = useMemo(() => {
+    if (!ctx) return null;
+    return provider.getFocusTouchpoints(ctx.focusId);
+  }, [provider, ctx]);
+
+  // Build situation placeholder from touchpoint context
+  const situationPlaceholder = useMemo(() => {
+    if (!touchpoints?.lastTouchpoint) {
+      return "What's happening? e.g. Follow-up after Copilot demo with IT + Security";
+    }
+    return `e.g. Follow-up: ${touchpoints.lastTouchpoint.summary.split('—')[0].trim()}`;
+  }, [touchpoints]);
+
   const canGenerate = customerName.trim() && selectedNeeds.length > 0;
 
   const handleToggleNeed = (value: QuickBriefNeed) => {
