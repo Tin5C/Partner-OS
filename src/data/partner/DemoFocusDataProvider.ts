@@ -67,6 +67,11 @@ export class DemoFocusDataProvider implements FocusDataProvider {
     return DEMO_FOCUS_ENTITIES;
   }
 
+  getFocusTouchpoints(focusId: string): FocusTouchpointContext | null {
+    const entity = DEMO_FOCUS_ENTITIES.find(e => e.id === focusId);
+    return entity?.touchpointContext ?? null;
+  }
+
   getActiveRun(params: {
     hubOrgId: string;
     focusId: string;
