@@ -9,7 +9,7 @@ import type {
   DerivedArtifact,
   ArtifactType,
   PersonaType,
-  StoryCardV1,
+  StoryCardsV1,
   PackageRecsV1,
 } from './contracts';
 
@@ -35,7 +35,7 @@ export interface FocusDataProvider {
   listStoryCards(params: {
     runId: string;
     focusId: string;
-  }): DerivedArtifact<StoryCardV1[]> | null;
+  }): DerivedArtifact<StoryCardsV1> | null;
 
   recommendPackages(params: {
     runId: string;
@@ -61,7 +61,7 @@ export class LiveFocusDataProvider implements FocusDataProvider {
   getArtifact(): DerivedArtifact | null {
     return null;
   }
-  listStoryCards(): DerivedArtifact<StoryCardV1[]> | null {
+  listStoryCards(): DerivedArtifact<StoryCardsV1> | null {
     return null;
   }
   recommendPackages(): DerivedArtifact<PackageRecsV1> | null {

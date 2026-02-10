@@ -11,9 +11,15 @@ import type {
   PersonaType,
   QuickBriefV1,
   PackageRecsV1,
-  StoryCardV1,
+  StoryCardsV1,
+  DealBriefV1,
 } from './contracts';
 import type { FocusDataProvider } from './FocusDataProvider';
+import {
+  assertQuickBriefV1,
+  assertStoryCardsV1,
+  assertDealBriefV1,
+} from './validation';
 import {
   DEMO_HUB_ORG,
   DEMO_VENDORS,
@@ -21,27 +27,6 @@ import {
   DEMO_EXTRACTION_RUN,
   DEMO_ARTIFACTS,
 } from './demo/demoDataset';
-
-// ============= Validation Helpers =============
-
-function validateQuickBriefV1(content: QuickBriefV1, artifactId: string): void {
-  if (content.whatChanged.length !== 3) {
-    throw new Error(`[DemoValidation] ${artifactId}: whatChanged must have exactly 3 items, got ${content.whatChanged.length}`);
-  }
-  if (content.actions.length !== 3) {
-    throw new Error(`[DemoValidation] ${artifactId}: actions must have exactly 3 items, got ${content.actions.length}`);
-  }
-  if (content.whatsMissing.length !== 3) {
-    throw new Error(`[DemoValidation] ${artifactId}: whatsMissing must have exactly 3 items, got ${content.whatsMissing.length}`);
-  }
-}
-
-function validatePackageRecs(content: PackageRecsV1, artifactId: string): void {
-  const count = content.recommendations.length;
-  if (count < 1 || count > 3) {
-    throw new Error(`[DemoValidation] ${artifactId}: packageRecs must recommend 1–3 packages, got ${count}`);
-  }
-}
 
 // ============= Demo Provider =============
 
@@ -52,18 +37,19 @@ export class DemoFocusDataProvider implements FocusDataProvider {
   constructor() {
     this.run = DEMO_EXTRACTION_RUN;
     this.artifacts = DEMO_ARTIFACTS;
-
-    // Run validation on construction (demo safety)
     this.validate();
   }
 
   private validate(): void {
     for (const artifact of this.artifacts) {
       if (artifact.artifactType === 'quickBrief') {
-        validateQuickBriefV1(artifact.content as QuickBriefV1, artifact.artifactId);
+        assertQuickBriefV1(artifact.content as QuickBriefV1);
       }
-      if (artifact.artifactType === 'packageRecs') {
-        validatePackageRecs(artifact.content as PackageRecsV1, artifact.artifactId);
+      if (artifact.artifactType === 'storyCards') {
+        assertStoryCardsV1(artifact.content as StoryCardsV1);
+      }
+      if (artifact.artifactType === 'dealBrief') {
+        assertDealBriefV1(artifact.content as DealBriefV1);
       }
     }
   }
@@ -112,11 +98,11 @@ export class DemoFocusDataProvider implements FocusDataProvider {
   listStoryCards(params: {
     runId: string;
     focusId: string;
-  }): DerivedArtifact<StoryCardV1[]> | null {
+  }): DerivedArtifact<StoryCardsV1> | null {
     const art = this.artifacts.find(
       (a) => a.runId === params.runId && a.artifactType === 'storyCards'
     );
-    return (art as DerivedArtifact<StoryCardV1[]>) ?? null;
+    return (art as DerivedArtifact<StoryCardsV1>) ?? null;
   }
 
   recommendPackages(params: {

@@ -10,7 +10,7 @@ import type {
   QuickBriefV1,
   DealBriefV1,
   PackageRecsV1,
-  StoryCardV1,
+  StoryCardsV1,
 } from '../contracts';
 
 // ============= Hub Org =============
@@ -142,17 +142,28 @@ export const DEMO_EXTRACTION_RUN: ExtractionRun = {
   },
 };
 
+// ============= Shared artifact envelope fields =============
+
+const ENVELOPE = {
+  runId: 'run-demo-001',
+  focusId: 'focus-schindler',
+  hubOrgId: 'hub-alpnova',
+  primaryVendorId: 'vendor-microsoft',
+  weekOfDate: WEEK_OF,
+  motionType: 'PARTNER' as const,
+  isSimulated: true,
+};
+
 // ============= Derived Artifacts =============
 
 // -- Quick Brief (Seller) --
 
 export const DEMO_QUICK_BRIEF_SELLER: DerivedArtifact<QuickBriefV1> = {
+  ...ENVELOPE,
   artifactId: 'art-qb-seller-001',
-  runId: 'run-demo-001',
   artifactType: 'quickBrief',
   persona: 'seller',
   formatVersion: 'quickBrief.v1',
-  isSimulated: true,
   createdAt: '2026-02-10T08:05:00Z',
   content: {
     whatChanged: [
@@ -172,7 +183,7 @@ export const DEMO_QUICK_BRIEF_SELLER: DerivedArtifact<QuickBriefV1> = {
       'Current vendor relationships — are they already engaged with Google Cloud or AWS?',
       'Specific maintenance use case priorities from Schindler\'s operations team.',
     ],
-    emailDraft: {
+    optionalEmail: {
       subject: 'Quick thought on AI for Schindler\'s field operations',
       body: 'Hi [Name],\n\nWith Azure OpenAI now available in Switzerland North and the EU Machinery Regulation timeline firming up, I wanted to share a few thoughts on how AI could accelerate Schindler\'s predictive maintenance goals without the data residency concerns.\n\nWe\'ve helped similar industrial companies get from idea to working prototype in 4–6 weeks.\n\nWorth a 15-minute call this week?\n\nBest,\n[Your name]',
     },
@@ -182,18 +193,18 @@ export const DEMO_QUICK_BRIEF_SELLER: DerivedArtifact<QuickBriefV1> = {
       { label: 'Schindler CTO conference notes', sourceType: 'internal_note' },
       { label: 'Partner Center incentive update', sourceType: 'url', url: 'https://partner.microsoft.com' },
     ],
+    simulated: true,
   },
 };
 
 // -- Quick Brief (Engineer) --
 
 export const DEMO_QUICK_BRIEF_ENGINEER: DerivedArtifact<QuickBriefV1> = {
+  ...ENVELOPE,
   artifactId: 'art-qb-eng-001',
-  runId: 'run-demo-001',
   artifactType: 'quickBrief',
   persona: 'engineer',
   formatVersion: 'quickBrief.v1',
-  isSimulated: true,
   createdAt: '2026-02-10T08:05:00Z',
   content: {
     whatChanged: [
@@ -218,58 +229,76 @@ export const DEMO_QUICK_BRIEF_ENGINEER: DerivedArtifact<QuickBriefV1> = {
       { label: 'Schindler careers page — job postings', sourceType: 'url' },
       { label: 'IoT Hub architecture docs', sourceType: 'internal_note' },
     ],
+    simulated: true,
   },
 };
 
 // -- Deal Brief Prefill --
 
 export const DEMO_DEAL_BRIEF: DerivedArtifact<DealBriefV1> = {
+  ...ENVELOPE,
   artifactId: 'art-db-001',
-  runId: 'run-demo-001',
   artifactType: 'dealBrief',
   formatVersion: 'dealBrief.v1',
-  isSimulated: true,
   createdAt: '2026-02-10T08:10:00Z',
   content: {
-    customerName: 'Schindler',
-    dealMotion: 'new-logo',
-    scope: 'AI for predictive maintenance and field service optimization',
-    aiUseCases: [
-      'Predictive maintenance for elevator fleet using IoT sensor data',
-      'Field technician dispatching optimization with AI scheduling',
-      'Automated compliance documentation for EU Machinery Regulation',
+    dealObjective: 'Position AlpNova as Schindler\'s AI implementation partner for predictive maintenance and field service optimization on Azure.',
+    currentSituation: 'Schindler is exploring AI to transform reactive maintenance into predictive operations. 70,000+ employees, IoT Hub pilot in progress, regulatory pressure from EU Machinery Regulation 2027.',
+    topSignals: [
+      'Azure OpenAI now available in Switzerland North — removes data residency blocker.',
+      'EU Machinery Regulation mandates digital twins by 2027.',
+      'Copilot for Field Service entered public preview.',
     ],
-    constraints: [
-      'Data must remain in Switzerland (regulatory requirement)',
-      'SAP S/4HANA integration required for maintenance workflows',
-      'Security classification needed for cross-country data consolidation',
+    stakeholders: [
+      { name: 'TBD — CTO Office', role: 'Technology strategy owner', stance: 'Sponsor (likely)' },
+      { name: 'TBD — VP Operations', role: 'Maintenance & field service', stance: 'Champion (likely)' },
+      { name: 'TBD — CISO', role: 'Security & compliance', stance: 'Gatekeeper' },
     ],
-    sellerNarrative: 'Schindler is a global industrial leader exploring AI to transform reactive maintenance into predictive operations. With 70,000+ employees and regulatory pressure from the EU Machinery Regulation 2027, there\'s a clear window to position AlpNova as the implementation partner for their Azure AI journey.',
-    engineerArchitecture: 'Recommended architecture: IoT Hub (existing pilot) → Event Grid → Azure OpenAI (Switzerland North) → Predictive Maintenance API → ServiceNow/SAP integration. Start with a RAG pipeline over maintenance manuals for the compliance documentation use case.',
-    readinessScore: 42,
-    topBlockers: [
+    risks: [
       'No formal AI governance framework in place',
       'Maintenance data siloed across 100+ country operations',
       'IoT Hub pilot not yet connected to central AI processing',
+      'Potential competing engagement with Google Cloud (Kone precedent)',
     ],
-    missingChecklist: [
-      'Decision-maker identification and budget authority',
+    proofArtifactsToAskFor: [
       'IoT Hub pilot technical architecture documentation',
       'Data residency requirements per country operation',
-      'Current vendor evaluations (Google Cloud, AWS status)',
+      'Current vendor evaluation status (Google Cloud, AWS)',
       'Maintenance data classification and access policies',
     ],
+    executionPlan: [
+      'Week 1–2: AI Readiness Assessment with CTO office',
+      'Week 3–4: Copilot Sprint scoped to field service team (30-day pilot)',
+      'Week 5–6: RAG PoC for maintenance manual documentation',
+      'Week 7–8: Governance Quickstart to satisfy EU compliance timeline',
+    ],
+    recommendedPlays: [
+      { playType: 'product', title: 'Azure OpenAI Data Residency — Switzerland North' },
+      { playType: 'competitive', title: 'Azure vs. Google Cloud for Industrial AI' },
+      { playType: 'objection', title: 'Handling "We\'re not ready for AI yet"' },
+    ],
+    openQuestions: [
+      'Who owns the AI budget — CTO or VP Operations?',
+      'Is Schindler already engaged with Google Cloud or AWS?',
+      'What is the timeline for EU Machinery Regulation compliance?',
+      'What are the specific maintenance use case priorities?',
+    ],
+    sources: [
+      { label: 'Azure Updates Blog', sourceType: 'url', url: 'https://azure.microsoft.com/updates' },
+      { label: 'EU Machinery Regulation', sourceType: 'url', url: 'https://ec.europa.eu' },
+      { label: 'Schindler CTO conference notes', sourceType: 'internal_note' },
+    ],
+    simulated: true,
   },
 };
 
 // -- Package Recommendations --
 
 export const DEMO_PACKAGE_RECS: DerivedArtifact<PackageRecsV1> = {
+  ...ENVELOPE,
   artifactId: 'art-pkg-001',
-  runId: 'run-demo-001',
   artifactType: 'packageRecs',
   formatVersion: 'packageRecs.v1',
-  isSimulated: true,
   createdAt: '2026-02-10T08:10:00Z',
   content: {
     recommendations: [
@@ -306,57 +335,65 @@ function getExpiryDate(daysFromNow: number = 10): string {
   return date.toISOString();
 }
 
-export const DEMO_STORY_CARDS: DerivedArtifact<StoryCardV1[]> = {
+export const DEMO_STORY_CARDS: DerivedArtifact<StoryCardsV1> = {
+  ...ENVELOPE,
   artifactId: 'art-stories-001',
-  runId: 'run-demo-001',
   artifactType: 'storyCards',
   formatVersion: 'storyCards.v1',
-  isSimulated: true,
   createdAt: '2026-02-10T08:10:00Z',
-  content: [
-    {
-      id: 'story-001',
-      signalType: 'Vendor',
-      headline: 'Azure OpenAI Now Available in Switzerland North',
-      soWhat: 'Removes data residency objection for Swiss-regulated workloads.',
-      action: 'Lead with this to unblock compliance team.',
-      source: 'Azure Updates Blog',
-      publishedAt: '2026-02-07T10:00:00Z',
-      expiresAt: getExpiryDate(12),
-      logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg',
-    },
-    {
-      id: 'story-002',
-      signalType: 'Regulatory',
-      headline: 'EU Machinery Regulation Mandates Digital Twins by 2027',
-      soWhat: 'Creates compliance urgency for elevator OEMs like Schindler.',
-      action: 'Position AI readiness as compliance prerequisite.',
-      source: 'European Commission',
-      publishedAt: '2026-02-05T14:00:00Z',
-      expiresAt: getExpiryDate(14),
-    },
-    {
-      id: 'story-003',
-      signalType: 'LocalMarket',
-      headline: 'Swiss Manufacturing AI Adoption Reaches 35%',
-      soWhat: 'Schindler risks falling behind peers if they delay.',
-      action: 'Reference benchmark in executive conversations.',
-      source: 'Swiss Digital Economy Report 2026',
-      publishedAt: '2026-02-03T09:00:00Z',
-      expiresAt: getExpiryDate(10),
-    },
-    {
-      id: 'story-004',
-      signalType: 'Vendor',
-      headline: 'Copilot for Field Service Enters Public Preview',
-      soWhat: 'Directly relevant to Schindler\'s 20K+ field technicians.',
-      action: 'Propose Copilot Sprint scoped to field service.',
-      source: 'Microsoft Dynamics 365 Blog',
-      publishedAt: '2026-02-08T11:00:00Z',
-      expiresAt: getExpiryDate(12),
-      logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg',
-    },
-  ],
+  content: {
+    cards: [
+      {
+        cardId: 'story-001',
+        title: 'Azure OpenAI Now Available in Switzerland North',
+        whatChanged: 'Azure OpenAI expanded to Switzerland North region.',
+        whyItMatters: 'Removes data residency objection for Swiss-regulated workloads.',
+        expiresAt: getExpiryDate(12),
+        tags: ['Vendor', 'Azure', 'Data Residency'],
+        suggestedAction: 'Lead with this to unblock compliance team.',
+        confidence: 'High',
+        sources: [{ label: 'Azure Updates Blog', sourceType: 'url', url: 'https://azure.microsoft.com/updates' }],
+        simulated: true,
+      },
+      {
+        cardId: 'story-002',
+        title: 'EU Machinery Regulation Mandates Digital Twins by 2027',
+        whatChanged: 'EU regulation requires machine-readable documentation for machinery.',
+        whyItMatters: 'Creates compliance urgency for elevator OEMs like Schindler.',
+        expiresAt: getExpiryDate(14),
+        tags: ['Regulatory', 'EU', 'Compliance'],
+        suggestedAction: 'Position AI readiness as compliance prerequisite.',
+        confidence: 'High',
+        sources: [{ label: 'European Commission', sourceType: 'url', url: 'https://ec.europa.eu' }],
+        simulated: true,
+      },
+      {
+        cardId: 'story-003',
+        title: 'Swiss Manufacturing AI Adoption Reaches 35%',
+        whatChanged: 'Industry benchmark shows 35% AI adoption in Swiss manufacturing.',
+        whyItMatters: 'Schindler risks falling behind peers if they delay.',
+        expiresAt: getExpiryDate(10),
+        tags: ['LocalMarket', 'Benchmark', 'Switzerland'],
+        suggestedAction: 'Reference benchmark in executive conversations.',
+        confidence: 'Medium',
+        sources: [{ label: 'Swiss Digital Economy Report 2026', sourceType: 'url' }],
+        simulated: true,
+      },
+      {
+        cardId: 'story-004',
+        title: 'Copilot for Field Service Enters Public Preview',
+        whatChanged: 'Microsoft launched Copilot for Field Service in public preview.',
+        whyItMatters: 'Directly relevant to Schindler\'s 20K+ field technicians.',
+        expiresAt: getExpiryDate(12),
+        tags: ['Vendor', 'Copilot', 'Field Service'],
+        suggestedAction: 'Propose Copilot Sprint scoped to field service.',
+        confidence: 'Medium',
+        sources: [{ label: 'Microsoft Dynamics 365 Blog', sourceType: 'url' }],
+        simulated: true,
+      },
+    ],
+    simulated: true,
+  },
 };
 
 // ============= Canonical Packages (structured reference, not marketplace) =============

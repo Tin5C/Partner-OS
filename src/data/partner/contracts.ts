@@ -5,12 +5,16 @@
 
 export type MotionType = 'DIRECT' | 'PARTNER';
 
-export interface CoreInvariants {
-  motionType: MotionType;
-  hubOrgId: string;
-  focusId: string;
-  primaryVendorId: string; // may equal hubOrgId in DIRECT
-}
+export type ArtifactType =
+  | 'storyCards'
+  | 'quickBrief'
+  | 'dealBrief'
+  | 'play'
+  | 'packageRecs'
+  | 'emailDraft';
+
+export type PersonaType = 'seller' | 'engineer';
+export type PlayType = 'product' | 'competitive' | 'objection';
 
 // ============= Entity Types =============
 
@@ -38,7 +42,121 @@ export interface FocusEntity {
   description?: string;
 }
 
-// ============= Module Pack Types =============
+// ============= Source Reference =============
+
+export interface ArtifactSource {
+  label: string;
+  sourceType: 'url' | 'internal_note';
+  url?: string;
+}
+
+// ============= Derived Artifact (unified envelope) =============
+
+export interface DerivedArtifact<T = unknown> {
+  artifactId: string;
+  runId: string;
+  artifactType: ArtifactType;
+  formatVersion: string;
+  persona?: PersonaType;
+  playType?: PlayType;
+  focusId: string;
+  hubOrgId: string;
+  primaryVendorId: string;
+  weekOfDate: string; // ISO
+  motionType: MotionType;
+  isSimulated: boolean;
+  createdAt: string; // ISO
+  content: T;
+}
+
+// ============= A) StoryCardsV1 =============
+
+export interface StoryCardV1 {
+  cardId: string;
+  title: string;
+  whatChanged: string;
+  whyItMatters: string;
+  expiresAt: string; // ISO
+  tags: string[];
+  suggestedAction: string;
+  packId?: string;
+  confidence: 'High' | 'Medium' | 'Low';
+  sources: ArtifactSource[];
+  simulated: boolean;
+}
+
+export interface StoryCardsV1 {
+  cards: StoryCardV1[]; // max 6
+  simulated: boolean;
+}
+
+// ============= B) QuickBriefV1 =============
+
+export interface QuickBriefV1 {
+  whatChanged: [string, string, string];
+  soWhat: string;
+  actions: [string, string, string];
+  confidence: 'High' | 'Medium' | 'Low';
+  whatsMissing: [string, string, string];
+  optionalEmail?: { subject: string; body: string };
+  sources: ArtifactSource[];
+  simulated: boolean;
+}
+
+// ============= C) DealBriefV1 =============
+
+export interface DealBriefV1Stakeholder {
+  name: string;
+  role: string;
+  stance?: string;
+}
+
+export interface DealBriefV1RecommendedPlay {
+  playType: PlayType;
+  title: string;
+}
+
+export interface DealBriefV1 {
+  dealObjective: string;
+  currentSituation?: string;
+  topSignals: string[]; // <= 3
+  stakeholders: DealBriefV1Stakeholder[]; // <= 12
+  risks: string[];
+  proofArtifactsToAskFor: string[];
+  executionPlan: string[];
+  recommendedPlays: DealBriefV1RecommendedPlay[]; // <= 3
+  openQuestions: string[];
+  sources: ArtifactSource[];
+  simulated: boolean;
+}
+
+// ============= D) PlayV1 =============
+
+export interface PlayV1Objection {
+  objection: string;
+  response: string;
+  whatNotToSay: string;
+  proofArtifact: string;
+}
+
+export interface PlayV1 {
+  title: string;
+  estMinutes: number; // 3–6
+  modes: ('audio' | 'read')[];
+  triggers: string[]; // 3–6
+  objective: string;
+  talkTrack: string[]; // 6–10
+  objections: PlayV1Objection[]; // 5–8
+  proofArtifacts: string[]; // 5–10
+  discoveryPrompts: string[]; // 6–10
+  nextActions: string[]; // 2–4
+  redFlags: string[]; // 3–5
+  sources: ArtifactSource[];
+  lastReviewed: string; // ISO
+  simulated: boolean;
+}
+
+// ============= Module Pack Types (ExtractionRun) =============
 
 export interface Module0A_HubOrg {
   profile: string;
@@ -78,8 +196,6 @@ export interface WeeklySignal {
   publishedAt: string;
 }
 
-// ============= Extraction Run =============
-
 export interface ModulePacks {
   module0A_hubOrg: Module0A_HubOrg;
   module0V_vendor: Module0V_Vendor;
@@ -98,73 +214,14 @@ export interface ExtractionRun {
   hubOrgId: string;
   focusId: string;
   primaryVendorId: string;
-  weekOfDate: string; // ISO date string
+  weekOfDate: string;
   promptVersion: string;
   isSimulated: boolean;
-  createdAt: string; // ISO
+  createdAt: string;
   modulePacks: ModulePacks;
 }
 
-// ============= Derived Artifact =============
-
-export type ArtifactType =
-  | 'quickBrief'
-  | 'dealBrief'
-  | 'emailDraft'
-  | 'packageRecs'
-  | 'storyCards';
-
-export type PersonaType = 'seller' | 'engineer';
-
-export interface DerivedArtifact<T = unknown> {
-  artifactId: string;
-  runId: string;
-  artifactType: ArtifactType;
-  persona?: PersonaType;
-  formatVersion: string;
-  isSimulated: boolean;
-  createdAt: string; // ISO
-  content: T;
-}
-
-// ============= Quick Brief V1 Content Shape =============
-
-export interface QuickBriefV1Source {
-  label: string;
-  sourceType: 'internal_note' | 'url';
-  url?: string;
-}
-
-export interface QuickBriefV1 {
-  whatChanged: [string, string, string]; // MUST be length 3
-  soWhat: string;
-  actions: [string, string, string]; // MUST be length 3
-  confidence: 'High' | 'Medium' | 'Low';
-  whatsMissing: [string, string, string]; // MUST be length 3
-  emailDraft?: { subject: string; body: string };
-  sources: QuickBriefV1Source[];
-}
-
-// ============= Deal Brief V1 Content Shape =============
-
-export interface DealBriefV1 {
-  customerName: string;
-  dealMotion: string;
-  scope: string;
-  aiUseCases: string[];
-  constraints: string[];
-  sellerNarrative: string;
-  engineerArchitecture: string;
-  readinessScore: number;
-  topBlockers: string[];
-  missingChecklist: string[];
-}
-
-// ============= Package Recs V1 Content Shape =============
-
-export interface PackageRecsV1 {
-  recommendations: PackageRecommendation[];
-}
+// ============= Package Recs V1 =============
 
 export interface PackageRecommendation {
   packageId: string;
@@ -174,16 +231,6 @@ export interface PackageRecommendation {
   suggestedTier: 'good' | 'better' | 'best';
 }
 
-// ============= Story Cards V1 Content Shape =============
-
-export interface StoryCardV1 {
-  id: string;
-  signalType: 'Vendor' | 'Regulatory' | 'LocalMarket';
-  headline: string;
-  soWhat: string;
-  action: string;
-  source?: string;
-  publishedAt: string;
-  expiresAt: string;
-  logoUrl?: string;
+export interface PackageRecsV1 {
+  recommendations: PackageRecommendation[];
 }
