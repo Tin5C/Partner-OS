@@ -117,9 +117,9 @@ export function getUnifiedStories(space?: string): UnifiedStoryItem[] {
 }
 
 // Get winwire playlist for winwire context
-export function getWinwirePlaylist(space?: 'internal' | 'partner'): UnifiedStoryItem[] {
+export function getWinwirePlaylist(space?: string): UnifiedStoryItem[] {
   const filtered = space 
-    ? winwireStories.filter(s => s.spaceVisibility.includes(space))
+    ? winwireStories.filter(s => s.spaceVisibility.includes(space as any))
     : winwireStories;
   
   return filtered
