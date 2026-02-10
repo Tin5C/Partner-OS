@@ -31,6 +31,7 @@ export function SpaceProvider({ children }: { children: React.ReactNode }) {
   // Determine space type from route
   const spaceType: SpaceType = useMemo(() => {
     if (location.pathname.startsWith('/internal')) return 'internal';
+    if (location.pathname.startsWith('/vendor')) return 'vendor';
     if (location.pathname.startsWith('/partner')) return 'partner';
     return 'internal'; // Default
   }, [location.pathname]);

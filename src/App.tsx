@@ -79,6 +79,7 @@ function AppRoutes() {
       {/* NEW: Space-based routes (Internal/Partner) with shared components */}
       <Route path="/internal" element={<InternalPage />} />
       <Route path="/partner" element={<PartnerPage />} />
+      <Route path="/vendor" element={<VendorPage />} />
       <Route path="/partner/strategy" element={<PartnerStrategyPage />} />
       <Route path="/partner/profile" element={<PartnerProfilePage />} />
       

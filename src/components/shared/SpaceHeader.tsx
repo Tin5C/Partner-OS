@@ -54,11 +54,11 @@ export function SpaceHeader({
           <div className="flex-shrink-0">
             <div className={cn(
               "w-12 h-12 rounded-full flex items-center justify-center ring-2 ring-border",
-              spaceType === 'partner' ? "bg-emerald-500/10" : "bg-primary/10"
+              spaceType === 'vendor' ? "bg-violet-500/10" : spaceType === 'partner' ? "bg-emerald-500/10" : "bg-primary/10"
             )}>
               <SpaceIcon className={cn(
                 "w-6 h-6",
-                spaceType === 'partner' ? "text-emerald-600" : "text-primary"
+                spaceType === 'vendor' ? "text-violet-600" : spaceType === 'partner' ? "text-emerald-600" : "text-primary"
               )} />
             </div>
           </div>

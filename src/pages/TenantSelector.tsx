@@ -53,6 +53,22 @@ export default function TenantSelector() {
                 Password: <code className="bg-muted px-1.5 py-0.5 rounded text-foreground">partner2025</code>
               </p>
             </div>
+            <div className="space-y-1">
+              <Button
+                variant="outline"
+                onClick={() => navigate('/vendor')}
+                className={cn(
+                  "w-full h-14 flex items-center justify-center gap-3",
+                  "border-violet-500/20 hover:border-violet-500/40 hover:bg-violet-500/5"
+                )}
+              >
+                <Store className="w-5 h-5 text-violet-600" />
+                <span className="font-medium">Vendor Channel</span>
+              </Button>
+              <p className="text-xs text-center text-muted-foreground">
+                Password: <code className="bg-muted px-1.5 py-0.5 rounded text-foreground">vendor2025</code>
+              </p>
+            </div>
           </div>
 
           {/* Help text */}

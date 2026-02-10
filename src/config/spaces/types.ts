@@ -1,7 +1,7 @@
 // Space Configuration Types
 // Defines how each space (Internal/Partner) renders its homepage
 
-export type SpaceType = 'internal' | 'partner';
+export type SpaceType = 'internal' | 'partner' | 'vendor';
 
 export type SectionType = 
   | 'storiesRow'
@@ -16,7 +16,12 @@ export type SectionType =
   | 'trendingPacks'
   | 'capabilityBrand'
   | 'partnerMode'
-  | 'onDemandBriefings';
+  | 'onDemandBriefings'
+  // Vendor-specific section types
+  | 'programSignals'
+  | 'publishing'
+  | 'partnerBriefingPresets'
+  | 'vendorInsights';
 
 export type SectionVariant = 'primary' | 'secondary' | 'tertiary';
 
