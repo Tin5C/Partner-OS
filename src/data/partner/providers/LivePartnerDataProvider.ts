@@ -4,6 +4,7 @@
 import type {
   DerivedArtifact,
   FocusEntity,
+  FocusTouchpointContext,
   MicrocastV1,
   MicrocastType,
 } from '../contracts';
