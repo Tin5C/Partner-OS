@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Headphones, Building2, Sparkles } from 'lucide-react';
+import { Headphones, Building2, Sparkles, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
