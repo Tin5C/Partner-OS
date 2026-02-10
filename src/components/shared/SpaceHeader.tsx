@@ -1,7 +1,7 @@
 // Space Header - Header component for /internal and /partner routes
 // Uses SpaceContext instead of ExperienceContext
 
-import { Search, ArrowLeftRight, Sparkles, Building2, Briefcase } from 'lucide-react';
+import { Search, ArrowLeftRight, Sparkles, Building2, Briefcase, Store } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSpace } from '@/contexts/SpaceContext';
 import { cn } from '@/lib/utils';
