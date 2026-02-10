@@ -29,7 +29,7 @@ export const partnerConfig: SpaceConfig = {
       variant: 'primary',
       enabled: true,
     },
-    // 2. PARTNER MODE — Quick Brief ↔ Deal Planning (replaces separate sections)
+    // 2. PARTNER MODE — Quick Brief ↔ Deal Planning
     {
       id: 'partner-mode',
       type: 'partnerMode',
@@ -38,16 +38,7 @@ export const partnerConfig: SpaceConfig = {
       variant: 'primary',
       enabled: true,
     },
-    // 4. SOLUTION DEEP DIVES — Help me understand this properly
-    {
-      id: 'expert-corners',
-      type: 'expertCorners',
-      title: 'Solution deep dives tailored to you',
-      subtitle: 'Synthetic explainers based on vendor documentation',
-      variant: 'primary',
-      enabled: true,
-    },
-    // 5. ON-DEMAND BRIEFINGS — replaces Trending Packs + Plays
+    // 3. ON-DEMAND BRIEFINGS
     {
       id: 'on-demand-briefings',
       type: 'onDemandBriefings',
@@ -56,16 +47,7 @@ export const partnerConfig: SpaceConfig = {
       variant: 'primary',
       enabled: true,
     },
-    // 7. CAPABILITY & BRAND
-    {
-      id: 'capability-brand',
-      type: 'capabilityBrand',
-      title: 'Capability & Brand Snapshot',
-      subtitle: undefined,
-      variant: 'secondary',
-      enabled: true,
-    },
-    // 8. GROWTH — Personal development (lower priority)
+    // 4. GROWTH / ENABLEMENT
     {
       id: 'growth',
       type: 'growth',
@@ -74,6 +56,24 @@ export const partnerConfig: SpaceConfig = {
       variant: 'secondary',
       enabled: true,
       packs: ['skill-of-week'],
+    },
+    // 5. SOLUTION DEEP DIVES — second-to-last
+    {
+      id: 'expert-corners',
+      type: 'expertCorners',
+      title: 'Solution deep dives tailored to you',
+      subtitle: 'Synthetic explainers based on vendor documentation',
+      variant: 'primary',
+      enabled: true,
+    },
+    // 6. CAPABILITY & BRAND — last
+    {
+      id: 'capability-brand',
+      type: 'capabilityBrand',
+      title: 'Capability & Brand Snapshot',
+      subtitle: undefined,
+      variant: 'secondary',
+      enabled: true,
     },
   ],
   
