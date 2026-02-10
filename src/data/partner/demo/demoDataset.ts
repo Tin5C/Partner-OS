@@ -45,6 +45,22 @@ export const DEMO_FOCUS_ENTITIES: FocusEntity[] = [
     industry: 'Industrial / Elevators',
     region: 'EMEA',
     description: 'Global leader in elevator and escalator manufacturing with 70,000+ employees.',
+    touchpointContext: {
+      lastTouchpoint: {
+        date: '2026-02-05',
+        summary: 'Copilot demo with IT + Security teams — positive reception, follow-up requested on data residency.',
+      },
+      nextMeeting: {
+        date: '2026-02-14',
+        summary: 'Architecture review with CTO office — Azure AI platform discussion.',
+      },
+      keyAttendees: [
+        { name: 'Markus Huber', role: 'Head of IT' },
+        { name: 'Elena Fischer', role: 'CISO' },
+        { name: 'Thomas Bauer', role: 'VP Digital Transformation' },
+        { name: 'Sarah Meier', role: 'Enterprise Architect' },
+      ],
+    },
   },
 ];
 

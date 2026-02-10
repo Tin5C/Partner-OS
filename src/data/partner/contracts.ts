@@ -35,12 +35,19 @@ export interface Vendor {
   tags?: string[];
 }
 
+export interface FocusTouchpointContext {
+  lastTouchpoint: { date: string; summary: string };
+  nextMeeting?: { date: string; summary: string };
+  keyAttendees: { name: string; role: string }[];
+}
+
 export interface FocusEntity {
   id: string;
   name: string;
   industry?: string;
   region?: string;
   description?: string;
+  touchpointContext?: FocusTouchpointContext; // Seeded CRM/calendar-like context
 }
 
 // ============= Source Reference =============
