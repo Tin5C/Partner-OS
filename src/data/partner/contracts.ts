@@ -78,11 +78,19 @@ export interface StoryCardCTA {
   label: string;
 }
 
+export interface StoryCardNextMove {
+  talkTrack: string; // 1 sentence max
+  proofToAsk: string; // concrete artifact to request
+}
+
 export interface StoryCardV1 {
   cardId: string;
   title: string;
   whatChanged: string;
+  whatChangedBullets?: string[]; // max 2 short factual bullets
   whyItMatters: string;
+  whoCares?: string[]; // 2-4 relevant roles (e.g., 'Compliance', 'Security')
+  nextMove?: StoryCardNextMove;
   expiresAt: string; // ISO
   tags: string[];
   suggestedAction: string;
