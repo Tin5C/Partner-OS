@@ -39,7 +39,7 @@ export function SpaceHeader({
     navigate('/');
   };
 
-  const SpaceIcon = spaceType === 'partner' ? Building2 : Sparkles;
+  const SpaceIcon = spaceType === 'vendor' ? Store : spaceType === 'partner' ? Building2 : Sparkles;
   const displayName = spaceConfig.displayName;
 
   return (
