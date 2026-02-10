@@ -200,6 +200,11 @@ export function PartnerStoriesRow({
         onCreateBrief={onCreateBrief}
         onCreateQuickBrief={onCreateQuickBrief}
         onListenMicrocast={handleListenMicrocast}
+        onPromoteToDealPlanning={(story) => {
+          // Switch to Deal Planning mode — scroll to partner-mode section
+          const el = document.getElementById('section-partner-mode');
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }}
       />
 
       {/* Microcast Viewer */}
