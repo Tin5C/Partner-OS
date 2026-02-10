@@ -11,7 +11,8 @@ export type ArtifactType =
   | 'dealBrief'
   | 'play'
   | 'packageRecs'
-  | 'emailDraft';
+  | 'emailDraft'
+  | 'microcast';
 
 export type PersonaType = 'seller' | 'engineer';
 export type PlayType = 'product' | 'competitive' | 'objection';
@@ -71,6 +72,12 @@ export interface DerivedArtifact<T = unknown> {
 
 // ============= A) StoryCardsV1 =============
 
+export interface StoryCardCTA {
+  type: 'listen_microcast';
+  microcastType: MicrocastType;
+  label: string;
+}
+
 export interface StoryCardV1 {
   cardId: string;
   title: string;
@@ -83,6 +90,7 @@ export interface StoryCardV1 {
   confidence: 'High' | 'Medium' | 'Low';
   sources: ArtifactSource[];
   simulated: boolean;
+  ctas?: StoryCardCTA[];
 }
 
 export interface StoryCardsV1 {
@@ -233,4 +241,26 @@ export interface PackageRecommendation {
 
 export interface PackageRecsV1 {
   recommendations: PackageRecommendation[];
+}
+
+// ============= Microcast V1 =============
+
+export type MicrocastType = 'account' | 'industry';
+
+export interface MicrocastV1 {
+  id: string;
+  microcastType: MicrocastType;
+  title: string;
+  estMinutes: number;
+  scriptText: string;
+  readText: string;
+  actions: [string, string, string];
+  proofArtifacts: [string, string, string];
+  sources: ArtifactSource[];
+  sourceStoryIds: string[];
+  focusId: string;
+  hubOrgId: string;
+  weekOfDate: string;
+  isSimulated: boolean;
+  createdAt: string;
 }

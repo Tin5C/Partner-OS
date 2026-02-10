@@ -12,6 +12,8 @@ import type {
   PackageRecsV1,
   StoryCardsV1,
   PlayV1,
+  MicrocastV1,
+  StoryCardCTA,
 } from '../contracts';
 import type { ActiveContext } from '../PartnerDataProvider';
 
@@ -145,12 +147,12 @@ const DEMO_STORY_CARDS: DerivedArtifact<StoryCardsV1> = {
   createdAt: '2026-02-10T08:10:00Z',
   content: {
     cards: [
-      { cardId: 'sc-001', title: 'Azure OpenAI Now in Switzerland North', whatChanged: 'Azure OpenAI expanded to Switzerland North region.', whyItMatters: 'Removes data residency objection for Swiss-regulated workloads like Schindler.', expiresAt: expiry(12), tags: ['Vendor', 'Azure', 'Data Residency'], suggestedAction: 'Lead with this to unblock compliance team.', confidence: 'High', sources: [{ label: 'Azure Updates Blog', sourceType: 'url', url: 'https://azure.microsoft.com/updates' }], simulated: true },
-      { cardId: 'sc-002', title: 'EU Machinery Regulation: Digital Twins by 2027', whatChanged: 'EU regulation requires machine-readable documentation for machinery.', whyItMatters: 'Elevator OEMs like Schindler must invest in digital twins — compliance deadline creates urgency.', expiresAt: expiry(14), tags: ['Regulatory', 'EU', 'Compliance'], suggestedAction: 'Position AI readiness assessment as compliance prerequisite.', confidence: 'High', sources: [{ label: 'European Commission', sourceType: 'url', url: 'https://ec.europa.eu' }], simulated: true },
-      { cardId: 'sc-003', title: 'Swiss Manufacturing AI Adoption at 35%', whatChanged: 'Industry benchmark shows 35% AI adoption in Swiss manufacturing.', whyItMatters: 'Schindler risks falling behind peers — competitive pressure angle.', expiresAt: expiry(10), tags: ['LocalMarket', 'Benchmark'], suggestedAction: 'Reference benchmark in executive conversations.', confidence: 'Medium', sources: [{ label: 'Swiss Digital Economy Report 2026', sourceType: 'url' }], simulated: true },
-      { cardId: 'sc-004', title: 'Copilot for Field Service in Public Preview', whatChanged: 'Microsoft launched Copilot for Field Service in public preview.', whyItMatters: 'Directly relevant to Schindler\'s 20K+ field technicians.', expiresAt: expiry(12), tags: ['Vendor', 'Copilot', 'Field Service'], suggestedAction: 'Propose Copilot Sprint scoped to field service.', packId: 'pkg-copilot', confidence: 'Medium', sources: [{ label: 'Dynamics 365 Blog', sourceType: 'url' }], simulated: true },
-      { cardId: 'sc-005', title: 'Kone Partners with Google Cloud for AI', whatChanged: 'Competitor Kone announced AI partnership with Google Cloud.', whyItMatters: 'Creates competitive pressure — Schindler may lose first-mover advantage on Azure.', expiresAt: expiry(10), tags: ['Competitive', 'Google Cloud'], suggestedAction: 'Use competitive urgency in next CTO conversation.', confidence: 'Medium', sources: [{ label: 'Industry news', sourceType: 'internal_note' }], simulated: true },
-      { cardId: 'sc-006', title: 'Partner Incentive Tiers Updated for AI', whatChanged: 'Microsoft updated partner incentive bands for AI workload certifications.', whyItMatters: 'AlpNova can unlock higher rebate bands by accelerating AI deployments.', expiresAt: expiry(21), tags: ['Vendor', 'Incentives'], suggestedAction: 'Review updated tier requirements with practice lead.', confidence: 'High', sources: [{ label: 'Partner Center', sourceType: 'url', url: 'https://partner.microsoft.com' }], simulated: true },
+      { cardId: 'sc-001', title: 'Azure OpenAI Now in Switzerland North', whatChanged: 'Azure OpenAI expanded to Switzerland North region.', whyItMatters: 'Removes data residency objection for Swiss-regulated workloads like Schindler.', expiresAt: expiry(12), tags: ['Vendor', 'Azure', 'Data Residency'], suggestedAction: 'Lead with this to unblock compliance team.', confidence: 'High', sources: [{ label: 'Azure Updates Blog', sourceType: 'url', url: 'https://azure.microsoft.com/updates' }], simulated: true, ctas: [{ type: 'listen_microcast', microcastType: 'account', label: 'Listen (4 min)' }] },
+      { cardId: 'sc-002', title: 'EU Machinery Regulation: Digital Twins by 2027', whatChanged: 'EU regulation requires machine-readable documentation for machinery.', whyItMatters: 'Elevator OEMs like Schindler must invest in digital twins — compliance deadline creates urgency.', expiresAt: expiry(14), tags: ['Regulatory', 'EU', 'Compliance'], suggestedAction: 'Position AI readiness assessment as compliance prerequisite.', confidence: 'High', sources: [{ label: 'European Commission', sourceType: 'url', url: 'https://ec.europa.eu' }], simulated: true, ctas: [{ type: 'listen_microcast', microcastType: 'account', label: 'Listen (4 min)' }, { type: 'listen_microcast', microcastType: 'industry', label: 'Industry Update (4 min)' }] },
+      { cardId: 'sc-003', title: 'Swiss Manufacturing AI Adoption at 35%', whatChanged: 'Industry benchmark shows 35% AI adoption in Swiss manufacturing.', whyItMatters: 'Schindler risks falling behind peers — competitive pressure angle.', expiresAt: expiry(10), tags: ['LocalMarket', 'Benchmark', 'Industry'], suggestedAction: 'Reference benchmark in executive conversations.', confidence: 'Medium', sources: [{ label: 'Swiss Digital Economy Report 2026', sourceType: 'url' }], simulated: true, ctas: [{ type: 'listen_microcast', microcastType: 'account', label: 'Listen (4 min)' }, { type: 'listen_microcast', microcastType: 'industry', label: 'Industry Update (4 min)' }] },
+      { cardId: 'sc-004', title: 'Copilot for Field Service in Public Preview', whatChanged: 'Microsoft launched Copilot for Field Service in public preview.', whyItMatters: 'Directly relevant to Schindler\'s 20K+ field technicians.', expiresAt: expiry(12), tags: ['Vendor', 'Copilot', 'Field Service'], suggestedAction: 'Propose Copilot Sprint scoped to field service.', packId: 'pkg-copilot', confidence: 'Medium', sources: [{ label: 'Dynamics 365 Blog', sourceType: 'url' }], simulated: true, ctas: [{ type: 'listen_microcast', microcastType: 'account', label: 'Listen (4 min)' }] },
+      { cardId: 'sc-005', title: 'Kone Partners with Google Cloud for AI', whatChanged: 'Competitor Kone announced AI partnership with Google Cloud.', whyItMatters: 'Creates competitive pressure — Schindler may lose first-mover advantage on Azure.', expiresAt: expiry(10), tags: ['Competitive', 'Google Cloud', 'Industry'], suggestedAction: 'Use competitive urgency in next CTO conversation.', confidence: 'Medium', sources: [{ label: 'Industry news', sourceType: 'internal_note' }], simulated: true, ctas: [{ type: 'listen_microcast', microcastType: 'account', label: 'Listen (4 min)' }, { type: 'listen_microcast', microcastType: 'industry', label: 'Industry Update (4 min)' }] },
+      { cardId: 'sc-006', title: 'Partner Incentive Tiers Updated for AI', whatChanged: 'Microsoft updated partner incentive bands for AI workload certifications.', whyItMatters: 'AlpNova can unlock higher rebate bands by accelerating AI deployments.', expiresAt: expiry(21), tags: ['Vendor', 'Incentives'], suggestedAction: 'Review updated tier requirements with practice lead.', confidence: 'High', sources: [{ label: 'Partner Center', sourceType: 'url', url: 'https://partner.microsoft.com' }], simulated: true, ctas: [{ type: 'listen_microcast', microcastType: 'account', label: 'Listen (4 min)' }] },
     ],
     simulated: true,
   },
@@ -543,6 +545,142 @@ export const CANONICAL_PACKAGES: CanonicalPackage[] = [
   { id: 'pkg-finops', name: 'FinOps for AI', category: 'finops', shortOutcome: 'Cost optimization framework for AI services.', timebox: '2–4 weeks', indicativeRange: '$12K–$40K' },
 ];
 
+// ============= H) Microcast — Account =============
+
+const DEMO_MICROCAST_ACCOUNT: DerivedArtifact<MicrocastV1> = {
+  ...ENV,
+  artifactId: 'art-microcast-account-001',
+  artifactType: 'microcast',
+  formatVersion: 'microcast.v1',
+  createdAt: '2026-02-10T08:20:00Z',
+  content: {
+    id: 'mc-account-001',
+    microcastType: 'account',
+    title: 'Schindler Account Update — Week of Feb 9',
+    estMinutes: 4,
+    scriptText: `Welcome to your Schindler account update for the week of February 9th.
+
+Three signals matter this week. First, Azure OpenAI is now generally available in Switzerland North. This is significant because it removes the data residency objection that Schindler's compliance team has raised in previous conversations. You can now position in-country AI processing as a given, not a workaround.
+
+Second, the EU Machinery Regulation has been finalized, mandating machine-readable documentation and digital twins for machinery by 2027. For an elevator OEM like Schindler, this creates real compliance urgency. Position AlpNova's AI Readiness Assessment as a prerequisite for compliance — not just a nice-to-have.
+
+Third, Copilot for Field Service has entered public preview. With over 20,000 field technicians, Schindler is an ideal candidate for a Copilot Sprint. The key is to scope it tightly — propose a 30-day pilot focused on field service dispatching.
+
+The competitive landscape is also shifting. Kone has announced an AI partnership with Google Cloud. While their use case differs from Schindler's, the optics create urgency. Schindler risks being seen as a laggard if they don't act.
+
+Your three actions for this week: First, lead your next meeting with the Switzerland North availability to unblock the compliance conversation. Second, position the AI Readiness Assessment as a compliance prerequisite tied to the EU regulation timeline. Third, propose a 30-day Copilot Sprint scoped to field service to demonstrate quick wins.`,
+    readText: `## Schindler Account Update — Week of Feb 9
+
+### Key Signals
+
+**1. Azure OpenAI in Switzerland North (GA)**
+Azure OpenAI is now available in Switzerland North, removing data residency objections for Swiss-regulated workloads. Position in-country AI processing as a given.
+
+**2. EU Machinery Regulation — Digital Twins by 2027**
+The regulation mandates machine-readable documentation for machinery. Schindler must invest in digital twins — compliance deadline creates real urgency.
+
+**3. Copilot for Field Service (Public Preview)**
+Directly relevant to Schindler's 20,000+ field technicians. Scope a 30-day pilot to field service dispatching.
+
+### Competitive Context
+Kone announced an AI partnership with Google Cloud. Different use case, but creates competitive pressure for Schindler to act.
+
+### This Week's Actions
+1. Lead with Switzerland North availability to unblock compliance
+2. Position AI Readiness Assessment as EU compliance prerequisite
+3. Propose 30-day Copilot Sprint for field service`,
+    actions: [
+      'Lead next meeting with Switzerland North availability to unblock compliance team.',
+      'Position AI Readiness Assessment as EU Machinery Regulation compliance prerequisite.',
+      'Propose 30-day Copilot Sprint scoped to field service dispatching.',
+    ],
+    proofArtifacts: [
+      'Azure OpenAI Switzerland North GA announcement',
+      'EU Machinery Regulation 2027 compliance timeline',
+      'Copilot for Field Service public preview documentation',
+    ],
+    sources: [
+      { label: 'Azure Updates Blog', sourceType: 'url', url: 'https://azure.microsoft.com/updates' },
+      { label: 'European Commission', sourceType: 'url', url: 'https://ec.europa.eu' },
+      { label: 'Schindler CTO conference notes', sourceType: 'internal_note' },
+    ],
+    sourceStoryIds: ['sc-001', 'sc-002', 'sc-004', 'sc-005'],
+    focusId: 'focus-schindler',
+    hubOrgId: 'hub-alpnova',
+    weekOfDate: WEEK_OF,
+    isSimulated: true,
+    createdAt: '2026-02-10T08:20:00Z',
+  },
+};
+
+// ============= I) Microcast — Industry =============
+
+const DEMO_MICROCAST_INDUSTRY: DerivedArtifact<MicrocastV1> = {
+  ...ENV,
+  artifactId: 'art-microcast-industry-001',
+  artifactType: 'microcast',
+  formatVersion: 'microcast.v1',
+  createdAt: '2026-02-10T08:20:00Z',
+  content: {
+    id: 'mc-industry-001',
+    microcastType: 'industry',
+    title: 'Industrial AI Landscape — Week of Feb 9',
+    estMinutes: 4,
+    scriptText: `Welcome to your industrial AI landscape update for the week of February 9th.
+
+The industrial sector is at an inflection point for AI adoption. Swiss manufacturing AI adoption has reached 35% according to the latest Digital Economy Report. This benchmark matters because it establishes a clear peer pressure dynamic — companies below this threshold risk falling behind.
+
+The EU Machinery Regulation is the biggest regulatory development. By 2027, machinery manufacturers must provide machine-readable documentation and digital twins. This isn't just a compliance checkbox — it fundamentally changes how elevator OEMs, including Schindler, need to think about their digital infrastructure.
+
+On the competitive front, Kone's partnership with Google Cloud signals that major elevator OEMs are committing to cloud AI strategies. While Kone's initial focus is consumer analytics rather than predictive maintenance, the direction is clear. Every major industrial player will need an AI platform strategy.
+
+For partners like AlpNova, these trends create a convergence opportunity. Regulatory pressure plus competitive urgency plus technology availability equals a narrow window where customers are most receptive to AI engagements.
+
+Your three key takeaways: First, use the 35% adoption benchmark as a conversation starter with any industrial prospect — it creates healthy peer pressure. Second, position AI readiness as a compliance necessity, not just an innovation play. Third, differentiate Azure's industrial IoT stack from Google Cloud's analytics-first approach when competing for industrial accounts.`,
+    readText: `## Industrial AI Landscape — Week of Feb 9
+
+### Market Signals
+
+**Swiss Manufacturing AI Adoption at 35%**
+The latest Digital Economy Report shows 35% AI adoption across Swiss manufacturing. Companies below this threshold risk falling behind peers.
+
+**EU Machinery Regulation 2027**
+Mandates machine-readable documentation and digital twins for machinery manufacturers. Creates compliance urgency across the elevator and industrial OEM sector.
+
+**Kone–Google Cloud Partnership**
+Signals that major elevator OEMs are committing to cloud AI strategies. Initial focus on consumer analytics, but direction is clear.
+
+### Convergence Opportunity
+Regulatory pressure + competitive urgency + technology availability = narrow window for AI engagements.
+
+### Key Takeaways
+1. Use the 35% benchmark as peer pressure in executive conversations
+2. Position AI readiness as compliance necessity, not just innovation
+3. Differentiate Azure IoT stack from Google Cloud's analytics-first approach`,
+    actions: [
+      'Use 35% AI adoption benchmark as peer pressure in executive conversations.',
+      'Position AI readiness as compliance necessity tied to EU Machinery Regulation.',
+      'Differentiate Azure IoT stack from Google Cloud analytics-first approach.',
+    ],
+    proofArtifacts: [
+      'Swiss Digital Economy Report 2026 — AI adoption data',
+      'EU Machinery Regulation summary and timeline',
+      'Azure vs GCP industrial IoT capability comparison',
+    ],
+    sources: [
+      { label: 'Swiss Digital Economy Report 2026', sourceType: 'url' },
+      { label: 'European Commission', sourceType: 'url', url: 'https://ec.europa.eu' },
+      { label: 'Industry competitive analysis', sourceType: 'internal_note' },
+    ],
+    sourceStoryIds: ['sc-002', 'sc-003', 'sc-005'],
+    focusId: 'focus-schindler',
+    hubOrgId: 'hub-alpnova',
+    weekOfDate: WEEK_OF,
+    isSimulated: true,
+    createdAt: '2026-02-10T08:20:00Z',
+  },
+};
+
 // ============= All Artifacts =============
 
 // Default: hand-crafted demo artifacts
@@ -555,6 +693,8 @@ const HANDCRAFTED_ARTIFACTS: DerivedArtifact[] = [
   DEMO_PLAY_COMPETITIVE,
   DEMO_PLAY_OBJECTION,
   DEMO_PACKAGE_RECS,
+  DEMO_MICROCAST_ACCOUNT,
+  DEMO_MICROCAST_INDUSTRY,
 ];
 
 // ============= Bundle Import (paste & uncomment to swap) =============

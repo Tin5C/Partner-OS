@@ -1,7 +1,7 @@
 // Runtime validation for demo artifact safety
 // Throws clear errors when precomputed data violates contracts
 
-import type { QuickBriefV1, StoryCardsV1, PlayV1, DealBriefV1 } from './contracts';
+import type { QuickBriefV1, StoryCardsV1, PlayV1, DealBriefV1, MicrocastV1 } from './contracts';
 
 function fail(artifact: string, msg: string): never {
   throw new Error(`Demo artifact invalid: ${artifact} ${msg}`);
@@ -49,5 +49,16 @@ export function assertPlayV1(c: PlayV1): void {
   assertArrayLen(c.redFlags, 3, 5, a, 'redFlags');
   if (c.estMinutes < 3 || c.estMinutes > 6) {
     fail(a, `requires estMinutes 3–6, got ${c.estMinutes}`);
+  }
+}
+
+export function assertMicrocastV1(c: MicrocastV1): void {
+  const a = 'microcast.v1';
+  assertExactLen(c.actions, 3, a, 'actions');
+  assertExactLen(c.proofArtifacts, 3, a, 'proofArtifacts');
+  assertArrayLen(c.sourceStoryIds, 1, 6, a, 'sourceStoryIds');
+  const validTypes = ['account', 'industry'];
+  if (!validTypes.includes(c.microcastType)) {
+    fail(a, `invalid microcastType "${c.microcastType}"`);
   }
 }
