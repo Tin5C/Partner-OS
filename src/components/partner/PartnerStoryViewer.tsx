@@ -1,13 +1,13 @@
 // Partner Story Viewer - 1-tap execution viewer
-// Shows headline, "so what", and primary action button
-// Actions: Add to Brief, Add to Quick Brief, Open Pack, Create Brief
+// Shows headline, "so what", and primary action button + Listen CTA for microcasts
 
-import { X, ChevronLeft, ChevronRight, ExternalLink, Plus, FileText, TrendingUp, Zap } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, ExternalLink, Plus, FileText, TrendingUp, Zap, Headphones } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { PartnerStory, signalTypeColors } from '@/data/partnerStories';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import type { StoryCardCTA, MicrocastType } from '@/data/partner/contracts';
 
 interface PartnerStoryViewerProps {
   story: PartnerStory | null;
@@ -21,12 +21,12 @@ interface PartnerStoryViewerProps {
   hasPrev?: boolean;
   currentIndex?: number;
   totalCount?: number;
-  // Callback when user has a Customer Brief
   hasCustomerBrief?: boolean;
   onAddToBrief?: (story: PartnerStory) => void;
   onOpenTrendingPack?: (packId: string) => void;
   onCreateBrief?: () => void;
   onCreateQuickBrief?: () => void;
+  onListenMicrocast?: (microcastType: MicrocastType) => void;
 }
 
 export function PartnerStoryViewer({
@@ -46,6 +46,7 @@ export function PartnerStoryViewer({
   onOpenTrendingPack,
   onCreateBrief,
   onCreateQuickBrief,
+  onListenMicrocast,
 }: PartnerStoryViewerProps) {
   if (!story) return null;
 
@@ -62,7 +63,6 @@ export function PartnerStoryViewer({
           });
           onMarkListened(story.id);
         } else if (onCreateBrief) {
-          // Prompt to create brief first
           toast.info('Create an AI Deal Brief first', {
             description: 'Start a brief to save signals for your deal.',
             action: {
@@ -113,11 +113,13 @@ export function PartnerStoryViewer({
     }
   };
 
-  // Show "Create Brief first" if action requires brief but none exists
   const needsBrief = 
     (story.primaryAction.actionType === 'AddToBrief' || 
      story.primaryAction.actionType === 'ApplyToProject') && 
     !hasCustomerBrief;
+
+  // Get CTAs from the adapted story (stored in _ctas field)
+  const ctas: StoryCardCTA[] = (story as any)._ctas ?? [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -160,10 +162,8 @@ export function PartnerStoryViewer({
 
         {/* Main content */}
         <div className="flex-1 overflow-y-auto p-5 space-y-5">
-          {/* Headline */}
           <h2 className="text-xl font-semibold leading-tight">{story.headline}</h2>
 
-          {/* So what - the key insight */}
           <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
             <p className="text-sm leading-relaxed">
               <span className="font-semibold text-primary">So what: </span>
@@ -171,7 +171,29 @@ export function PartnerStoryViewer({
             </p>
           </div>
 
-          {/* Tags */}
+          {/* Listen CTAs */}
+          {ctas.length > 0 && onListenMicrocast && (
+            <div className="flex flex-wrap gap-2">
+              {ctas.map((cta, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    onListenMicrocast(cta.microcastType);
+                    onClose();
+                  }}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium",
+                    "bg-primary/10 text-primary border border-primary/20",
+                    "hover:bg-primary/15 transition-colors"
+                  )}
+                >
+                  <Headphones className="w-3.5 h-3.5" />
+                  {cta.label}
+                </button>
+              ))}
+            </div>
+          )}
+
           {story.tags && story.tags.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {story.tags.map((tag, idx) => (
@@ -185,7 +207,6 @@ export function PartnerStoryViewer({
             </div>
           )}
 
-          {/* Source link */}
           {story.sourceName && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>Source:</span>

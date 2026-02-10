@@ -7,21 +7,21 @@ import { cn } from '@/lib/utils';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { PartnerStoryTile } from './PartnerStoryTile';
 import { PartnerStoryViewer } from './PartnerStoryViewer';
+import { MicrocastViewer } from './MicrocastViewer';
 import { PartnerStory, PartnerSignalType, signalTypeColors, signalTypeGradients } from '@/data/partnerStories';
 import { useStoryState } from '@/hooks/useStoryState';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { usePartnerData } from '@/contexts/FocusDataContext';
-import type { StoryCardsV1, StoryCardV1 } from '@/data/partner/contracts';
+import type { StoryCardsV1, StoryCardV1, MicrocastV1, MicrocastType } from '@/data/partner/contracts';
 
 // Adapter: convert StoryCardV1 → PartnerStory for existing tile/viewer components
 function adaptCardToStory(card: StoryCardV1): PartnerStory {
-  // Derive signalType from tags
   const signalType: PartnerSignalType = 
     card.tags.includes('Regulatory') ? 'Regulatory' :
     card.tags.includes('LocalMarket') ? 'LocalMarket' : 'Vendor';
 
-  return {
+  const adapted: PartnerStory = {
     id: card.cardId,
     signalType,
     headline: card.title,
@@ -34,6 +34,13 @@ function adaptCardToStory(card: StoryCardV1): PartnerStory {
     expiresAt: card.expiresAt,
     tags: card.tags,
   };
+
+  // Pass CTAs through via a hidden field for the viewer
+  if (card.ctas && card.ctas.length > 0) {
+    (adapted as any)._ctas = card.ctas;
+  }
+
+  return adapted;
 }
 
 interface PartnerStoriesRowProps {
@@ -70,6 +77,10 @@ export function PartnerStoriesRow({
   const [viewerOpen, setViewerOpen] = useState(false);
   const [browseOpen, setBrowseOpen] = useState(false);
   const [currentPlaylist, setCurrentPlaylist] = useState<PartnerStory[]>([]);
+
+  // Microcast viewer state
+  const [microcastOpen, setMicrocastOpen] = useState(false);
+  const [activeMicrocast, setActiveMicrocast] = useState<MicrocastV1 | null>(null);
 
   const { getState, markSeen, markListened } = useStoryState();
 
@@ -110,6 +121,18 @@ export function PartnerStoriesRow({
   const handleAddToBrief = (story: PartnerStory) => {
     markListened(story.id);
   };
+
+  const handleListenMicrocast = useCallback((microcastType: MicrocastType) => {
+    if (!ctx) return;
+    const artifact = provider.getMicrocastByType(ctx.focusId, microcastType);
+    if (artifact) {
+      setActiveMicrocast(artifact.content);
+      setMicrocastOpen(true);
+    } else {
+      setActiveMicrocast(null);
+      setMicrocastOpen(true); // will show fallback
+    }
+  }, [provider, ctx]);
 
   if (homepageStories.length === 0) {
     return null;
@@ -165,6 +188,14 @@ export function PartnerStoriesRow({
         onOpenTrendingPack={onOpenTrendingPack}
         onCreateBrief={onCreateBrief}
         onCreateQuickBrief={onCreateQuickBrief}
+        onListenMicrocast={handleListenMicrocast}
+      />
+
+      {/* Microcast Viewer */}
+      <MicrocastViewer
+        microcast={activeMicrocast}
+        open={microcastOpen}
+        onOpenChange={setMicrocastOpen}
       />
 
       {/* Browse All Sheet */}

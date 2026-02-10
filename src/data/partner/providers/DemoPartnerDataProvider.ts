@@ -10,6 +10,8 @@ import type {
   StoryCardsV1,
   DealBriefV1,
   PlayV1,
+  MicrocastV1,
+  MicrocastType,
 } from '../contracts';
 import type { PartnerDataProvider, ActiveContext } from '../PartnerDataProvider';
 import {
@@ -17,6 +19,7 @@ import {
   assertStoryCardsV1,
   assertDealBriefV1,
   assertPlayV1,
+  assertMicrocastV1,
 } from '../validation';
 import {
   DEMO_CONTEXT,
@@ -40,6 +43,7 @@ export class DemoPartnerDataProvider implements PartnerDataProvider {
       if (a.artifactType === 'storyCards') assertStoryCardsV1(a.content as StoryCardsV1);
       if (a.artifactType === 'dealBrief') assertDealBriefV1(a.content as DealBriefV1);
       if (a.artifactType === 'play') assertPlayV1(a.content as PlayV1);
+      if (a.artifactType === 'microcast') assertMicrocastV1(a.content as MicrocastV1);
     }
   }
 
@@ -70,5 +74,17 @@ export class DemoPartnerDataProvider implements PartnerDataProvider {
 
   listFocusEntities(): FocusEntity[] {
     return DEMO_FOCUS_ENTITIES;
+  }
+
+  getMicrocastByType(focusId: string, microcastType: MicrocastType): DerivedArtifact<MicrocastV1> | null {
+    return (this.artifacts.find(
+      (a) => a.artifactType === 'microcast' && a.focusId === focusId && (a.content as MicrocastV1).microcastType === microcastType
+    ) as DerivedArtifact<MicrocastV1> | undefined) ?? null;
+  }
+
+  getMicrocastById(id: string): DerivedArtifact<MicrocastV1> | null {
+    return (this.artifacts.find(
+      (a) => a.artifactType === 'microcast' && (a.content as MicrocastV1).id === id
+    ) as DerivedArtifact<MicrocastV1> | undefined) ?? null;
   }
 }

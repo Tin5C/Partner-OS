@@ -1,8 +1,8 @@
 // Import helper: paste one Bundle Transformer JSON output → DerivedArtifact[]
 
 import type { DerivedArtifact, ArtifactType, PersonaType, PlayType, MotionType } from '../contracts';
-import { assertQuickBriefV1, assertStoryCardsV1, assertDealBriefV1, assertPlayV1 } from '../validation';
-import type { QuickBriefV1, StoryCardsV1, DealBriefV1, PlayV1 } from '../contracts';
+import { assertQuickBriefV1, assertStoryCardsV1, assertDealBriefV1, assertPlayV1, assertMicrocastV1 } from '../validation';
+import type { QuickBriefV1, StoryCardsV1, DealBriefV1, PlayV1, MicrocastV1 } from '../contracts';
 
 // ============= Bundle Format =============
 
@@ -63,6 +63,9 @@ export function normalizeBundle(bundle: ArtifactBundle): DerivedArtifact[] {
         break;
       case 'play':
         assertPlayV1(a.content as PlayV1);
+        break;
+      case 'microcast':
+        assertMicrocastV1(a.content as MicrocastV1);
         break;
     }
   }
