@@ -8,6 +8,9 @@ import { getDefaultBriefTemplatesConfig, BriefTemplatesConfig } from '@/data/bri
 // Brief templates config (exported for use by partner components)
 export const partnerBriefTemplates: BriefTemplatesConfig = getDefaultBriefTemplatesConfig();
 
+// Demo mode switch — true = precomputed artifacts (Option A), false = live generation (Option B)
+export const partnerDemoMode: boolean = true;
+
 export const partnerConfig: SpaceConfig = {
   spaceType: 'partner',
   displayName: 'Partner',
