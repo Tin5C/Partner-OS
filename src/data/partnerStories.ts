@@ -36,6 +36,11 @@ export interface PartnerStory {
   sourceName?: string;
   sourceUrl?: string;
   tags?: string[];
+
+  // Relevance fields (optional, render only when present)
+  relevance_summary?: string;
+  relevance_score?: number; // 0–100
+  relevance_reasons?: string[];
 }
 
 // Helper to create expiry date

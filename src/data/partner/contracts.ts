@@ -106,6 +106,11 @@ export interface StoryCardV1 {
   sources: ArtifactSource[];
   simulated: boolean;
   ctas?: StoryCardCTA[];
+
+  // Relevance fields (optional, render only when present)
+  relevance_summary?: string;
+  relevance_score?: number; // 0–100
+  relevance_reasons?: string[];
 }
 
 export interface StoryCardsV1 {
