@@ -77,6 +77,11 @@ export class DemoPartnerDataProvider implements PartnerDataProvider {
     return DEMO_FOCUS_ENTITIES;
   }
 
+  getFocusTouchpoints(focusId: string): FocusTouchpointContext | null {
+    const entity = DEMO_FOCUS_ENTITIES.find(e => e.id === focusId);
+    return entity?.touchpointContext ?? null;
+  }
+
   getMicrocastByType(focusId: string, microcastType: MicrocastType): DerivedArtifact<MicrocastV1> | null {
     return (this.artifacts.find(
       (a) => a.artifactType === 'microcast' && a.focusId === focusId && (a.content as MicrocastV1).microcastType === microcastType

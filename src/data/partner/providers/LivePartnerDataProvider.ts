@@ -27,6 +27,10 @@ export class LivePartnerDataProvider implements PartnerDataProvider {
     return [];
   }
 
+  getFocusTouchpoints(): FocusTouchpointContext | null {
+    return null;
+  }
+
   getMicrocastByType(): DerivedArtifact<MicrocastV1> | null {
     return null;
   }
