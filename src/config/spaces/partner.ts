@@ -47,17 +47,7 @@ export const partnerConfig: SpaceConfig = {
       variant: 'primary',
       enabled: true,
     },
-    // 4. GROWTH / ENABLEMENT
-    {
-      id: 'growth',
-      type: 'growth',
-      title: 'Enablement',
-      subtitle: undefined,
-      variant: 'secondary',
-      enabled: true,
-      packs: ['skill-of-week'],
-    },
-    // 5. SOLUTION DEEP DIVES — second-to-last
+    // 4. SOLUTION DEEP DIVES
     {
       id: 'expert-corners',
       type: 'expertCorners',
@@ -66,7 +56,7 @@ export const partnerConfig: SpaceConfig = {
       variant: 'primary',
       enabled: true,
     },
-    // 6. CAPABILITY & BRAND — last
+    // 5. CAPABILITY & BRAND
     {
       id: 'capability-brand',
       type: 'capabilityBrand',
@@ -74,6 +64,16 @@ export const partnerConfig: SpaceConfig = {
       subtitle: undefined,
       variant: 'secondary',
       enabled: true,
+    },
+    // 6. GROWTH / ENABLEMENT — last
+    {
+      id: 'growth',
+      type: 'growth',
+      title: 'Enablement',
+      subtitle: undefined,
+      variant: 'secondary',
+      enabled: true,
+      packs: ['skill-of-week'],
     },
   ],
   
