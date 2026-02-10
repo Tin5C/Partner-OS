@@ -169,10 +169,41 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
         </div>
       </div>
 
-      <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-        <Info className="w-3 h-3" />
-        Based on your Dialogue activity
-      </p>
+      <div className="flex items-center gap-3">
+        <p className="text-[11px] text-muted-foreground flex items-center gap-1 flex-1">
+          <Info className="w-3 h-3" />
+          Based on your Dialogue activity
+        </p>
+        <button
+          onClick={() => {
+            const allSelected = signals.every((s) => selectedIds.has(s.id));
+            if (allSelected) {
+              setSelectedIds(new Set());
+            } else {
+              const allIds = new Set(signals.map((s) => s.id));
+              setSelectedIds(allIds);
+              setSectionToggles((prev) => {
+                const next = { ...prev };
+                signals.forEach((s) => { if (!next[s.id]) next[s.id] = new Set(ALL_SECTION_KEYS); });
+                return next;
+              });
+            }
+          }}
+          className="text-[11px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+        >
+          <Check className="w-3 h-3" />
+          {signals.every((s) => selectedIds.has(s.id)) ? 'Deselect all' : 'Select all'}
+        </button>
+        {selectedIds.size > 0 && (
+          <button
+            onClick={() => setExpandedIds(new Set(selectedIds))}
+            className="text-[11px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+          >
+            <ChevronDown className="w-3 h-3" />
+            Expand selected
+          </button>
+        )}
+      </div>
 
       {/* Signal Cards */}
       <div className="space-y-2">
