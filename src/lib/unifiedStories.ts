@@ -107,7 +107,7 @@ export function getUnifiedStories(space?: string): UnifiedStoryItem[] {
   
   // Filter winwire stories by space visibility if space is provided
   const filteredWinwire = space 
-    ? winwireStories.filter(s => s.spaceVisibility.includes(space))
+    ? winwireStories.filter(s => s.spaceVisibility.includes(space as any))
     : winwireStories;
   const winwireItems = filteredWinwire.map(winwireToUnified);
   
