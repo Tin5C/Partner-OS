@@ -226,12 +226,28 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
                     onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="Customer"
                     className={cn(
-                      "w-full h-10 pl-9 pr-3 rounded-lg text-sm",
+                      "w-full h-10 pl-9 pr-8 rounded-lg text-sm",
                       "bg-background border border-border",
                       "placeholder:text-muted-foreground/60",
                       "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30"
                     )}
                   />
+                  <TooltipProvider delayDuration={200}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                          tabIndex={-1}
+                        >
+                          <Info className="w-3.5 h-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-[240px] text-xs">
+                        Some context can auto-fill from CRM & calendar when connected. In this demo, results are based on simulated Dialogue activity.
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               </div>
               <div className="flex-1">
@@ -239,7 +255,7 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
                   type="text"
                   value={situation}
                   onChange={(e) => setSituation(e.target.value)}
-                  placeholder="What's happening? e.g. Follow-up after Copilot demo with IT + Security"
+                  placeholder={situationPlaceholder}
                   className={cn(
                     "w-full h-10 px-3 rounded-lg text-sm",
                     "bg-background border border-border",
