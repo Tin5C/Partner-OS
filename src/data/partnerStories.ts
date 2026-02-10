@@ -19,6 +19,12 @@ export interface PartnerStory {
   soWhat: string; // max ~90 characters - the implication
   primaryAction: PartnerStoryAction;
   
+  // Enriched detail fields (from StoryCardV1)
+  whatChanged?: string;
+  whatChangedBullets?: string[]; // max 2 short factual bullets
+  whoCares?: string[]; // 2-4 relevant roles
+  nextMove?: { talkTrack: string; proofToAsk: string };
+  
   // Visual
   coverUrl?: string;
   logoUrl?: string; // For vendor signals
