@@ -15,6 +15,9 @@ export * from './accountSignalStore';
 export * from './objectionStore';
 export * from './partnerProfileStore';
 
+// Deal Plan Selection store
+export * from './dealPlanSelectionStore';
+
 // HelioWorks demo seed (auto-runs on import)
 import './demo/helioworksSeed';
 
