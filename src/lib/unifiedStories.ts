@@ -92,7 +92,7 @@ function winwireToUnified(story: WinwireStory): UnifiedStoryItem {
 }
 
 // Get all unified stories sorted by publishedAt (newest first)
-export function getUnifiedStories(space?: 'internal' | 'partner'): UnifiedStoryItem[] {
+export function getUnifiedStories(space?: string): UnifiedStoryItem[] {
   const signalItems = stories.map(signalToUnified);
   
   // For Voice items, we add ONLY the latest episode from each Voice to the main rail
