@@ -17,6 +17,7 @@ const SpaceContext = createContext<SpaceContextValue | null>(null);
 const SPACE_PASSWORDS: Record<SpaceType, string> = {
   internal: 'internal2025',
   partner: 'partner2025',
+  vendor: 'vendor2025',
 };
 
 // Storage key for unlock state
