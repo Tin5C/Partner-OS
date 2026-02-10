@@ -32,12 +32,14 @@ export interface EngagementEvent {
   id: string;
   org_id: string;
   actor_user_id: string;
+  actor_role?: string;
   timestamp: string; // ISO
   customer_account_id?: string;
   content_type: EngagementContentType;
   content_id: string;
   event_type: EngagementEventType;
   duration_seconds?: number;
+  channel?: string;
   metadata?: Record<string, unknown>;
 }
 
