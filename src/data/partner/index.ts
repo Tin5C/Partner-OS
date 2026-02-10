@@ -15,6 +15,9 @@ export * from './accountSignalStore';
 export * from './objectionStore';
 export * from './partnerProfileStore';
 
+// HelioWorks demo seed (auto-runs on import)
+import './demo/helioworksSeed';
+
 // Legacy exports (kept for backward compat during migration)
 export type { FocusDataProvider } from './FocusDataProvider';
 export { LiveFocusDataProvider } from './FocusDataProvider';
