@@ -10,7 +10,9 @@ export type EngagementContentType =
   | 'objection'
   | 'competitive'
   | 'deal_brief'
-  | 'deep_dive';
+  | 'deep_dive'
+  | 'package'
+  | 'meeting';
 
 export type EngagementEventType =
   | 'view'
@@ -18,6 +20,10 @@ export type EngagementEventType =
   | 'play'
   | 'complete'
   | 'copy'
+  | 'forward'
+  | 'replied'
+  | 'requested_info'
+  | 'booked_meeting'
   | 'promote_to_deal_brief';
 
 // ============= EngagementEvent =============
@@ -26,29 +32,36 @@ export interface EngagementEvent {
   id: string;
   org_id: string;
   actor_user_id: string;
+  actor_role?: string;
   timestamp: string; // ISO
   customer_account_id?: string;
   content_type: EngagementContentType;
   content_id: string;
   event_type: EngagementEventType;
   duration_seconds?: number;
+  channel?: string;
   metadata?: Record<string, unknown>;
 }
 
 // ============= EngagementSignal =============
+
+export type EngagementConfidence = 'Low' | 'Medium' | 'High';
 
 export interface EngagementSignal {
   id: string;
   org_id: string;
   account_id: string;
   created_at: string; // ISO
+  actor_role?: string;
   title: string;
   so_what: string;
+  interpretation?: string;
   what_changed?: string[];
   who_cares?: string[];
   next_move?: string;
+  recommended_next_moves?: string[];
   proof_to_ask_for?: string;
-  confidence?: number; // 0–100
+  confidence?: number | EngagementConfidence; // 0–100 or enum
   source_event_refs?: string[];
   tags?: string[];
 }
@@ -112,16 +125,22 @@ const SIGNAL_SEEDS: Array<Omit<EngagementSignal, 'created_at'> & { created_at?: 
     id: 'es-seed-schindler-01',
     org_id: 'alpnova',
     account_id: 'schindler',
+    actor_role: 'seller',
     title: 'Schindler team revisiting Copilot governance content',
     so_what: 'Multiple views on governance stories suggest active evaluation — ideal time to offer a workshop.',
+    interpretation: 'Repeated engagement with governance content signals internal compliance review is underway.',
     what_changed: [
       'Three team members viewed the Copilot Governance story within 48 h.',
       'One user promoted the story to Deal Planning.',
     ],
     who_cares: ['IT', 'Security', 'Compliance'],
     next_move: 'Propose a 30-min Copilot Governance workshop for IT + Security stakeholders.',
+    recommended_next_moves: [
+      'Propose a 30-min Copilot Governance workshop for IT + Security stakeholders.',
+      'Share data-residency compliance checklist.',
+    ],
     proof_to_ask_for: 'Internal compliance checklist from Schindler IT',
-    confidence: 72,
+    confidence: 'High',
     source_event_refs: [],
     tags: ['Copilot', 'Governance', 'Schindler'],
   },
