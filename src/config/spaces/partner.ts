@@ -52,12 +52,12 @@ export const partnerConfig: SpaceConfig = {
       variant: 'primary',
       enabled: true,
     },
-    // 6. EXECUTION PACKS / BRIEFINGS
+    // 6. PLAYS (renamed from Execution Packs)
     {
       id: 'briefings',
       type: 'packGrid',
-      title: 'Execution Packs',
-      subtitle: 'Concrete actions, talk tracks, and objection handling.',
+      title: 'Plays',
+      subtitle: 'Talk tracks, objection handling, and competitive positioning.',
       variant: 'primary',
       enabled: true,
       packs: ['product-focus', 'competitive-overview', 'objection-handling'],
@@ -93,8 +93,8 @@ export const partnerConfig: SpaceConfig = {
     storiesSubtitle: 'What changed, why it matters, what to do.',
     accountPrepTitle: 'AI Deal Brief',
     accountPrepSubtitle: 'Turn messy AI deal context into a deal-ready plan in 5–10 minutes.',
-    briefingsTitle: 'Execution Packs',
-    briefingsSubtitle: 'Concrete actions, talk tracks, and objection handling.',
+    briefingsTitle: 'Plays',
+    briefingsSubtitle: 'Talk tracks, objection handling, and competitive positioning.',
     growthTitle: 'Enablement',
     reputationTitle: 'Enablement Progress',
     reputationSubtitle: 'Track your partner certification and training.',
