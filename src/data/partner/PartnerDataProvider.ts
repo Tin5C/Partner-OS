@@ -40,6 +40,8 @@ export interface PartnerDataProvider {
 
   listFocusEntities(): FocusEntity[];
 
+  getFocusTouchpoints(focusId: string): FocusTouchpointContext | null;
+
   getMicrocastByType(focusId: string, microcastType: MicrocastType): DerivedArtifact<MicrocastV1> | null;
 
   getMicrocastById(id: string): DerivedArtifact<MicrocastV1> | null;
