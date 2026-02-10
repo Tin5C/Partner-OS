@@ -95,7 +95,7 @@ const SEEDS: Array<Omit<BriefingArtifactRecord, 'created_at' | 'updated_at'>> = 
     type: 'account_microcast',
     format: 'text',
     title: 'Schindler AI Adoption – Weekly Signal Digest',
-    summary: 'Key signals from Schindler's recent AI evaluation cycle.',
+    summary: "Key signals from Schindler's recent AI evaluation cycle.",
     body_text:
       '## What changed\n- Schindler IT confirmed a Q3 pilot budget for predictive-maintenance AI.\n- New CISO hire is prioritising data-residency compliance.\n\n## So what\nPartners with Swiss-hosted AI workloads have a timing advantage.\n\n## Actions\n1. Request architecture review meeting.\n2. Share Azure Swiss data-centre collateral.\n3. Prepare ROI model for predictive-maintenance use case.',
     tags: ['Schindler', 'AI', 'Predictive Maintenance'],
