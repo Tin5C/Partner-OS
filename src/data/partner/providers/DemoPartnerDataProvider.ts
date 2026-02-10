@@ -6,6 +6,7 @@ import type {
   PersonaType,
   PlayType,
   FocusEntity,
+  FocusTouchpointContext,
   QuickBriefV1,
   StoryCardsV1,
   DealBriefV1,
