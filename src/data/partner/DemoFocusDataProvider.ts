@@ -5,6 +5,7 @@ import type {
   HubOrg,
   Vendor,
   FocusEntity,
+  FocusTouchpointContext,
   ExtractionRun,
   DerivedArtifact,
   ArtifactType,

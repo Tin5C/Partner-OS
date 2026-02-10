@@ -5,6 +5,7 @@ import type {
   HubOrg,
   Vendor,
   FocusEntity,
+  FocusTouchpointContext,
   ExtractionRun,
   DerivedArtifact,
   ArtifactType,
@@ -19,6 +20,8 @@ export interface FocusDataProvider {
   getHubOrg(): HubOrg;
   listVendors(): Vendor[];
   listFocusEntities(): FocusEntity[];
+
+  getFocusTouchpoints(focusId: string): FocusTouchpointContext | null;
 
   getActiveRun(params: {
     hubOrgId: string;
@@ -54,6 +57,9 @@ export class LiveFocusDataProvider implements FocusDataProvider {
   }
   listFocusEntities(): FocusEntity[] {
     return [];
+  }
+  getFocusTouchpoints(): FocusTouchpointContext | null {
+    return null;
   }
   getActiveRun(): ExtractionRun | null {
     return null;
