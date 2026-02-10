@@ -15,6 +15,7 @@ import TenantHome from "./pages/TenantHome";
 import ExperiencePage from "./pages/ExperiencePage";
 import InternalPage from "./pages/InternalPage";
 import PartnerPage from "./pages/PartnerPage";
+import VendorPage from "./pages/VendorPage";
 import AccessGate from "./pages/AccessGate";
 import Home from "./pages/Home";
 import PlaylistsIndex from "./pages/PlaylistsIndex";
