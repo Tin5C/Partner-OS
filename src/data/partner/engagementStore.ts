@@ -10,7 +10,9 @@ export type EngagementContentType =
   | 'objection'
   | 'competitive'
   | 'deal_brief'
-  | 'deep_dive';
+  | 'deep_dive'
+  | 'package'
+  | 'meeting';
 
 export type EngagementEventType =
   | 'view'
@@ -18,6 +20,10 @@ export type EngagementEventType =
   | 'play'
   | 'complete'
   | 'copy'
+  | 'forward'
+  | 'replied'
+  | 'requested_info'
+  | 'booked_meeting'
   | 'promote_to_deal_brief';
 
 // ============= EngagementEvent =============
