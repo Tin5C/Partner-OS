@@ -92,7 +92,7 @@ function winwireToUnified(story: WinwireStory): UnifiedStoryItem {
 }
 
 // Get all unified stories sorted by publishedAt (newest first)
-export function getUnifiedStories(space?: 'internal' | 'partner'): UnifiedStoryItem[] {
+export function getUnifiedStories(space?: string): UnifiedStoryItem[] {
   const signalItems = stories.map(signalToUnified);
   
   // For Voice items, we add ONLY the latest episode from each Voice to the main rail
@@ -107,7 +107,7 @@ export function getUnifiedStories(space?: 'internal' | 'partner'): UnifiedStoryI
   
   // Filter winwire stories by space visibility if space is provided
   const filteredWinwire = space 
-    ? winwireStories.filter(s => s.spaceVisibility.includes(space))
+    ? winwireStories.filter(s => s.spaceVisibility.includes(space as any))
     : winwireStories;
   const winwireItems = filteredWinwire.map(winwireToUnified);
   
@@ -117,9 +117,9 @@ export function getUnifiedStories(space?: 'internal' | 'partner'): UnifiedStoryI
 }
 
 // Get winwire playlist for winwire context
-export function getWinwirePlaylist(space?: 'internal' | 'partner'): UnifiedStoryItem[] {
+export function getWinwirePlaylist(space?: string): UnifiedStoryItem[] {
   const filtered = space 
-    ? winwireStories.filter(s => s.spaceVisibility.includes(space))
+    ? winwireStories.filter(s => s.spaceVisibility.includes(space as any))
     : winwireStories;
   
   return filtered

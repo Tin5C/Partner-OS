@@ -15,6 +15,7 @@ import TenantHome from "./pages/TenantHome";
 import ExperiencePage from "./pages/ExperiencePage";
 import InternalPage from "./pages/InternalPage";
 import PartnerPage from "./pages/PartnerPage";
+import VendorPage from "./pages/VendorPage";
 import AccessGate from "./pages/AccessGate";
 import Home from "./pages/Home";
 import PlaylistsIndex from "./pages/PlaylistsIndex";
@@ -78,6 +79,7 @@ function AppRoutes() {
       {/* NEW: Space-based routes (Internal/Partner) with shared components */}
       <Route path="/internal" element={<InternalPage />} />
       <Route path="/partner" element={<PartnerPage />} />
+      <Route path="/vendor" element={<VendorPage />} />
       <Route path="/partner/strategy" element={<PartnerStrategyPage />} />
       <Route path="/partner/profile" element={<PartnerProfilePage />} />
       

@@ -1,0 +1,1 @@
+export { DemoVendorDataProvider } from './DemoVendorDataProvider';

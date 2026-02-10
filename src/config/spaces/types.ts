@@ -1,7 +1,7 @@
 // Space Configuration Types
 // Defines how each space (Internal/Partner) renders its homepage
 
-export type SpaceType = 'internal' | 'partner';
+export type SpaceType = 'internal' | 'partner' | 'vendor';
 
 export type SectionType = 
   | 'storiesRow'
@@ -16,7 +16,12 @@ export type SectionType =
   | 'trendingPacks'
   | 'capabilityBrand'
   | 'partnerMode'
-  | 'onDemandBriefings';
+  | 'onDemandBriefings'
+  // Vendor-specific section types
+  | 'programSignals'
+  | 'publishing'
+  | 'partnerBriefingPresets'
+  | 'vendorInsights';
 
 export type SectionVariant = 'primary' | 'secondary' | 'tertiary';
 
@@ -78,9 +83,7 @@ export interface SpaceConfig {
 
 // Get space config by type
 export function getSpaceConfig(spaceType: SpaceType): SpaceConfig {
-  // Dynamic import would happen here in production
-  // For now, we use the configs directly
-  return spaceType === 'internal' 
-    ? require('./internal').internalConfig 
-    : require('./partner').partnerConfig;
+  if (spaceType === 'internal') return require('./internal').internalConfig;
+  if (spaceType === 'vendor') return require('./vendor').vendorConfig;
+  return require('./partner').partnerConfig;
 }
