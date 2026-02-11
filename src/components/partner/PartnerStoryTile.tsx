@@ -1,11 +1,39 @@
-// Partner Story Tile - Compact, enterprise-clean story card
-// Shows signal type pill, headline, and logo/cover
+// Partner Story Tile — Bloomberg × Intelligence Briefing style
+// 16:9 visual area + headline + intelligence strip
 
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { PartnerStory, signalTypeColors, signalTypeGradients } from '@/data/partnerStories';
+import { PartnerStory, signalTypeColors } from '@/data/partnerStories';
 import { ListenedState } from '@/lib/stories';
-import { Check } from 'lucide-react';
+import { Volume2, Plus, ArrowUpRight, Check } from 'lucide-react';
+
+import coverVendor from '@/assets/signals/cover-vendor.jpg';
+import coverRegulatory from '@/assets/signals/cover-regulatory.jpg';
+import coverLocalMarket from '@/assets/signals/cover-localmarket.jpg';
+import coverCompetitive from '@/assets/signals/cover-competitive.jpg';
+
+const CATEGORY_COVERS: Record<string, string> = {
+  Vendor: coverVendor,
+  Regulatory: coverRegulatory,
+  LocalMarket: coverLocalMarket,
+  Competitive: coverCompetitive,
+};
+
+// Urgency chip logic
+function getUrgencyChip(story: PartnerStory): { label: string; emoji: string } | null {
+  const score = story.relevance_score ?? 0;
+  if (score >= 90) return { label: 'Hot', emoji: '🔥' };
+  if (score >= 80) return { label: 'Data', emoji: '📊' };
+  if (story.tags?.some(t => t.toLowerCase().includes('deadline') || t.toLowerCase().includes('regulation')))
+    return { label: 'Deadline', emoji: '⚠' };
+  return null;
+}
+
+// Impact score from relevance
+function getImpactScore(story: PartnerStory): string {
+  const score = story.relevance_score ?? 70;
+  return (score / 10).toFixed(1);
+}
 
 interface PartnerStoryTileProps {
   story: PartnerStory;
@@ -13,130 +41,124 @@ interface PartnerStoryTileProps {
   onClick: () => void;
 }
 
-function getInitials(name: string): string {
-  return name
-    .split(/\s+/)
-    .map(word => word[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-}
-
 export function PartnerStoryTile({ story, listenedState, onClick }: PartnerStoryTileProps) {
-  const [logoError, setLogoError] = useState(false);
-  const [coverError, setCoverError] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
-  const hasLogo = story.logoUrl && !logoError;
-  const hasCover = story.coverUrl && !coverError;
-  const hasPerson = story.personImageUrl && !coverError;
-
-  // Render cover based on available assets
-  const renderCover = () => {
-    // Logo-based cover (Vendor signals)
-    if (hasLogo) {
-      return (
-        <div className="absolute inset-0 bg-gradient-to-br from-muted via-muted/80 to-muted flex items-center justify-center p-6">
-          <img
-            src={story.logoUrl}
-            alt="Vendor"
-            className="w-full h-auto max-h-12 object-contain opacity-90 dark:opacity-80"
-            onError={() => setLogoError(true)}
-          />
-        </div>
-      );
-    }
-
-    // Person/face cover
-    if (hasPerson) {
-      return (
-        <>
-          <img
-            src={story.personImageUrl}
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover object-top"
-            onError={() => setCoverError(true)}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-        </>
-      );
-    }
-
-    // Generic cover image
-    if (hasCover) {
-      return (
-        <>
-          <img
-            src={story.coverUrl}
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover"
-            onError={() => setCoverError(true)}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-        </>
-      );
-    }
-
-    // Monogram fallback
-    return (
-      <div className={cn(
-        "absolute inset-0 flex items-center justify-center",
-        "bg-gradient-to-br",
-        signalTypeGradients[story.signalType]
-      )}>
-        <span className="text-2xl font-bold text-white/90 drop-shadow-sm">
-          {getInitials(story.headline)}
-        </span>
-      </div>
-    );
-  };
-
-  const isLogoCover = hasLogo && !logoError;
+  const coverImg = story.coverUrl || story.logoUrl || CATEGORY_COVERS[story.signalType] || coverVendor;
+  const urgency = getUrgencyChip(story);
+  const impact = getImpactScore(story);
+  const roles = (story.whoCares ?? []).slice(0, 3);
 
   return (
     <button
       onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className={cn(
-        "group relative flex-shrink-0 w-[140px] rounded-2xl overflow-hidden",
-        "border shadow-[0_2px_8px_rgba(0,0,0,0.06)] transition-all duration-200",
-        "hover:scale-[1.02] hover:shadow-[0_4px_16px_rgba(0,0,0,0.12)] active:scale-[0.98]",
-        "aspect-[4/5]",
+        "group relative flex-shrink-0 w-[280px] rounded-xl overflow-hidden text-left",
+        "bg-card border transition-all duration-300",
+        "shadow-[0_1px_4px_rgba(0,0,0,0.06)]",
+        "hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:-translate-y-1",
         listenedState === 'unseen' && "border-border",
-        listenedState === 'seen' && "border-primary/30 ring-1 ring-primary/20",
-        listenedState === 'listened' && "border-primary ring-2 ring-primary/40"
+        listenedState === 'seen' && "border-primary/20",
+        listenedState === 'listened' && "border-primary/40"
       )}
     >
-      {/* Cover */}
-      {renderCover()}
+      {/* ===== Top: Visual Context Area (16:9) ===== */}
+      <div className="relative aspect-[16/9] overflow-hidden bg-muted">
+        <img
+          src={coverImg}
+          alt=""
+          className={cn(
+            "absolute inset-0 w-full h-full object-cover transition-transform duration-500",
+            isHovered && "scale-105"
+          )}
+        />
+        {/* Dark gradient from bottom */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
 
-      {/* Listened indicator */}
-      {listenedState === 'listened' && (
-        <div className="absolute top-2.5 right-2.5 w-6 h-6 rounded-full bg-primary flex items-center justify-center z-10 shadow-sm">
-          <Check className="w-3.5 h-3.5 text-primary-foreground" />
-        </div>
-      )}
-
-      {/* Content overlay */}
-      <div className="absolute inset-0 flex flex-col p-3 text-left z-[5]">
-        {/* Signal type pill */}
+        {/* Top-left: Category badge */}
         <span className={cn(
-          "self-start px-2 py-0.5 text-[10px] font-semibold rounded-md border backdrop-blur-sm",
-          isLogoCover
-            ? "bg-white/90 dark:bg-black/70 border-border/50 text-foreground"
-            : signalTypeColors[story.signalType]
+          "absolute top-2.5 left-2.5 px-2.5 py-1 text-[10px] font-semibold rounded-full border backdrop-blur-md z-10",
+          signalTypeColors[story.signalType]
         )}>
           {story.signalType}
         </span>
 
-        {/* Spacer */}
-        <div className="flex-1" />
+        {/* Top-right: Urgency chip */}
+        {urgency && (
+          <span className="absolute top-2.5 right-2.5 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-card/90 backdrop-blur-md border border-border/60 text-foreground z-10">
+            {urgency.emoji} {urgency.label}
+          </span>
+        )}
 
-        {/* Headline */}
-        <p className={cn(
-          "text-[13px] font-medium leading-tight line-clamp-3 drop-shadow-md",
-          isLogoCover ? "text-foreground" : "text-white"
-        )}>
+        {/* Listened indicator */}
+        {listenedState === 'listened' && (
+          <div className="absolute bottom-2.5 right-2.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center z-10">
+            <Check className="w-3 h-3 text-primary-foreground" />
+          </div>
+        )}
+      </div>
+
+      {/* ===== Middle: Headline + So What ===== */}
+      <div className="px-3.5 pt-3 pb-2 space-y-1.5">
+        <h3 className="text-[13px] font-semibold text-foreground leading-snug line-clamp-2">
           {story.headline}
+        </h3>
+        <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">
+          {story.soWhat}
         </p>
+      </div>
+
+      {/* ===== Bottom: Intelligence Strip ===== */}
+      <div className="px-3.5 pb-3 pt-1 border-t border-border/40">
+        <div className="flex items-center gap-2">
+          {/* Impact score */}
+          <span className="text-[10px] font-bold text-foreground tabular-nums">
+            {impact}
+            <span className="text-muted-foreground font-normal">/10</span>
+          </span>
+
+          {/* Separator */}
+          <span className="w-px h-3 bg-border/60" />
+
+          {/* Affected roles */}
+          <div className="flex items-center gap-1 flex-1 min-w-0 overflow-hidden">
+            {roles.map((role, i) => (
+              <span
+                key={i}
+                className="text-[9px] px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground border border-border/40 truncate max-w-[80px]"
+              >
+                {role.split('/')[0]}
+              </span>
+            ))}
+          </div>
+
+          {/* Micro icons */}
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <span className="w-5 h-5 rounded-full bg-muted/50 flex items-center justify-center" title="Microcast available">
+              <Volume2 className="w-2.5 h-2.5 text-muted-foreground" />
+            </span>
+            <span className="w-5 h-5 rounded-full bg-muted/50 flex items-center justify-center" title="Promote">
+              <Plus className="w-2.5 h-2.5 text-muted-foreground" />
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ===== Hover Actions Overlay ===== */}
+      <div className={cn(
+        "absolute inset-0 flex items-center justify-center gap-2 bg-background/80 backdrop-blur-sm transition-opacity duration-200 z-20",
+        isHovered ? "opacity-100" : "opacity-0 pointer-events-none"
+      )}>
+        <span className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium shadow-sm flex items-center gap-1">
+          <ArrowUpRight className="w-3 h-3" />
+          Open
+        </span>
+        <span className="px-3 py-1.5 rounded-lg bg-card border border-border text-foreground text-xs font-medium shadow-sm flex items-center gap-1">
+          <Plus className="w-3 h-3" />
+          Quick Brief
+        </span>
       </div>
     </button>
   );
