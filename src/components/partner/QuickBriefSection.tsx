@@ -21,6 +21,7 @@ import { QuickBriefOutput } from './QuickBriefOutput';
 import type { QuickBriefNeed } from './QuickBriefOutput';
 import { listSignals } from '@/data/partner/signalStore';
 import { enrichSignals } from '@/data/partner/signalEnrichment';
+import { listWeeklySignals, hasWeeklySignals } from '@/data/partner/weeklySignalStore';
 import { createGeneratedDraft } from '@/data/partner/generatedDraftStore';
 import { BriefingModePill } from './BriefingModePill';
 import { toast } from 'sonner';
@@ -42,6 +43,7 @@ const NEED_OPTIONS: { value: QuickBriefNeed; label: string; icon: React.ReactNod
 const MAX_CHIPS = 2;
 const FOCUS_ID = 'schindler';
 const WEEK_OF = '2026-02-10';
+const TIME_KEY = '2026-W07';
 
 type BriefMode = 'curated' | 'on-demand';
 
@@ -62,8 +64,14 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
   const [onDemandOutput, setOnDemandOutput] = useState<string | null>(null);
   const [onDemandDraftId, setOnDemandDraftId] = useState<string | null>(null);
 
+  // Check WeeklySignal index first, fall back to legacy signalStore
+  const weeklySignals = useMemo(() => listWeeklySignals(FOCUS_ID, TIME_KEY), []);
+  const hasWeekly = weeklySignals.length > 0;
+
   const rawSignals = useMemo(() => listSignals(FOCUS_ID, WEEK_OF), []);
   const signals = useMemo(() => enrichSignals(rawSignals, FOCUS_ID), [rawSignals]);
+
+  const noSignals = !hasWeekly && rawSignals.length === 0;
 
   const canGenerate = customerName.trim().length > 0;
 

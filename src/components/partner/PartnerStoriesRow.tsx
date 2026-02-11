@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { usePartnerData } from '@/contexts/FocusDataContext';
 import type { StoryCardsV1, StoryCardV1, MicrocastV1, MicrocastType } from '@/data/partner/contracts';
+import { hasWeeklySignals } from '@/data/partner/weeklySignalStore';
 import {
   createBriefingRequest,
   generateBriefingArtifactFromRequest,
@@ -153,6 +154,25 @@ export function PartnerStoriesRow({
       setMicrocastOpen(true); // will show fallback
     }
   }, [provider, ctx]);
+
+  // Show empty state if no WeeklySignals for this customer + week
+  const TIME_KEY = '2026-W07';
+  const CUSTOMER = 'schindler';
+  const weeklyAvailable = hasWeeklySignals(CUSTOMER, TIME_KEY);
+
+  if (homepageStories.length === 0 && !weeklyAvailable) {
+    return (
+      <section className={cn("space-y-3", className)}>
+        <SectionHeader
+          title="AI Selling Signals"
+          subtitle="What changed, why it matters, what to do."
+        />
+        <div className="rounded-2xl border border-border/60 bg-muted/20 p-8 text-center">
+          <p className="text-sm text-muted-foreground">No curated signals for this week yet.</p>
+        </div>
+      </section>
+    );
+  }
 
   if (homepageStories.length === 0) {
     return null;
