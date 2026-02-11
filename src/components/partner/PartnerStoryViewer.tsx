@@ -1,15 +1,15 @@
 // Partner Story Viewer - Actionable story detail modal
-// Shows headline, "so what", what changed, who cares, next move + CTAs
-// Action bar: Open Quick Brief + See Related Signals
+// Shows headline, "so what", what changed, who cares, next move
+// Bottom escalation: Find Related Signals → Quick Brief, Go Deeper → Deal Planning
 
 import { useState, useMemo } from 'react';
-import { X, ChevronLeft, ChevronRight, FileText, Users, Zap, Link2, ChevronDown, Square, CheckSquare } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Users, Search, Crosshair } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { PartnerStory, signalTypeColors } from '@/data/partnerStories';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
 import { setQuickBriefTrigger } from '@/data/partner/quickBriefTrigger';
+import { setDealPlanTrigger } from '@/data/partner/dealPlanTrigger';
 
 interface PartnerStoryViewerProps {
   story: PartnerStory | null;
@@ -27,35 +27,6 @@ interface PartnerStoryViewerProps {
   onBuildAccountBrief?: (anchorStory: PartnerStory, selectedSignals: PartnerStory[]) => void;
 }
 
-// Generate a 1-line implication that doesn't repeat the anchor story text
-function getUniqueImplication(signal: PartnerStory, anchor: PartnerStory): string {
-  if (signal.whatChanged && signal.whatChanged !== anchor.soWhat) {
-    return signal.whatChanged;
-  }
-  if (signal.soWhat !== anchor.soWhat) {
-    return signal.soWhat;
-  }
-  return `${signal.signalType} signal with relevance to same stakeholders.`;
-}
-
-function rankRelatedSignals(anchor: PartnerStory, candidates: PartnerStory[]): PartnerStory[] {
-  return candidates
-    .filter(s => s.id !== anchor.id)
-    .map(s => {
-      let score = 0;
-      if (s.signalType === anchor.signalType) score += 3;
-      const anchorRoles = new Set(anchor.whoCares ?? []);
-      (s.whoCares ?? []).forEach(r => { if (anchorRoles.has(r)) score += 2; });
-      const anchorTags = new Set((anchor.tags ?? []).map(t => t.toLowerCase()));
-      (s.tags ?? []).forEach(t => { if (anchorTags.has(t.toLowerCase())) score += 1; });
-      score += ((s.relevance_score ?? 50) / 100);
-      return { story: s, score };
-    })
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 5)
-    .map(r => r.story);
-}
-
 export function PartnerStoryViewer({
   story,
   open,
@@ -68,26 +39,7 @@ export function PartnerStoryViewer({
   hasPrev = false,
   currentIndex = 0,
   totalCount = 1,
-  allStories = [],
-  onBuildAccountBrief,
 }: PartnerStoryViewerProps) {
-  const [showRelated, setShowRelated] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-
-  const relatedSignals = useMemo(() => {
-    if (!story) return [];
-    return rankRelatedSignals(story, allStories);
-  }, [allStories, story]);
-
-  // Reset state on story change
-  const storyId = story?.id;
-  const [prevStoryId, setPrevStoryId] = useState(storyId);
-  if (storyId !== prevStoryId) {
-    setPrevStoryId(storyId);
-    setShowRelated(false);
-    setSelectedIds(new Set());
-  }
-
   if (!story) return null;
 
   const whatChangedBullets = story.whatChangedBullets ?? 
@@ -95,20 +47,26 @@ export function PartnerStoryViewer({
   const whoCares = story.whoCares;
   const nextMove = story.nextMove;
 
-  const toggleSignalSelection = (id: string) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const triggerQuickBrief = () => {
+  const handleFindRelated = () => {
     setQuickBriefTrigger({
       storyTitle: story.headline,
       customer: 'Schindler',
       category: story.signalType,
+      tags: story.tags,
+    });
+    onMarkListened(story.id);
+    onClose();
+    setTimeout(() => {
+      const el = document.getElementById('section-quick-brief');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
+
+  const handleGoDeeper = () => {
+    setDealPlanTrigger({
+      signalId: story.id,
+      customer: 'Schindler',
+      signalTitle: story.headline,
       tags: story.tags,
     });
     onMarkListened(story.id);
@@ -158,73 +116,8 @@ export function PartnerStoryViewer({
           </div>
         </div>
 
-        {/* Action bar */}
-        <div className="px-4 py-2.5 border-b border-border/40 flex items-center gap-2">
-          <Button size="sm" className="flex-1" onClick={triggerQuickBrief}>
-            <Zap className="h-3.5 w-3.5 mr-1.5" />
-            Open Quick Brief
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1"
-            onClick={() => setShowRelated(!showRelated)}
-          >
-            <Link2 className="h-3.5 w-3.5 mr-1.5" />
-            {showRelated ? 'Hide Related' : `See Related (${relatedSignals.length})`}
-            <ChevronDown className={cn("h-3 w-3 ml-1 transition-transform", showRelated && "rotate-180")} />
-          </Button>
-        </div>
-
         {/* Main content */}
         <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-4">
-
-          {/* Inline Related Signals */}
-          {showRelated && relatedSignals.length > 0 && (
-            <div className="rounded-xl border border-primary/15 bg-primary/[0.02] p-3.5 space-y-2.5">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <Link2 className="w-3.5 h-3.5" />
-                Related Signals
-              </p>
-              <div className="space-y-1.5">
-                {relatedSignals.map((s) => {
-                  const isSelected = selectedIds.has(s.id);
-                  return (
-                    <button
-                      key={s.id}
-                      onClick={() => toggleSignalSelection(s.id)}
-                      className={cn(
-                        "w-full flex items-start gap-2 p-2 rounded-lg border text-left transition-all",
-                        isSelected
-                          ? "border-primary/30 bg-primary/5"
-                          : "border-border/40 bg-card hover:border-border"
-                      )}
-                    >
-                      <div className="mt-0.5 flex-shrink-0">
-                        {isSelected ? (
-                          <CheckSquare className="w-3.5 h-3.5 text-primary" />
-                        ) : (
-                          <Square className="w-3.5 h-3.5 text-muted-foreground/40" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-foreground line-clamp-1">{s.headline}</p>
-                        <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
-                          {getUniqueImplication(s, story)}
-                        </p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-              {selectedIds.size > 0 && (
-                <Button size="sm" className="w-full" onClick={triggerQuickBrief}>
-                  <Zap className="h-3.5 w-3.5 mr-1.5" />
-                  Add Selected to Quick Brief ({selectedIds.size})
-                </Button>
-              )}
-            </div>
-          )}
 
           {/* Headline */}
           <h2 className="text-xl font-semibold leading-tight">{story.headline}</h2>
@@ -312,6 +205,32 @@ export function PartnerStoryViewer({
               ))}
             </div>
           )}
+
+          {/* Escalation Block */}
+          <div className="pt-3 mt-2 border-t border-border/30 space-y-2.5">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+              What's next?
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/30"
+                onClick={handleFindRelated}
+              >
+                <Search className="h-3.5 w-3.5 mr-1.5" />
+                Find Related Signals
+              </Button>
+              <Button
+                size="sm"
+                className="flex-1"
+                onClick={handleGoDeeper}
+              >
+                <Crosshair className="h-3.5 w-3.5 mr-1.5" />
+                Go Deeper
+              </Button>
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
