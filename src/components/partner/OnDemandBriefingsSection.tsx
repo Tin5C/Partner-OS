@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { BriefingModePill } from './BriefingModePill';
 import type { BriefingType } from '@/data/partner/briefingContracts';
 import type { TaxonomyItem } from '@/data/partner/briefingTaxonomy';
 import {
@@ -131,10 +132,13 @@ export function OnDemandBriefingsSection() {
 
   return (
     <section className="space-y-4">
-      <SectionHeader
-        title="On-Demand Briefings"
-        subtitle="Select a topic then generate — audio briefings coming soon."
-      />
+      <div className="flex items-center gap-2">
+        <SectionHeader
+          title="On-Demand Briefings"
+          subtitle="Select a topic then generate — audio briefings coming soon."
+        />
+        <BriefingModePill mode="on-demand" className="mt-0.5" />
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {CARDS.map((card) => {

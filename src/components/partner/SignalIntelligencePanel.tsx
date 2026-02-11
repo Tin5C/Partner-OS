@@ -25,6 +25,7 @@ import { PartnerStory, signalTypeColors } from '@/data/partnerStories';
 import { getRotatedCategoryImage, CATEGORY_TINTS, getTimeAgo } from '@/data/partner/signalImageTaxonomy';
 import type { SignalCategory } from '@/data/partner/signalImageTaxonomy';
 import { toast } from 'sonner';
+import { BriefingModePill } from './BriefingModePill';
 
 interface SignalIntelligencePanelProps {
   story: PartnerStory | null;
@@ -221,7 +222,10 @@ export function SignalIntelligencePanel({
 
           {/* Bottom: headline on hero */}
           <div className="absolute bottom-0 inset-x-0 p-4 z-10">
-            <p className="text-[10px] text-white/60 uppercase tracking-wide font-medium mb-1">Signal Intelligence</p>
+            <div className="flex items-center gap-2 mb-1">
+              <p className="text-[10px] text-white/60 uppercase tracking-wide font-medium">Signal Intelligence</p>
+              <BriefingModePill mode="curated" className="[&_span]:bg-white/15 [&_span]:text-white/90 [&_span]:border-white/25 [&_button]:text-white/50" />
+            </div>
             <h2 className="text-lg font-bold text-white leading-tight">{story.headline}</h2>
           </div>
         </div>
