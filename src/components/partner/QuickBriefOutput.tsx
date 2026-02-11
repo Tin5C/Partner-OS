@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import type { Signal } from '@/data/partner/signalStore';
 import { getSignal } from '@/data/partner/signalStore';
 import { promoteSignalsToDealPlan } from '@/data/partner/dealPlanStore';
+import { BriefingModePill } from './BriefingModePill';
 
 
 export type QuickBriefNeed = 'meeting-prep' | 'objection-help' | 'competitive-position' | 'intro-email' | 'value-pitch';
@@ -99,6 +100,7 @@ export function QuickBriefOutput({
           <h3 className="text-sm font-semibold text-foreground">
             Quick Brief: {customerName}
           </h3>
+          <BriefingModePill mode="curated" />
         </div>
         <button
           onClick={handlePromote}

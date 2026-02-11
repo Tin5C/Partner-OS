@@ -46,6 +46,7 @@ import {
   removePromotedSignal,
   type PromotedSignal,
 } from '@/data/partner/dealPlanStore';
+import { BriefingModePill } from './BriefingModePill';
 
 const FOCUS_ID = 'schindler';
 const WEEK_OF = '2026-02-10';
@@ -333,6 +334,7 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
           <h3 className="text-base font-semibold text-foreground">
             Deal Planning — {drivers.length} driver{drivers.length !== 1 ? 's' : ''}
           </h3>
+          <BriefingModePill mode="curated" />
           {avgConfidence && (
             <span className={cn('text-xs font-bold ml-2', confidenceColor(avgConfidence.score))}>
               {avgConfidence.score}% avg
