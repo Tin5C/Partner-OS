@@ -26,6 +26,7 @@ import { ExpertCornersRail } from '@/components/partner/ExpertCornersRail';
 import { PartnerGrowthSection } from '@/components/partner/PartnerGrowthSection';
 import { PartnerStoriesRow } from '@/components/partner/PartnerStoriesRow';
 import { OnDemandBriefingsSection } from '@/components/partner/OnDemandBriefingsSection';
+import { PartnerModeSection } from '@/components/partner/PartnerModeSection';
 import { CapabilitySnapshotCard } from '@/components/partner/CapabilitySnapshotCard';
 import { briefingSourceMode } from '@/config/spaces/partner';
 import { usePresenceSources } from '@/hooks/usePresenceSources';
@@ -304,8 +305,9 @@ export function HomeRenderer() {
         ) : null;
 
       case 'partnerMode':
-        // Partner Mode (Quick Brief ↔ Deal Planning) removed — replaced by Account Brief flow
-        return null;
+        return spaceType === 'partner' ? (
+          <PartnerModeSection key={section.id} />
+        ) : null;
 
       case 'expertCorners':
         return spaceConfig.features.expertCorners ? (

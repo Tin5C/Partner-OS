@@ -1,6 +1,6 @@
 // Partner Story Viewer - Actionable story detail modal
 // Shows headline, "so what", what changed, who cares, next move + CTAs
-// Action bar: Build Account Brief + See Related Signals
+// Action bar: Open Quick Brief + See Related Signals
 
 import { useState, useMemo } from 'react';
 import { X, ChevronLeft, ChevronRight, FileText, Users, Zap, Link2, ChevronDown, Square, CheckSquare } from 'lucide-react';

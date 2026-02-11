@@ -78,9 +78,9 @@ export function QuickBriefOutput({
     try {
       const { addedCount } = promoteSignalsToDealPlan(focusId, weekOf, selected);
       if (addedCount > 0) {
-        toast.success(`Added ${addedCount} signal${addedCount > 1 ? 's' : ''} to Account Brief`);
+        toast.success(`Added ${addedCount} signal${addedCount > 1 ? 's' : ''} to Deal Planning`);
       } else {
-        toast.info('All selected signals are already in Account Brief');
+        toast.info('All selected signals are already in Deal Planning');
       }
       onPromoteToDealBrief();
     } catch {
@@ -115,7 +115,7 @@ export function QuickBriefOutput({
           )}
         >
           <ArrowUpRight className="w-3 h-3" />
-          Promote to Account Brief
+          Promote to Deal Planning
           {selectedIds.size > 0 && (
             <span className="ml-1 px-1.5 py-0.5 rounded-full bg-primary-foreground/20 text-[10px]">
               {selectedIds.size}
@@ -369,14 +369,14 @@ export function QuickBriefOutput({
               {selectedIds.size} signal{selectedIds.size > 1 ? 's' : ''} selected
             </p>
             <p className="text-[11px] text-muted-foreground">
-              Snapshots will be saved to Account Brief.
+              Snapshots will be saved to Deal Planning.
             </p>
           </div>
           <button
             onClick={handlePromote}
             className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors whitespace-nowrap"
           >
-            Open Account Brief
+            Open Deal Planning
             <ChevronRight className="w-3 h-3" />
           </button>
         </div>
