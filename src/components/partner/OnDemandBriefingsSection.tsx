@@ -1,14 +1,15 @@
-// On-Demand Briefings Section — MVP: inline dropdowns per card, no modals
+// On-Demand Briefings Section — MVP: inline dropdowns per card
+// Account Microcast for Schindler: simulated 15s creation + autoplay
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Radio,
   Globe,
   Sword,
   Cpu,
   Sparkles,
+  Loader2,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import {
   Select,
@@ -32,6 +33,7 @@ import {
   getBriefingSelection,
   saveBriefingSelection,
 } from '@/data/partner/briefingSelectionStore';
+import { AccountMicrocastPlayer } from './AccountMicrocastPlayer';
 
 // ============= Inline picker config =============
 
@@ -75,6 +77,8 @@ const COMPETITORS: TaxonomyItem[] = [
   { id: 'servicenow', label: 'ServiceNow' },
 ];
 
+const SCHINDLER_MP3 = 'https://daq7nasbr6dck.cloudfront.net/misc/temp/temp1.mp3';
+
 const CARDS: CardConfig[] = [
   {
     type: 'vendor_updates',
@@ -108,9 +112,12 @@ const CARDS: CardConfig[] = [
 
 // ============= Main Section =============
 
+type CreatingState = 'idle' | 'creating' | 'ready';
+
 export function OnDemandBriefingsSection() {
-  // Local state mirrors persisted selections for reactivity
   const [picks, setPicks] = useState<Record<string, Record<string, string>>>({});
+  const [accountState, setAccountState] = useState<CreatingState>('idle');
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const loaded: Record<string, Record<string, string>> = {};
@@ -121,13 +128,66 @@ export function OnDemandBriefingsSection() {
     setPicks(loaded);
   }, []);
 
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
   const handlePick = (type: BriefingType, key: string, value: string) => {
+    // If account microcast selection changes while ready, reset to idle
+    if (type === 'account_microcast') {
+      cancelCreation();
+    }
     setPicks((prev) => {
       const updated = { ...prev, [type]: { ...(prev[type] ?? {}), [key]: value } };
-      // Persist
       saveBriefingSelection(type, updated[type]);
       return updated;
     });
+  };
+
+  const cancelCreation = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    setAccountState('idle');
+  }, []);
+
+  const handleGenerate = (card: CardConfig, cardPicks: Record<string, string>) => {
+    if (card.type !== 'account_microcast') {
+      toast.info('Audio coming soon.');
+      return;
+    }
+
+    const selectedAccount = cardPicks['account'];
+    if (!selectedAccount) {
+      toast.info('Please select an account first.');
+      return;
+    }
+
+    if (selectedAccount !== 'schindler') {
+      toast.info('Audio coming soon.');
+      return;
+    }
+
+    // Schindler: start 15s simulated creation
+    // Clear any existing timer first
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+
+    setAccountState('creating');
+    timerRef.current = setTimeout(() => {
+      timerRef.current = null;
+      setAccountState('ready');
+    }, 15000);
+  };
+
+  const handleClosePlayer = () => {
+    setAccountState('idle');
   };
 
   return (
@@ -143,7 +203,9 @@ export function OnDemandBriefingsSection() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {CARDS.map((card) => {
           const cardPicks = picks[card.type] ?? {};
-          const allFilled = card.pickers.every((p) => cardPicks[p.key]);
+          const isAccountCard = card.type === 'account_microcast';
+          const isCreating = isAccountCard && accountState === 'creating';
+          const isReady = isAccountCard && accountState === 'ready';
 
           return (
             <div
@@ -168,6 +230,7 @@ export function OnDemandBriefingsSection() {
                   <Select
                     value={cardPicks[picker.key] || undefined}
                     onValueChange={(val) => handlePick(card.type, picker.key, val)}
+                    disabled={isCreating}
                   >
                     <SelectTrigger className="h-8 text-xs">
                       <SelectValue placeholder={`Select ${picker.label.toLowerCase()}`} />
@@ -183,30 +246,92 @@ export function OnDemandBriefingsSection() {
                 </div>
               ))}
 
-              {/* Generate button — disabled for MVP */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="block">
-                      <Button
-                        size="sm"
-                        disabled
-                        className="w-full gap-1.5 text-xs"
-                      >
-                        <Sparkles className="w-3 h-3" />
-                        Generate
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    <p className="text-xs">Generation in a later MVP step</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              {/* Creating state */}
+              {isCreating && (
+                <div className="flex items-center justify-between gap-2 py-1.5 px-2 rounded-lg bg-primary/5 border border-primary/10">
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
+                    <span className="text-xs text-primary font-medium">Creating microcast…</span>
+                  </div>
+                  <button
+                    onClick={cancelCreation}
+                    className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+
+              {/* Ready state: show player */}
+              {isReady && (
+                <AccountMicrocastPlayer
+                  src={SCHINDLER_MP3}
+                  accountLabel="Schindler"
+                  onClose={handleClosePlayer}
+                />
+              )}
+
+              {/* Generate button */}
+              {!isCreating && !isReady && (
+                <GenerateButton
+                  card={card}
+                  cardPicks={cardPicks}
+                  onGenerate={handleGenerate}
+                />
+              )}
             </div>
           );
         })}
       </div>
     </section>
+  );
+}
+
+// ============= Sub-components =============
+
+function GenerateButton({
+  card,
+  cardPicks,
+  onGenerate,
+}: {
+  card: CardConfig;
+  cardPicks: Record<string, string>;
+  onGenerate: (card: CardConfig, picks: Record<string, string>) => void;
+}) {
+  const isAccountCard = card.type === 'account_microcast';
+  const allFilled = card.pickers.every((p) => cardPicks[p.key]);
+  const isDisabled = !isAccountCard || !allFilled;
+
+  if (!isAccountCard) {
+    // Non-account cards: keep disabled with tooltip
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="block">
+              <Button size="sm" disabled className="w-full gap-1.5 text-xs">
+                <Sparkles className="w-3 h-3" />
+                Generate
+              </Button>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            <p className="text-xs">Generation in a later MVP step</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return (
+    <Button
+      size="sm"
+      disabled={!allFilled}
+      className="w-full gap-1.5 text-xs"
+      onClick={() => onGenerate(card, cardPicks)}
+    >
+      <Sparkles className="w-3 h-3" />
+      Generate
+    </Button>
   );
 }
