@@ -1,23 +1,14 @@
 // Partner Story Tile — Bloomberg × Intelligence Briefing style
 // 16:9 visual area + headline + intelligence strip
+// Uses rotated category images, tints, source badges, freshness
 
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { PartnerStory, signalTypeColors } from '@/data/partnerStories';
 import { ListenedState } from '@/lib/stories';
-import { Volume2, Plus, ArrowUpRight, Check } from 'lucide-react';
-
-import coverVendor from '@/assets/signals/cover-vendor.jpg';
-import coverRegulatory from '@/assets/signals/cover-regulatory.jpg';
-import coverLocalMarket from '@/assets/signals/cover-localmarket.jpg';
-import coverCompetitive from '@/assets/signals/cover-competitive.jpg';
-
-const CATEGORY_COVERS: Record<string, string> = {
-  Vendor: coverVendor,
-  Regulatory: coverRegulatory,
-  LocalMarket: coverLocalMarket,
-  Competitive: coverCompetitive,
-};
+import { Volume2, Plus, ArrowUpRight, Check, Clock, Users } from 'lucide-react';
+import { getRotatedCategoryImage, CATEGORY_TINTS, getTimeAgo } from '@/data/partner/signalImageTaxonomy';
+import type { SignalCategory } from '@/data/partner/signalImageTaxonomy';
 
 // Urgency chip logic
 function getUrgencyChip(story: PartnerStory): { label: string; emoji: string } | null {
@@ -35,6 +26,13 @@ function getImpactScore(story: PartnerStory): string {
   return (score / 10).toFixed(1);
 }
 
+// Mock promotion count (deterministic from id)
+function getPromotionCount(storyId: string): number {
+  let h = 0;
+  for (let i = 0; i < storyId.length; i++) h = ((h << 5) - h) + storyId.charCodeAt(i);
+  return (Math.abs(h) % 4) + 1; // 1-4
+}
+
 interface PartnerStoryTileProps {
   story: PartnerStory;
   listenedState: ListenedState;
@@ -44,10 +42,14 @@ interface PartnerStoryTileProps {
 export function PartnerStoryTile({ story, listenedState, onClick }: PartnerStoryTileProps) {
   const [isHovered, setIsHovered] = useState(false);
 
-  const coverImg = story.coverUrl || story.logoUrl || CATEGORY_COVERS[story.signalType] || coverVendor;
+  const category = story.signalType as SignalCategory;
+  const coverImg = story.coverUrl || getRotatedCategoryImage(category, story.id);
+  const tintClass = CATEGORY_TINTS[category] || CATEGORY_TINTS.Vendor;
   const urgency = getUrgencyChip(story);
   const impact = getImpactScore(story);
   const roles = (story.whoCares ?? []).slice(0, 3);
+  const timeAgo = getTimeAgo(story.publishedAt);
+  const promoCount = getPromotionCount(story.id);
 
   return (
     <button
@@ -71,9 +73,11 @@ export function PartnerStoryTile({ story, listenedState, onClick }: PartnerStory
           alt=""
           className={cn(
             "absolute inset-0 w-full h-full object-cover transition-transform duration-500",
-            isHovered && "scale-105"
+            isHovered && "scale-[1.03]"
           )}
         />
+        {/* Category color tint overlay */}
+        <div className={cn("absolute inset-0", tintClass)} />
         {/* Dark gradient from bottom */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
 
@@ -92,7 +96,14 @@ export function PartnerStoryTile({ story, listenedState, onClick }: PartnerStory
           </span>
         )}
 
-        {/* Listened indicator */}
+        {/* Bottom-left: Source badge */}
+        {story.sourceName && (
+          <span className="absolute bottom-2.5 left-2.5 px-2 py-0.5 text-[9px] font-medium rounded bg-black/50 backdrop-blur-sm text-white/90 z-10 truncate max-w-[160px]">
+            {story.sourceName}
+          </span>
+        )}
+
+        {/* Bottom-right: Listened indicator */}
         {listenedState === 'listened' && (
           <div className="absolute bottom-2.5 right-2.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center z-10">
             <Check className="w-3 h-3 text-primary-foreground" />
@@ -119,15 +130,31 @@ export function PartnerStoryTile({ story, listenedState, onClick }: PartnerStory
             <span className="text-muted-foreground font-normal">/10</span>
           </span>
 
-          {/* Separator */}
           <span className="w-px h-3 bg-border/60" />
 
-          {/* Affected roles */}
-          <div className="flex items-center gap-1 flex-1 min-w-0 overflow-hidden">
-            {roles.map((role, i) => (
+          {/* Freshness indicator */}
+          <span className="flex items-center gap-0.5 text-[9px] text-muted-foreground">
+            <Clock className="w-2.5 h-2.5" />
+            {timeAgo}
+          </span>
+
+          <span className="w-px h-3 bg-border/60" />
+
+          {/* Social proof */}
+          <span className="flex items-center gap-0.5 text-[9px] text-muted-foreground">
+            <Users className="w-2.5 h-2.5" />
+            {promoCount}
+          </span>
+
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* Affected roles (show on wider tiles) */}
+          <div className="hidden sm:flex items-center gap-1 overflow-hidden">
+            {roles.slice(0, 2).map((role, i) => (
               <span
                 key={i}
-                className="text-[9px] px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground border border-border/40 truncate max-w-[80px]"
+                className="text-[8px] px-1 py-0.5 rounded bg-muted/50 text-muted-foreground border border-border/40 truncate max-w-[60px]"
               >
                 {role.split('/')[0]}
               </span>
@@ -138,9 +165,6 @@ export function PartnerStoryTile({ story, listenedState, onClick }: PartnerStory
           <div className="flex items-center gap-1 flex-shrink-0">
             <span className="w-5 h-5 rounded-full bg-muted/50 flex items-center justify-center" title="Microcast available">
               <Volume2 className="w-2.5 h-2.5 text-muted-foreground" />
-            </span>
-            <span className="w-5 h-5 rounded-full bg-muted/50 flex items-center justify-center" title="Promote">
-              <Plus className="w-2.5 h-2.5 text-muted-foreground" />
             </span>
           </div>
         </div>
