@@ -20,7 +20,7 @@ import { toast } from 'sonner';
 import type { Signal } from '@/data/partner/signalStore';
 import { getSignal } from '@/data/partner/signalStore';
 import { promoteSignalsToDealPlan } from '@/data/partner/dealPlanStore';
-import { getSignalThumbnail } from '@/data/partner/signalThumbnails';
+
 
 export type QuickBriefNeed = 'meeting-prep' | 'objection-help' | 'competitive-position' | 'intro-email' | 'value-pitch';
 
@@ -156,7 +156,7 @@ export function QuickBriefOutput({
         {signals.map((signal, idx) => {
           const isExpanded = expandedIds.has(signal.id);
           const isSelected = selectedIds.has(signal.id);
-          const thumb = getSignalThumbnail(signal.id);
+          
 
           // Signal type badge colors
           const typeColors: Record<string, string> = {
@@ -178,31 +178,7 @@ export function QuickBriefOutput({
                   : 'border-border/60 bg-card'
               )}
             >
-              {/* Image strip at top */}
-              {thumb && (
-                <div className="relative h-24 w-full overflow-hidden bg-muted/30">
-                  <img
-                    src={thumb}
-                    alt=""
-                    className="w-full h-full object-cover opacity-80"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-card" />
-                  {/* Type badge overlay */}
-                  <span className={cn(
-                    'absolute top-2 left-2 text-[10px] font-medium px-2 py-0.5 rounded-full border backdrop-blur-sm',
-                    typeColor
-                  )}>
-                    {signal.type}
-                  </span>
-                  {/* Confidence overlay */}
-                  <span className={cn(
-                    'absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-card/80 backdrop-blur-sm border border-border/40',
-                    signal.confidence >= 60 ? 'text-green-600' : 'text-primary'
-                  )}>
-                    {signal.confidence}%
-                  </span>
-                </div>
-              )}
+              {/* No image strip — text-first compact layout */}
 
               {/* Collapsed header */}
               <div className="flex items-start gap-3 p-3">
@@ -218,20 +194,22 @@ export function QuickBriefOutput({
                   {isSelected && <Check className="w-3 h-3" />}
                 </button>
 
-                {!thumb && (
-                  <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
-                    {idx + 1}
-                  </span>
-                )}
+                <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+                  {idx + 1}
+                </span>
 
                 <div className="flex-1 min-w-0">
-                  {!thumb && (
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full border', typeColor)}>
-                        {signal.type}
-                      </span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full border', typeColor)}>
+                      {signal.type}
+                    </span>
+                    <span className={cn(
+                      'text-[10px] font-bold',
+                      signal.confidence >= 60 ? 'text-green-600' : 'text-primary'
+                    )}>
+                      {signal.confidence}%
+                    </span>
+                  </div>
                   <p className="text-sm font-medium text-foreground leading-snug">
                     {signal.title}
                   </p>
