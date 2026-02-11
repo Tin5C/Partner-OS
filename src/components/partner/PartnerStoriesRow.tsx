@@ -6,7 +6,7 @@ import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { PartnerStoryTile } from './PartnerStoryTile';
-import { PartnerStoryViewer } from './PartnerStoryViewer';
+import { SignalIntelligencePanel } from './SignalIntelligencePanel';
 import { MicrocastViewer } from './MicrocastViewer';
 import { PartnerStory, PartnerSignalType, signalTypeColors, signalTypeGradients } from '@/data/partnerStories';
 import { useStoryState } from '@/hooks/useStoryState';
@@ -95,13 +95,26 @@ export function PartnerStoriesRow({
 
   const { getState, markSeen, markListened } = useStoryState();
 
-  const handleStoryClick = (story: PartnerStory, playlist: PartnerStory[]) => {
+  const handleOpenSignal = (story: PartnerStory, playlist: PartnerStory[]) => {
     setCurrentPlaylist(playlist);
     const index = playlist.findIndex(s => s.id === story.id);
     setSelectedIndex(index);
     setSelectedStory(story);
     setViewerOpen(true);
     markSeen(story.id);
+  };
+
+  const handleQuickBrief = (story: PartnerStory) => {
+    markListened(story.id);
+    if (onCreateQuickBrief) onCreateQuickBrief();
+    toast.success('Added to Quick Brief', { description: 'Signal context transferred.' });
+  };
+
+  const handlePromote = (story: PartnerStory) => {
+    markListened(story.id);
+    const el = document.getElementById('section-partner-mode');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    toast.success('Promoted to Deal Planning', { description: 'Signal evidence added to planning workspace.' });
   };
 
   const handleClose = () => {
@@ -128,10 +141,6 @@ export function PartnerStoriesRow({
       setSelectedStory(currentPlaylist[prevIndex]);
     }
   }, [selectedIndex, currentPlaylist]);
-
-  const handleAddToBrief = (story: PartnerStory) => {
-    markListened(story.id);
-  };
 
   const handleListenMicrocast = useCallback((microcastType: MicrocastType) => {
     if (!ctx) return;
@@ -175,36 +184,29 @@ export function PartnerStoriesRow({
               key={story.id}
               story={story}
               listenedState={getState(story.id)}
-              onClick={() => handleStoryClick(story, homepageStories)}
+              onClick={() => handleOpenSignal(story, homepageStories)}
+              onQuickBrief={() => handleQuickBrief(story)}
+              onPromote={() => handlePromote(story)}
             />
           ))}
         </div>
       </div>
 
-      {/* Story Viewer */}
-      <PartnerStoryViewer
+      {/* Signal Intelligence Panel */}
+      <SignalIntelligencePanel
         story={selectedStory}
         open={viewerOpen}
         onOpenChange={setViewerOpen}
         onClose={handleClose}
-        onMarkListened={markListened}
         onNext={handleNext}
         onPrev={handlePrev}
         hasNext={selectedIndex < currentPlaylist.length - 1}
         hasPrev={selectedIndex > 0}
         currentIndex={selectedIndex}
         totalCount={currentPlaylist.length}
-        hasCustomerBrief={hasCustomerBrief}
-        onAddToBrief={handleAddToBrief}
-        onOpenTrendingPack={onOpenTrendingPack}
-        onCreateBrief={onCreateBrief}
-        onCreateQuickBrief={onCreateQuickBrief}
-        onListenMicrocast={handleListenMicrocast}
-        onPromoteToDealPlanning={(story) => {
-          // Switch to Deal Planning mode — scroll to partner-mode section
-          const el = document.getElementById('section-partner-mode');
-          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }}
+        allStories={homepageStories}
+        onAddToQuickBrief={(story) => handleQuickBrief(story)}
+        onPromoteToDealPlanning={(story) => handlePromote(story)}
       />
 
       {/* Microcast Viewer */}
@@ -232,8 +234,10 @@ export function PartnerStoriesRow({
                 listenedState={getState(story.id)}
                 onClick={() => {
                   setBrowseOpen(false);
-                  handleStoryClick(story, homepageStories);
+                  handleOpenSignal(story, homepageStories);
                 }}
+                onQuickBrief={() => handleQuickBrief(story)}
+                onPromote={() => handlePromote(story)}
               />
             ))}
           </div>
