@@ -32,6 +32,10 @@ export * from './dealPlanStore';
 export * from './signalStore';
 export * from './quickBriefStore';
 
+// Extractor + WeeklySignal layer
+export * from './extractorRunStore';
+export * from './weeklySignalStore';
+
 // On-Demand Briefing taxonomy + selection
 export * from './briefingTaxonomy';
 export * from './briefingSelectionStore';
