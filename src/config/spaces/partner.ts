@@ -29,7 +29,16 @@ export const partnerConfig: SpaceConfig = {
       variant: 'primary',
       enabled: true,
     },
-    // 2. ON-DEMAND BRIEFINGS
+    // 2. QUICK BRIEF — fast situational refresh, auto-populated from Stories
+    {
+      id: 'quick-brief',
+      type: 'quickBrief',
+      title: 'Quick Brief',
+      subtitle: 'Fast situational refresh before a call or meeting — 60 seconds.',
+      variant: 'primary',
+      enabled: true,
+    },
+    // 3. ON-DEMAND BRIEFINGS
     {
       id: 'on-demand-briefings',
       type: 'onDemandBriefings',
@@ -91,7 +100,7 @@ export const partnerConfig: SpaceConfig = {
     events: false, // Hidden for partners
     skillOfWeek: true,
     customerBrief: true, // Partner-only: full Account Brief
-    quickBrief: false, // Removed — Stories are the entry point now
+    quickBrief: true, // Re-enabled — Stories auto-populate Quick Brief
     expertCorners: true, // Partner-only feature
     trendingPacks: false, // Replaced by On-Demand Briefings
     onDemandBriefings: true, // Partner-only: unified briefing system
