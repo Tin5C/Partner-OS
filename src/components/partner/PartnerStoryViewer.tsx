@@ -1,12 +1,13 @@
 // Partner Story Viewer - Actionable story detail modal
 // Shows headline, "so what", what changed, who cares, next move + CTAs
 
-import { X, ChevronLeft, ChevronRight, Zap, FileText, Headphones, Users } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Zap, FileText, Headphones, Users, Radio } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { PartnerStory, signalTypeColors } from '@/data/partnerStories';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { saveBriefingSelection } from '@/data/partner/briefingSelectionStore';
 import type { StoryCardCTA, MicrocastType } from '@/data/partner/contracts';
 
 interface PartnerStoryViewerProps {
@@ -218,7 +219,7 @@ export function PartnerStoryViewer({
             Add to Quick Brief
           </Button>
 
-          {/* Secondary row: Promote + Listen */}
+          {/* Secondary row: Promote + Listen + Generate Microcast */}
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -243,6 +244,36 @@ export function PartnerStoryViewer({
               </Button>
             )}
           </div>
+
+          {/* Generate Microcast — pre-fills context from story */}
+          <Button
+            variant="secondary"
+            className="w-full text-sm gap-1.5"
+            onClick={() => {
+              // Auto-prefill vendor/account/industry from story tags
+              const tags = story.tags ?? [];
+              const vendorMap: Record<string, string> = { microsoft: 'microsoft', google: 'google', databricks: 'databricks' };
+              const accountMap: Record<string, string> = { schindler: 'schindler', ubs: 'ubs', fifa: 'fifa', pflanzer: 'pflanzer' };
+              const industryMap: Record<string, string> = { manufacturing: 'manufacturing', banking: 'banking', entertainment: 'entertainment' };
+
+              const lower = tags.map((t) => t.toLowerCase());
+              const vendor = Object.keys(vendorMap).find((k) => lower.some((t) => t.includes(k)));
+              const account = Object.keys(accountMap).find((k) => lower.some((t) => t.includes(k)));
+              const industry = Object.keys(industryMap).find((k) => lower.some((t) => t.includes(k)));
+
+              if (vendor) saveBriefingSelection('vendor_updates', { vendor });
+              if (account) saveBriefingSelection('account_microcast', { account });
+              if (industry) saveBriefingSelection('industry_microcast', { industry });
+
+              toast.success('Microcast context pre-filled', {
+                description: 'Selections saved to On-Demand Briefings. Generation coming soon.',
+              });
+              onClose();
+            }}
+          >
+            <Radio className="h-4 w-4" />
+            Generate Microcast
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
