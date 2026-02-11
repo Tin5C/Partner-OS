@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import type { Signal } from '@/data/partner/signalStore';
 import { getSignal } from '@/data/partner/signalStore';
 import { promoteSignalsToDealPlan } from '@/data/partner/dealPlanStore';
+import { getSignalThumbnail } from '@/data/partner/signalThumbnails';
 
 export type QuickBriefNeed = 'meeting-prep' | 'objection-help' | 'competitive-position' | 'intro-email' | 'value-pitch';
 
@@ -155,17 +156,54 @@ export function QuickBriefOutput({
         {signals.map((signal, idx) => {
           const isExpanded = expandedIds.has(signal.id);
           const isSelected = selectedIds.has(signal.id);
+          const thumb = getSignalThumbnail(signal.id);
+
+          // Signal type badge colors
+          const typeColors: Record<string, string> = {
+            vendor: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+            regulatory: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+            internalActivity: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
+            competitive: 'bg-red-500/10 text-red-600 border-red-500/20',
+            localMarket: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+          };
+          const typeColor = typeColors[signal.type] ?? 'bg-muted text-muted-foreground border-border';
 
           return (
             <div
               key={signal.id}
               className={cn(
-                'rounded-xl border transition-all',
+                'rounded-xl border transition-all overflow-hidden',
                 isSelected
                   ? 'border-primary/40 bg-primary/[0.02]'
-                  : 'border-border/60 bg-muted/20'
+                  : 'border-border/60 bg-card'
               )}
             >
+              {/* Image strip at top */}
+              {thumb && (
+                <div className="relative h-24 w-full overflow-hidden bg-muted/30">
+                  <img
+                    src={thumb}
+                    alt=""
+                    className="w-full h-full object-cover opacity-80"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-card" />
+                  {/* Type badge overlay */}
+                  <span className={cn(
+                    'absolute top-2 left-2 text-[10px] font-medium px-2 py-0.5 rounded-full border backdrop-blur-sm',
+                    typeColor
+                  )}>
+                    {signal.type}
+                  </span>
+                  {/* Confidence overlay */}
+                  <span className={cn(
+                    'absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-card/80 backdrop-blur-sm border border-border/40',
+                    signal.confidence >= 60 ? 'text-green-600' : 'text-primary'
+                  )}>
+                    {signal.confidence}%
+                  </span>
+                </div>
+              )}
+
               {/* Collapsed header */}
               <div className="flex items-start gap-3 p-3">
                 <button
@@ -180,11 +218,20 @@ export function QuickBriefOutput({
                   {isSelected && <Check className="w-3 h-3" />}
                 </button>
 
-                <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
-                  {idx + 1}
-                </span>
+                {!thumb && (
+                  <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+                    {idx + 1}
+                  </span>
+                )}
 
                 <div className="flex-1 min-w-0">
+                  {!thumb && (
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full border', typeColor)}>
+                        {signal.type}
+                      </span>
+                    </div>
+                  )}
                   <p className="text-sm font-medium text-foreground leading-snug">
                     {signal.title}
                   </p>
