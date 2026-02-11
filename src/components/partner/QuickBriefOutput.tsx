@@ -1,4 +1,6 @@
 // Quick Brief Output — expandable signal cards with selection & promote flow
+// Now reads from canonical Signal objects directly
+
 import { useState, useCallback } from 'react';
 import {
   Zap,
@@ -7,75 +9,39 @@ import {
   ChevronDown,
   ArrowUpRight,
   AlertTriangle,
-  Shield,
-  Target,
   Info,
   Play,
   Check,
   Link2,
+  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import {
-  promoteSignalsToDealPlan,
-  ALL_SECTION_KEYS,
-  SECTION_LABELS,
-  type DealPlanSectionKey,
-} from '@/data/partner/dealPlanSelectionStore';
+import type { Signal } from '@/data/partner/signalStore';
+import { getSignal } from '@/data/partner/signalStore';
+import { promoteSignalsToDealPlan } from '@/data/partner/dealPlanStore';
 
 export type QuickBriefNeed = 'meeting-prep' | 'objection-help' | 'competitive-position' | 'intro-email' | 'value-pitch';
 
-export interface SignalBriefingRef {
-  id: string;
-  title: string;
-  type: string;
-}
-
-export interface QuickBriefSignal {
-  id: string;
-  headline: string;
-  soWhat: string;
-  whatToDo: string;
-  sellerTalkTrack: string[];
-  engineerContext: string[];
-  confidence: { score: number; label: string; reason: string };
-  whatsMissing: string[];
-  proofToRequest: string[];
-  recommendedBriefings: SignalBriefingRef[];
-  sources: { label: string; sourceType: string }[];
-}
-
-export interface QuickBriefResult {
-  customerName: string;
-  needs: QuickBriefNeed[];
-  signals: QuickBriefSignal[];
-  accountId: string;
-  // Legacy fields kept for backward compat
-  whatChanged: { headline: string; soWhat: string; whatToDo: string }[];
-  sellerView: { talkTrack: string[]; emailDraft?: string };
-  engineerView: { technicalContext: string[]; architectureNotes: string };
-  confidence: { score: number; label: string; reason: string };
-  whatsMissing: string[];
-  recommendedPlay?: { playType: string; title: string };
-  objections?: { theme: string; responses: string[]; proofArtifact?: string }[];
-  contextLine?: string;
-}
-
-type PersonaTab = 'seller' | 'engineer';
-
 interface QuickBriefOutputProps {
-  result: QuickBriefResult;
+  customerName: string;
+  focusId: string;
+  weekOf: string;
+  signals: Signal[];
   onPromoteToDealBrief: () => void;
   onReset: () => void;
 }
 
-export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: QuickBriefOutputProps) {
+export function QuickBriefOutput({
+  customerName,
+  focusId,
+  weekOf,
+  signals,
+  onPromoteToDealBrief,
+  onReset,
+}: QuickBriefOutputProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [personaTabs, setPersonaTabs] = useState<Record<string, PersonaTab>>({});
-  const [sectionToggles, setSectionToggles] = useState<Record<string, Set<DealPlanSectionKey>>>({});
-
-  const signals = result.signals ?? [];
 
   const toggleExpand = useCallback((id: string) => {
     setExpandedIds((prev) => {
@@ -93,26 +59,7 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
       else next.add(id);
       return next;
     });
-    // Init section toggles with defaults when selecting
-    setSectionToggles((prev) => {
-      if (prev[id]) return prev;
-      return { ...prev, [id]: new Set(ALL_SECTION_KEYS) };
-    });
   }, []);
-
-  const toggleSection = useCallback((signalId: string, section: DealPlanSectionKey) => {
-    setSectionToggles((prev) => {
-      const current = prev[signalId] ?? new Set(ALL_SECTION_KEYS);
-      const next = new Set(current);
-      if (next.has(section)) next.delete(section);
-      else next.add(section);
-      return { ...prev, [signalId]: next };
-    });
-  }, []);
-
-  const getPersona = (id: string): PersonaTab => personaTabs[id] ?? 'seller';
-  const setPersona = (id: string, tab: PersonaTab) =>
-    setPersonaTabs((p) => ({ ...p, [id]: tab }));
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -120,22 +67,27 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
   };
 
   const handlePromote = () => {
-    const selections = Array.from(selectedIds).map((signalId) => ({
-      signalId,
-      includedSections: Array.from(sectionToggles[signalId] ?? new Set(ALL_SECTION_KEYS)),
-    }));
+    if (selectedIds.size === 0) return;
+    const selected = signals.filter((s) => selectedIds.has(s.id));
+    if (selected.length === 0) return;
 
-    promoteSignalsToDealPlan(result.accountId, selections);
-    toast.success(`Promoted ${selections.length} signal${selections.length > 1 ? 's' : ''} to Deal Planning`);
+    try {
+      const { addedCount } = promoteSignalsToDealPlan(focusId, weekOf, selected);
+      if (addedCount > 0) {
+        toast.success(`Added ${addedCount} signal${addedCount > 1 ? 's' : ''} to Deal Planning`);
+      } else {
+        toast.info('All selected signals are already in Deal Planning');
+      }
+      onPromoteToDealBrief();
+    } catch {
+      toast.error('Failed to promote signals');
+    }
   };
 
   const confidenceColor = (score: number) =>
     score >= 60 ? 'text-green-600' : score >= 40 ? 'text-primary' : 'text-red-500';
 
-  if (signals.length === 0) {
-    // Fallback to legacy layout — shouldn't happen with proper data
-    return null;
-  }
+  if (signals.length === 0) return null;
 
   return (
     <div className="p-5 space-y-4">
@@ -144,31 +96,30 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
         <div className="flex items-center gap-2">
           <Zap className="w-4 h-4 text-primary" />
           <h3 className="text-sm font-semibold text-foreground">
-            Quick Brief: {result.customerName}
+            Quick Brief: {customerName}
           </h3>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handlePromote}
-            disabled={selectedIds.size === 0}
-            className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
-              selectedIds.size > 0
-                ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm'
-                : 'bg-muted text-muted-foreground cursor-not-allowed opacity-50'
-            )}
-          >
-            <ArrowUpRight className="w-3 h-3" />
-            Promote to Deal Planning
-            {selectedIds.size > 0 && (
-              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-primary-foreground/20 text-[10px]">
-                {selectedIds.size}
-              </span>
-            )}
-          </button>
-        </div>
+        <button
+          onClick={handlePromote}
+          disabled={selectedIds.size === 0}
+          className={cn(
+            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
+            selectedIds.size > 0
+              ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm'
+              : 'bg-muted text-muted-foreground cursor-not-allowed opacity-50'
+          )}
+        >
+          <ArrowUpRight className="w-3 h-3" />
+          Promote to Deal Planning
+          {selectedIds.size > 0 && (
+            <span className="ml-1 px-1.5 py-0.5 rounded-full bg-primary-foreground/20 text-[10px]">
+              {selectedIds.size}
+            </span>
+          )}
+        </button>
       </div>
 
+      {/* Speed controls */}
       <div className="flex items-center gap-3">
         <p className="text-[11px] text-muted-foreground flex items-center gap-1 flex-1">
           <Info className="w-3 h-3" />
@@ -180,13 +131,7 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
             if (allSelected) {
               setSelectedIds(new Set());
             } else {
-              const allIds = new Set(signals.map((s) => s.id));
-              setSelectedIds(allIds);
-              setSectionToggles((prev) => {
-                const next = { ...prev };
-                signals.forEach((s) => { if (!next[s.id]) next[s.id] = new Set(ALL_SECTION_KEYS); });
-                return next;
-              });
+              setSelectedIds(new Set(signals.map((s) => s.id)));
             }
           }}
           className="text-[11px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
@@ -210,8 +155,6 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
         {signals.map((signal, idx) => {
           const isExpanded = expandedIds.has(signal.id);
           const isSelected = selectedIds.has(signal.id);
-          const persona = getPersona(signal.id);
-          const sections = sectionToggles[signal.id] ?? new Set(ALL_SECTION_KEYS);
 
           return (
             <div
@@ -225,7 +168,6 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
             >
               {/* Collapsed header */}
               <div className="flex items-start gap-3 p-3">
-                {/* Checkbox */}
                 <button
                   onClick={() => toggleSelect(signal.id)}
                   className={cn(
@@ -238,29 +180,24 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
                   {isSelected && <Check className="w-3 h-3" />}
                 </button>
 
-                {/* Number badge */}
                 <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
                   {idx + 1}
                 </span>
 
-                {/* Content */}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground leading-snug">
-                    {signal.headline}
+                    {signal.title}
                   </p>
-                  {signal.soWhat && (
-                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
-                      {signal.soWhat}
-                    </p>
-                  )}
-                  {signal.whatToDo && !isExpanded && (
+                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                    {signal.soWhat}
+                  </p>
+                  {!isExpanded && (
                     <p className="text-xs text-muted-foreground/70 mt-0.5 line-clamp-1">
-                      → {signal.whatToDo}
+                      &rarr; {signal.recommendedAction}
                     </p>
                   )}
                 </div>
 
-                {/* Expand chevron */}
                 <button
                   onClick={() => toggleExpand(signal.id)}
                   className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors flex-shrink-0"
@@ -273,106 +210,44 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
                 </button>
               </div>
 
-              {/* Expanded sections */}
+              {/* Expanded dropdown */}
               {isExpanded && (
                 <div className="px-3 pb-3 space-y-3 border-t border-border/40 pt-3 ml-[52px]">
-                  {/* Section toggles (when selected for promote) */}
-                  {isSelected && (
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      <span className="text-[10px] text-muted-foreground/70 mr-1 self-center">Include:</span>
-                      {ALL_SECTION_KEYS.map((key) => (
-                        <button
-                          key={key}
-                          onClick={() => toggleSection(signal.id, key)}
-                          className={cn(
-                            'px-2 py-0.5 rounded-full text-[10px] font-medium border transition-all',
-                            sections.has(key)
-                              ? 'bg-primary/10 text-primary border-primary/20'
-                              : 'bg-muted/30 text-muted-foreground/60 border-border/40 line-through'
-                          )}
-                        >
-                          {SECTION_LABELS[key]}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* 1) Talk Track with persona toggle */}
+                  {/* 1) Talk Track */}
                   <div>
-                    <div className="flex items-center gap-1 mb-2">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+                        Talk track
+                      </p>
                       <button
-                        onClick={() => setPersona(signal.id, 'seller')}
-                        className={cn(
-                          'px-2.5 py-1 rounded-md text-[11px] font-medium transition-all',
-                          persona === 'seller'
-                            ? 'bg-primary text-primary-foreground shadow-sm'
-                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                        )}
-                      >
-                        <Target className="w-3 h-3 inline mr-1" />
-                        Seller
-                      </button>
-                      <button
-                        onClick={() => setPersona(signal.id, 'engineer')}
-                        className={cn(
-                          'px-2.5 py-1 rounded-md text-[11px] font-medium transition-all',
-                          persona === 'engineer'
-                            ? 'bg-primary text-primary-foreground shadow-sm'
-                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                        )}
-                      >
-                        <Shield className="w-3 h-3 inline mr-1" />
-                        Engineer
-                      </button>
-                      <button
-                        onClick={() =>
-                          handleCopy(
-                            (persona === 'seller'
-                              ? signal.sellerTalkTrack
-                              : signal.engineerContext
-                            ).join('\n')
-                          )
-                        }
-                        className="ml-auto text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-0.5"
+                        onClick={() => handleCopy(signal.talkTrack)}
+                        className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-0.5"
                       >
                         <Copy className="w-3 h-3" /> Copy
                       </button>
                     </div>
-                    <div className="space-y-1.5">
-                      {(persona === 'seller'
-                        ? signal.sellerTalkTrack
-                        : signal.engineerContext
-                      ).map((point, i) => (
-                        <div key={i} className="flex items-start gap-2 text-xs">
-                          <span className="w-4 h-4 rounded-full bg-primary/10 text-primary text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
-                            {i + 1}
-                          </span>
-                          <p className="text-foreground leading-relaxed">{point}</p>
-                        </div>
-                      ))}
-                    </div>
+                    <p className="text-xs text-foreground leading-relaxed">
+                      {signal.talkTrack}
+                    </p>
                   </div>
 
                   {/* 2) Confidence */}
                   <div className="p-2.5 rounded-lg bg-muted/30 border border-border/40">
                     <div className="flex items-center gap-2">
-                      <span className={cn('text-sm font-bold', confidenceColor(signal.confidence.score))}>
-                        {signal.confidence.score}%
+                      <span className={cn('text-sm font-bold', confidenceColor(signal.confidence))}>
+                        {signal.confidence}%
                       </span>
-                      <span className={cn('text-[11px] font-medium', confidenceColor(signal.confidence.score))}>
-                        {signal.confidence.label}
+                      <span className={cn('text-[11px] font-medium', confidenceColor(signal.confidence))}>
+                        {signal.confidenceLabel}
                       </span>
                     </div>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      {signal.confidence.reason}
-                    </p>
                   </div>
 
                   {/* 3) What's missing */}
                   {signal.whatsMissing.length > 0 && (
                     <div>
                       <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
-                        What's missing
+                        What&apos;s missing
                       </p>
                       <div className="space-y-1">
                         {signal.whatsMissing.map((item, i) => (
@@ -402,30 +277,21 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
                     </div>
                   )}
 
-                  {/* 5) Recommended briefings */}
-                  {signal.recommendedBriefings.length > 0 && (
+                  {/* 5) Who cares */}
+                  {signal.whoCares.length > 0 && (
                     <div>
                       <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
-                        Recommended briefings
+                        Who cares
                       </p>
-                      <div className="space-y-1.5">
-                        {signal.recommendedBriefings.map((b) => (
-                          <div
-                            key={b.id}
-                            className="flex items-center justify-between p-2 rounded-lg bg-muted/20 border border-border/40"
+                      <div className="flex flex-wrap gap-1.5">
+                        {signal.whoCares.map((role, i) => (
+                          <span
+                            key={i}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted/40 border border-border/40 text-[10px] text-muted-foreground"
                           >
-                            <div>
-                              <p className="text-xs font-medium text-foreground">{b.title}</p>
-                              <p className="text-[10px] text-muted-foreground capitalize">{b.type.replace(/_/g, ' ')}</p>
-                            </div>
-                            <button
-                              onClick={() => toast.info('Briefing viewer coming soon')}
-                              className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-primary hover:bg-primary/5 transition-colors"
-                            >
-                              <Play className="w-3 h-3" />
-                              Open
-                            </button>
-                          </div>
+                            <Users className="w-2.5 h-2.5" />
+                            {role}
+                          </span>
                         ))}
                       </div>
                     </div>
@@ -443,7 +309,7 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
                             key={i}
                             className="px-2 py-0.5 rounded-full bg-muted/40 border border-border/40 text-[10px] text-muted-foreground"
                           >
-                            {s.label}
+                            {s}
                           </span>
                         ))}
                       </div>
@@ -456,7 +322,7 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
         })}
       </div>
 
-      {/* Promote CTA (bottom, for visibility) */}
+      {/* Bottom promote CTA */}
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
           <ArrowUpRight className="w-4 h-4 text-primary flex-shrink-0" />
@@ -465,11 +331,11 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
               {selectedIds.size} signal{selectedIds.size > 1 ? 's' : ''} selected
             </p>
             <p className="text-[11px] text-muted-foreground">
-              References will be linked to Deal Planning — no content is copied.
+              Snapshots will be saved to Deal Planning.
             </p>
           </div>
           <button
-            onClick={() => { handlePromote(); onPromoteToDealBrief(); }}
+            onClick={handlePromote}
             className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors whitespace-nowrap"
           >
             Open Deal Planning
@@ -478,14 +344,10 @@ export function QuickBriefOutput({ result, onPromoteToDealBrief, onReset }: Quic
         </div>
       )}
 
-      {/* Context attribution */}
-      {result.contextLine && (
-        <p className="text-[11px] text-muted-foreground/70 text-center italic">
-          {result.contextLine}
-        </p>
-      )}
-
-      {/* Reset */}
+      {/* Context + Reset */}
+      <p className="text-[11px] text-muted-foreground/70 text-center italic">
+        Context used: last touchpoint + upcoming meeting (simulated in demo).
+      </p>
       <div className="flex justify-center pt-1">
         <button
           onClick={onReset}

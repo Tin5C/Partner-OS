@@ -15,8 +15,22 @@ export * from './accountSignalStore';
 export * from './objectionStore';
 export * from './partnerProfileStore';
 
-// Deal Plan Selection store
-export * from './dealPlanSelectionStore';
+// Legacy deal plan selection store (kept for backward compat)
+export {
+  listDealPlanSelections,
+  getDealPlanSelection,
+  removeDealPlanSelection,
+  ALL_SECTION_KEYS,
+  SECTION_LABELS,
+  type DealPlanSelection,
+  type DealPlanSectionKey,
+  type PromoteSelection,
+} from './dealPlanSelectionStore';
+
+// New canonical stores
+export * from './dealPlanStore';
+export * from './signalStore';
+export * from './quickBriefStore';
 
 // HelioWorks demo seed (auto-runs on import)
 import './demo/helioworksSeed';
