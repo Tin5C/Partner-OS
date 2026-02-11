@@ -1,6 +1,6 @@
-// Partner Mode Section
-// Toggles between Quick Brief (default) and Deal Planning modes
-// Deal Planning renders promoted signals via DealPlanDriversView
+// Partner Mode Section (legacy — no longer rendered on homepage)
+// Kept for potential reuse; Account Brief flow is now embedded in Stories
+// Deal Planning renamed to Account Brief
 
 import { useState } from 'react';
 import { Zap, Brain, Info } from 'lucide-react';

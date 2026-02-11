@@ -37,8 +37,6 @@ interface PartnerStoryTileProps {
   story: PartnerStory;
   listenedState: ListenedState;
   onClick: () => void;
-  onQuickBrief?: () => void;
-  onPromote?: () => void;
 }
 
 export function PartnerStoryTile({ story, listenedState, onClick }: PartnerStoryTileProps) {

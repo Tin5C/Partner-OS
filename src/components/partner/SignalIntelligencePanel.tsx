@@ -1,7 +1,8 @@
 // Signal Intelligence Panel — full analytical view of a signal
 // Sections: Summary, What Changed, Why It Matters, Who Cares, Conversion Paths, Related Signals, Source Layer
+// Action bar: Build Account Brief + See Related Signals
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   X,
   ChevronLeft,
@@ -15,8 +16,10 @@ import {
   Link2,
   FileText,
   Clock,
-  Zap,
-  Brain,
+  Briefcase,
+  ChevronDown,
+  Square,
+  CheckSquare,
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -39,8 +42,7 @@ interface SignalIntelligencePanelProps {
   currentIndex?: number;
   totalCount?: number;
   allStories?: PartnerStory[];
-  onAddToQuickBrief?: (story: PartnerStory) => void;
-  onPromoteToDealPlanning?: (story: PartnerStory) => void;
+  onBuildAccountBrief?: (anchorStory: PartnerStory, selectedSignals: PartnerStory[]) => void;
 }
 
 // Role impact mapping
@@ -98,7 +100,7 @@ function getConversionPaths(story: PartnerStory) {
     },
     {
       label: 'Pilot Angle',
-      icon: <Zap className="w-3.5 h-3.5" />,
+      icon: <TrendingUp className="w-3.5 h-3.5" />,
       description: `Propose a scoped pilot to validate the signal's impact — start small, measure fast, expand on evidence.`,
     },
     {
@@ -138,6 +140,42 @@ function SectionBlock({ title, icon, children }: { title: string; icon: React.Re
   );
 }
 
+// Ranking logic for related signals
+function rankRelatedSignals(anchor: PartnerStory, candidates: PartnerStory[]): PartnerStory[] {
+  return candidates
+    .filter(s => s.id !== anchor.id)
+    .map(s => {
+      let score = 0;
+      // Same signal type (vendor/capability cluster)
+      if (s.signalType === anchor.signalType) score += 3;
+      // Overlapping stakeholders
+      const anchorRoles = new Set(anchor.whoCares ?? []);
+      (s.whoCares ?? []).forEach(r => { if (anchorRoles.has(r)) score += 2; });
+      // Same tags (capability cluster)
+      const anchorTags = new Set((anchor.tags ?? []).map(t => t.toLowerCase()));
+      (s.tags ?? []).forEach(t => { if (anchorTags.has(t.toLowerCase())) score += 1; });
+      // Higher confidence
+      score += ((s.relevance_score ?? 50) / 100);
+      return { story: s, score };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5)
+    .map(r => r.story);
+}
+
+// Generate a 1-line implication that doesn't repeat the anchor story text
+function getUniqueImplication(signal: PartnerStory, anchor: PartnerStory): string {
+  // Use whatChanged if it's different enough from the anchor soWhat
+  if (signal.whatChanged && signal.whatChanged !== anchor.soWhat) {
+    return signal.whatChanged;
+  }
+  // Fall back to soWhat but ensure it's different
+  if (signal.soWhat !== anchor.soWhat) {
+    return signal.soWhat;
+  }
+  return `${signal.signalType} signal with relevance to same stakeholders.`;
+}
+
 export function SignalIntelligencePanel({
   story,
   open,
@@ -150,16 +188,25 @@ export function SignalIntelligencePanel({
   currentIndex = 0,
   totalCount = 1,
   allStories = [],
-  onAddToQuickBrief,
-  onPromoteToDealPlanning,
+  onBuildAccountBrief,
 }: SignalIntelligencePanelProps) {
-  // Related signals (same signal type, exclude self)
+  const [showRelated, setShowRelated] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Related signals with smart ranking
   const relatedSignals = useMemo(() => {
     if (!story) return [];
-    return allStories
-      .filter(s => s.id !== story.id && s.signalType === story.signalType)
-      .slice(0, 3);
+    return rankRelatedSignals(story, allStories);
   }, [allStories, story]);
+
+  // Reset state when story changes
+  const storyId = story?.id;
+  const [prevStoryId, setPrevStoryId] = useState(storyId);
+  if (storyId !== prevStoryId) {
+    setPrevStoryId(storyId);
+    setShowRelated(false);
+    setSelectedIds(new Set());
+  }
 
   if (!story) return null;
 
@@ -174,6 +221,33 @@ export function SignalIntelligencePanel({
 
   const whatChangedBullets = story.whatChangedBullets ?? (story.whatChanged ? [story.whatChanged] : []);
   const roles = story.whoCares ?? [];
+
+  const toggleSignalSelection = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBuildBrief = () => {
+    const selected = allStories.filter(s => selectedIds.has(s.id));
+    onBuildAccountBrief?.(story, selected);
+    toast.success('Building Account Brief', {
+      description: `Anchor signal + ${selected.length} related signals included.`,
+    });
+    onClose();
+  };
+
+  const handleAddSelectedToBrief = () => {
+    const selected = allStories.filter(s => selectedIds.has(s.id));
+    onBuildAccountBrief?.(story, selected);
+    toast.success('Building Account Brief', {
+      description: `${selected.length + 1} signals included.`,
+    });
+    onClose();
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -230,8 +304,89 @@ export function SignalIntelligencePanel({
           </div>
         </div>
 
+        {/* Action bar — compact, horizontal */}
+        <div className="px-4 py-3 border-b border-border/50 flex items-center gap-2">
+          <Button
+            size="sm"
+            className="flex-1"
+            onClick={handleBuildBrief}
+          >
+            <Briefcase className="h-3.5 w-3.5 mr-1.5" />
+            Build Account Brief
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1"
+            onClick={() => setShowRelated(!showRelated)}
+          >
+            <Link2 className="h-3.5 w-3.5 mr-1.5" />
+            {showRelated ? 'Hide Related' : `See Related Signals (${relatedSignals.length})`}
+            <ChevronDown className={cn("h-3 w-3 ml-1 transition-transform", showRelated && "rotate-180")} />
+          </Button>
+        </div>
+
         {/* Scrollable content */}
         <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-5">
+
+          {/* Inline Related Signals (expandable) */}
+          {showRelated && relatedSignals.length > 0 && (
+            <div className="rounded-xl border border-primary/15 bg-primary/[0.02] p-4 space-y-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <Link2 className="w-3.5 h-3.5" />
+                Related Signals
+              </p>
+              <div className="space-y-2">
+                {relatedSignals.map((s) => {
+                  const isSelected = selectedIds.has(s.id);
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() => toggleSignalSelection(s.id)}
+                      className={cn(
+                        "w-full flex items-start gap-2.5 p-2.5 rounded-lg border text-left transition-all",
+                        isSelected
+                          ? "border-primary/30 bg-primary/5"
+                          : "border-border/40 bg-card hover:border-border"
+                      )}
+                    >
+                      <div className="mt-0.5 flex-shrink-0">
+                        {isSelected ? (
+                          <CheckSquare className="w-4 h-4 text-primary" />
+                        ) : (
+                          <Square className="w-4 h-4 text-muted-foreground/40" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className={cn(
+                            "px-2 py-0.5 text-[9px] font-medium rounded-full border flex-shrink-0",
+                            signalTypeColors[s.signalType]
+                          )}>
+                            {s.signalType}
+                          </span>
+                        </div>
+                        <p className="text-xs font-medium text-foreground line-clamp-1">{s.headline}</p>
+                        <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
+                          {getUniqueImplication(s, story)}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              {selectedIds.size > 0 && (
+                <Button
+                  size="sm"
+                  className="w-full"
+                  onClick={handleAddSelectedToBrief}
+                >
+                  <Briefcase className="h-3.5 w-3.5 mr-1.5" />
+                  Add Selected to Account Brief ({selectedIds.size})
+                </Button>
+              )}
+            </div>
+          )}
 
           {/* A. Signal Summary */}
           <div className="flex items-center gap-3 flex-wrap">
@@ -347,29 +502,7 @@ export function SignalIntelligencePanel({
             </div>
           </SectionBlock>
 
-          {/* F. Related Signals */}
-          {relatedSignals.length > 0 && (
-            <SectionBlock title="Related Signals" icon={<Link2 className="w-3.5 h-3.5" />}>
-              <div className="space-y-1.5">
-                {relatedSignals.map((s) => (
-                  <div key={s.id} className="flex items-start gap-2.5 p-2 rounded-lg bg-muted/15 border border-border/40">
-                    <span className={cn(
-                      "px-2 py-0.5 text-[9px] font-medium rounded-full border flex-shrink-0 mt-0.5",
-                      signalTypeColors[s.signalType]
-                    )}>
-                      {s.signalType}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-foreground line-clamp-1">{s.headline}</p>
-                      <p className="text-[11px] text-muted-foreground line-clamp-1">{s.soWhat}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </SectionBlock>
-          )}
-
-          {/* G. Source Layer */}
+          {/* F. Source Layer */}
           <SectionBlock title="Source Layer" icon={<FileText className="w-3.5 h-3.5" />}>
             <div className="p-2.5 rounded-lg bg-muted/20 border border-border/40 space-y-1.5">
               <div className="flex items-center gap-2">
@@ -389,35 +522,6 @@ export function SignalIntelligencePanel({
               )}
             </div>
           </SectionBlock>
-        </div>
-
-        {/* Footer actions */}
-        <div className="p-4 border-t border-border/50 flex gap-2">
-          <Button
-            className="flex-1"
-            size="sm"
-            onClick={() => {
-              onAddToQuickBrief?.(story);
-              toast.success('Added to Quick Brief');
-              onClose();
-            }}
-          >
-            <Zap className="h-3.5 w-3.5 mr-1.5" />
-            Quick Brief
-          </Button>
-          <Button
-            variant="outline"
-            className="flex-1"
-            size="sm"
-            onClick={() => {
-              onPromoteToDealPlanning?.(story);
-              toast.success('Promoted to Deal Planning');
-              onClose();
-            }}
-          >
-            <Brain className="h-3.5 w-3.5 mr-1.5" />
-            Promote to Deal Planning
-          </Button>
         </div>
       </DialogContent>
     </Dialog>

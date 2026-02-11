@@ -24,8 +24,6 @@ import { CustomerBriefSection } from '@/components/partner/CustomerBriefSection'
 import { ExpertCornersRail } from '@/components/partner/ExpertCornersRail';
 import { PartnerGrowthSection } from '@/components/partner/PartnerGrowthSection';
 import { PartnerStoriesRow } from '@/components/partner/PartnerStoriesRow';
-import { QuickBriefSection } from '@/components/partner/QuickBriefSection';
-import { PartnerModeSection } from '@/components/partner/PartnerModeSection';
 import { OnDemandBriefingsSection } from '@/components/partner/OnDemandBriefingsSection';
 import { CapabilitySnapshotCard } from '@/components/partner/CapabilitySnapshotCard';
 import { briefingSourceMode } from '@/config/spaces/partner';
@@ -150,8 +148,8 @@ export function HomeRenderer() {
   const [scorecardOpen, setScorecardOpen] = useState(false);
   const [sourcesOpen, setSourcesOpen] = useState(false);
 
-  // Scroll to Deal Brief section
-  const scrollToDealBrief = () => {
+  // Scroll to Account Brief section
+  const scrollToAccountBrief = () => {
     const el = document.getElementById('section-customer-brief');
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
@@ -216,12 +214,6 @@ export function HomeRenderer() {
           return (
             <PartnerStoriesRow
               key={section.id}
-              hasCustomerBrief={false}
-              onCreateBrief={scrollToDealBrief}
-              onCreateQuickBrief={() => {
-                const el = document.getElementById('section-quick-brief');
-                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }}
             />
           );
         }
@@ -304,20 +296,12 @@ export function HomeRenderer() {
         ) : null;
 
       case 'quickBrief':
-        return spaceConfig.features.quickBrief ? (
-          <div id="section-quick-brief" key={section.id}>
-            <QuickBriefSection
-              onOpenDealBrief={scrollToDealBrief}
-            />
-          </div>
-        ) : null;
+        // Quick Brief removed — Stories are the primary entry point now
+        return null;
 
       case 'partnerMode':
-        return (
-          <div id="section-partner-mode" key={section.id}>
-            <PartnerModeSection />
-          </div>
-        );
+        // Partner Mode (Quick Brief ↔ Deal Planning) removed — replaced by Account Brief flow
+        return null;
 
       case 'expertCorners':
         return spaceConfig.features.expertCorners ? (
