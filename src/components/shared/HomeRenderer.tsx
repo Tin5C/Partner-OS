@@ -336,7 +336,6 @@ export function HomeRenderer() {
         return spaceConfig.features.onDemandBriefings ? (
           <OnDemandBriefingsSection
             key={section.id}
-            sourceMode={briefingSourceMode}
           />
         ) : null;
 
