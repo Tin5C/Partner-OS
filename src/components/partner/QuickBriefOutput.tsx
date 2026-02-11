@@ -32,6 +32,7 @@ interface QuickBriefOutputProps {
   signals: Signal[];
   onPromoteToDealBrief: () => void;
   onReset: () => void;
+  triggeredFrom?: string | null;
 }
 
 export function QuickBriefOutput({
@@ -41,6 +42,7 @@ export function QuickBriefOutput({
   signals,
   onPromoteToDealBrief,
   onReset,
+  triggeredFrom,
 }: QuickBriefOutputProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -121,6 +123,15 @@ export function QuickBriefOutput({
           )}
         </button>
       </div>
+
+      {/* Generated from context */}
+      {triggeredFrom && (
+        <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 px-1">
+          <Info className="w-3 h-3 flex-shrink-0" />
+          Generated from: <span className="font-medium text-foreground/70">{triggeredFrom}</span>
+        </p>
+      )}
+
 
       {/* Speed controls */}
       <div className="flex items-center gap-3">

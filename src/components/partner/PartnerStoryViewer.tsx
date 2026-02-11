@@ -3,12 +3,13 @@
 // Action bar: Build Account Brief + See Related Signals
 
 import { useState, useMemo } from 'react';
-import { X, ChevronLeft, ChevronRight, FileText, Users, Briefcase, Link2, ChevronDown, Square, CheckSquare } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, FileText, Users, Zap, Link2, ChevronDown, Square, CheckSquare } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { PartnerStory, signalTypeColors } from '@/data/partnerStories';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { setQuickBriefTrigger } from '@/data/partner/quickBriefTrigger';
 
 interface PartnerStoryViewerProps {
   story: PartnerStory | null;
@@ -103,24 +104,19 @@ export function PartnerStoryViewer({
     });
   };
 
-  const handleBuildBrief = () => {
-    const selected = (allStories ?? []).filter(s => selectedIds.has(s.id));
-    onBuildAccountBrief?.(story, selected);
-    toast.success('Building Account Brief', {
-      description: `Anchor signal + ${selected.length} related signals included.`,
+  const triggerQuickBrief = () => {
+    setQuickBriefTrigger({
+      storyTitle: story.headline,
+      customer: 'Schindler',
+      category: story.signalType,
+      tags: story.tags,
     });
     onMarkListened(story.id);
     onClose();
-  };
-
-  const handleAddSelectedToBrief = () => {
-    const selected = (allStories ?? []).filter(s => selectedIds.has(s.id));
-    onBuildAccountBrief?.(story, selected);
-    toast.success('Building Account Brief', {
-      description: `${selected.length + 1} signals included.`,
-    });
-    onMarkListened(story.id);
-    onClose();
+    setTimeout(() => {
+      const el = document.getElementById('section-quick-brief');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
   };
 
   return (
@@ -164,9 +160,9 @@ export function PartnerStoryViewer({
 
         {/* Action bar */}
         <div className="px-4 py-2.5 border-b border-border/40 flex items-center gap-2">
-          <Button size="sm" className="flex-1" onClick={handleBuildBrief}>
-            <Briefcase className="h-3.5 w-3.5 mr-1.5" />
-            Build Account Brief
+          <Button size="sm" className="flex-1" onClick={triggerQuickBrief}>
+            <Zap className="h-3.5 w-3.5 mr-1.5" />
+            Open Quick Brief
           </Button>
           <Button
             variant="outline"
@@ -222,9 +218,9 @@ export function PartnerStoryViewer({
                 })}
               </div>
               {selectedIds.size > 0 && (
-                <Button size="sm" className="w-full" onClick={handleAddSelectedToBrief}>
-                  <Briefcase className="h-3.5 w-3.5 mr-1.5" />
-                  Add Selected to Account Brief ({selectedIds.size})
+                <Button size="sm" className="w-full" onClick={triggerQuickBrief}>
+                  <Zap className="h-3.5 w-3.5 mr-1.5" />
+                  Add Selected to Quick Brief ({selectedIds.size})
                 </Button>
               )}
             </div>

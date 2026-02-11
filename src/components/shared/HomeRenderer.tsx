@@ -21,6 +21,7 @@ import { EventsPanel } from '@/components/events';
 import { ScorecardModal, SourcesModal } from '@/components/presence';
 import { SkillExecSummaryPanel } from '@/components/skills';
 import { CustomerBriefSection } from '@/components/partner/CustomerBriefSection';
+import { QuickBriefSection } from '@/components/partner/QuickBriefSection';
 import { ExpertCornersRail } from '@/components/partner/ExpertCornersRail';
 import { PartnerGrowthSection } from '@/components/partner/PartnerGrowthSection';
 import { PartnerStoriesRow } from '@/components/partner/PartnerStoriesRow';
@@ -296,8 +297,11 @@ export function HomeRenderer() {
         ) : null;
 
       case 'quickBrief':
-        // Quick Brief removed — Stories are the primary entry point now
-        return null;
+        return spaceConfig.features.quickBrief && spaceType === 'partner' ? (
+          <div id="section-quick-brief" key={section.id}>
+            <QuickBriefSection onOpenDealBrief={scrollToAccountBrief} />
+          </div>
+        ) : null;
 
       case 'partnerMode':
         // Partner Mode (Quick Brief ↔ Deal Planning) removed — replaced by Account Brief flow

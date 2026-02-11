@@ -1,8 +1,9 @@
 // Quick Brief Section (Partner-only)
 // Reads from canonical signalStore + quickBriefStore
 // Supports Curated (default) and On-Demand modes
+// Auto-populates and auto-runs when triggered from a Story
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Zap,
   Sparkles,
@@ -25,6 +26,7 @@ import { listWeeklySignals, hasWeeklySignals } from '@/data/partner/weeklySignal
 import { createGeneratedDraft } from '@/data/partner/generatedDraftStore';
 import { BriefingModePill } from './BriefingModePill';
 import { toast } from 'sonner';
+import { consumeQuickBriefTrigger, QUICK_BRIEF_TRIGGER_EVENT } from '@/data/partner/quickBriefTrigger';
 import {
   Tooltip,
   TooltipContent,
@@ -58,11 +60,40 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showOutput, setShowOutput] = useState(false);
   const [briefMode, setBriefMode] = useState<BriefMode>('curated');
+  const [triggeredFrom, setTriggeredFrom] = useState<string | null>(null);
+  
 
   // On-Demand state
   const [onDemandQuery, setOnDemandQuery] = useState('');
   const [onDemandOutput, setOnDemandOutput] = useState<string | null>(null);
   const [onDemandDraftId, setOnDemandDraftId] = useState<string | null>(null);
+
+  // Check for trigger context from Stories
+  // Listen for trigger events from Story modals
+  const handleTrigger = useRef(() => {
+    const ctx = consumeQuickBriefTrigger();
+    if (ctx) {
+      // Auto-populate
+      if (ctx.customer) setCustomerName(ctx.customer);
+      setSituation(`Triggered from: ${ctx.storyTitle}`);
+      setTriggeredFrom(ctx.storyTitle);
+      setSelectedNeeds((prev) => prev.length === 0 ? ['meeting-prep'] : prev);
+      setBriefMode('curated');
+      // Auto-run
+      setIsGenerating(true);
+      setShowOutput(false);
+      setTimeout(() => {
+        setShowOutput(true);
+        setIsGenerating(false);
+      }, 600);
+    }
+  });
+
+  useEffect(() => {
+    const handler = () => handleTrigger.current();
+    window.addEventListener(QUICK_BRIEF_TRIGGER_EVENT, handler);
+    return () => window.removeEventListener(QUICK_BRIEF_TRIGGER_EVENT, handler);
+  }, []);
 
   // Check WeeklySignal index first, fall back to legacy signalStore
   const weeklySignals = useMemo(() => listWeeklySignals(FOCUS_ID, TIME_KEY), []);
@@ -101,6 +132,8 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
     setOnDemandDraftId(null);
     setOnDemandQuery('');
     setBriefMode('curated');
+    setTriggeredFrom(null);
+    
   };
 
   const handlePromoteToDealBrief = () => {
@@ -193,6 +226,7 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
               signals={signals}
               onPromoteToDealBrief={handlePromoteToDealBrief}
               onReset={handleReset}
+              triggeredFrom={triggeredFrom}
             />
           )
         ) : (

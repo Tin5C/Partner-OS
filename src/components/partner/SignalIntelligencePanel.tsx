@@ -1,6 +1,6 @@
 // Signal Intelligence Panel — full analytical view of a signal
 // Sections: Summary, What Changed, Why It Matters, Who Cares, Conversion Paths, Related Signals, Source Layer
-// Action bar: Build Account Brief + See Related Signals
+// Action bar: Open Quick Brief + See Related Signals
 
 import { useMemo, useState } from 'react';
 import {
@@ -17,6 +17,7 @@ import {
   FileText,
   Clock,
   Briefcase,
+  Zap,
   ChevronDown,
   Square,
   CheckSquare,
@@ -29,6 +30,7 @@ import { getRotatedCategoryImage, CATEGORY_TINTS, getTimeAgo } from '@/data/part
 import type { SignalCategory } from '@/data/partner/signalImageTaxonomy';
 import { toast } from 'sonner';
 import { BriefingModePill } from './BriefingModePill';
+import { setQuickBriefTrigger } from '@/data/partner/quickBriefTrigger';
 
 interface SignalIntelligencePanelProps {
   story: PartnerStory | null;
@@ -231,22 +233,23 @@ export function SignalIntelligencePanel({
     });
   };
 
-  const handleBuildBrief = () => {
-    const selected = allStories.filter(s => selectedIds.has(s.id));
-    onBuildAccountBrief?.(story, selected);
-    toast.success('Building Account Brief', {
-      description: `Anchor signal + ${selected.length} related signals included.`,
+  const triggerQuickBrief = () => {
+    setQuickBriefTrigger({
+      storyTitle: story.headline,
+      customer: 'Schindler', // from focus context
+      category: story.signalType,
+      tags: story.tags,
     });
     onClose();
+    // Scroll to Quick Brief section
+    setTimeout(() => {
+      const el = document.getElementById('section-quick-brief');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
   };
 
-  const handleAddSelectedToBrief = () => {
-    const selected = allStories.filter(s => selectedIds.has(s.id));
-    onBuildAccountBrief?.(story, selected);
-    toast.success('Building Account Brief', {
-      description: `${selected.length + 1} signals included.`,
-    });
-    onClose();
+  const handleAddSelectedToQuickBrief = () => {
+    triggerQuickBrief();
   };
 
   return (
@@ -309,10 +312,10 @@ export function SignalIntelligencePanel({
           <Button
             size="sm"
             className="flex-1"
-            onClick={handleBuildBrief}
+            onClick={triggerQuickBrief}
           >
-            <Briefcase className="h-3.5 w-3.5 mr-1.5" />
-            Build Account Brief
+            <Zap className="h-3.5 w-3.5 mr-1.5" />
+            Open Quick Brief
           </Button>
           <Button
             variant="outline"
@@ -379,10 +382,10 @@ export function SignalIntelligencePanel({
                 <Button
                   size="sm"
                   className="w-full"
-                  onClick={handleAddSelectedToBrief}
+                  onClick={handleAddSelectedToQuickBrief}
                 >
-                  <Briefcase className="h-3.5 w-3.5 mr-1.5" />
-                  Add Selected to Account Brief ({selectedIds.size})
+                  <Zap className="h-3.5 w-3.5 mr-1.5" />
+                  Add Selected to Quick Brief ({selectedIds.size})
                 </Button>
               )}
             </div>
