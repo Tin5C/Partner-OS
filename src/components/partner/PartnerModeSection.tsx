@@ -1,7 +1,7 @@
 // Partner Mode Section — Quick Brief ↔ Deal Planning toggle
 // Renders both tabs as a unified execution section on the Partner homepage
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Zap, Brain, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QuickBriefSection } from './QuickBriefSection';
@@ -12,11 +12,24 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { DEAL_PLAN_TRIGGER_EVENT, consumeDealPlanTrigger } from '@/data/partner/dealPlanTrigger';
 
 export type PartnerMode = 'quick-brief' | 'deal-planning';
 
 export function PartnerModeSection() {
   const [mode, setMode] = useState<PartnerMode>('quick-brief');
+
+  // Listen for deal-plan trigger from story viewer
+  useEffect(() => {
+    const handler = () => {
+      const ctx = consumeDealPlanTrigger();
+      if (ctx) {
+        setMode('deal-planning');
+      }
+    };
+    window.addEventListener(DEAL_PLAN_TRIGGER_EVENT, handler);
+    return () => window.removeEventListener(DEAL_PLAN_TRIGGER_EVENT, handler);
+  }, []);
 
   const handlePromoteToDealBrief = () => {
     setMode('deal-planning');
