@@ -1,5 +1,5 @@
 // Partner Stories Row - Partner-only stories section
-// Wired to PartnerDataProvider artifacts + BriefingProvider for Listen CTAs
+// Stories are the primary entry point → Story detail → Account Brief
 
 import { useState, useCallback, useMemo } from 'react';
 import { ChevronRight } from 'lucide-react';
@@ -7,20 +7,13 @@ import { cn } from '@/lib/utils';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { PartnerStoryTile } from './PartnerStoryTile';
 import { SignalIntelligencePanel } from './SignalIntelligencePanel';
-import { MicrocastViewer } from './MicrocastViewer';
-import { PartnerStory, PartnerSignalType, signalTypeColors, signalTypeGradients } from '@/data/partnerStories';
+import { PartnerStory, PartnerSignalType, signalTypeColors } from '@/data/partnerStories';
 import { useStoryState } from '@/hooks/useStoryState';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { usePartnerData } from '@/contexts/FocusDataContext';
-import type { StoryCardsV1, StoryCardV1, MicrocastV1, MicrocastType } from '@/data/partner/contracts';
+import type { StoryCardsV1, StoryCardV1 } from '@/data/partner/contracts';
 import { hasWeeklySignals } from '@/data/partner/weeklySignalStore';
-import {
-  createBriefingRequest,
-  generateBriefingArtifactFromRequest,
-} from '@/data/partner/briefingProvider';
-import { briefingSourceMode } from '@/config/spaces/partner';
-import type { BriefingArtifact } from '@/data/partner/briefingContracts';
 import { toast } from 'sonner';
 
 // Adapter: convert StoryCardV1 → PartnerStory for existing tile/viewer components
@@ -47,7 +40,6 @@ function adaptCardToStory(card: StoryCardV1): PartnerStory {
     tags: card.tags,
   };
 
-  // Pass CTAs through via a hidden field for the viewer
   if (card.ctas && card.ctas.length > 0) {
     (adapted as any)._ctas = card.ctas;
   }
@@ -57,18 +49,10 @@ function adaptCardToStory(card: StoryCardV1): PartnerStory {
 
 interface PartnerStoriesRowProps {
   className?: string;
-  hasCustomerBrief?: boolean;
-  onCreateBrief?: () => void;
-  onOpenTrendingPack?: (packId: string) => void;
-  onCreateQuickBrief?: () => void;
 }
 
 export function PartnerStoriesRow({
   className,
-  hasCustomerBrief = false,
-  onCreateBrief,
-  onOpenTrendingPack,
-  onCreateQuickBrief,
 }: PartnerStoriesRowProps) {
   const { provider } = usePartnerData();
   const ctx = provider.getActiveContext();
@@ -90,10 +74,6 @@ export function PartnerStoriesRow({
   const [browseOpen, setBrowseOpen] = useState(false);
   const [currentPlaylist, setCurrentPlaylist] = useState<PartnerStory[]>([]);
 
-  // Microcast viewer state
-  const [microcastOpen, setMicrocastOpen] = useState(false);
-  const [activeMicrocast, setActiveMicrocast] = useState<MicrocastV1 | null>(null);
-
   const { getState, markSeen, markListened } = useStoryState();
 
   const handleOpenSignal = (story: PartnerStory, playlist: PartnerStory[]) => {
@@ -103,19 +83,6 @@ export function PartnerStoriesRow({
     setSelectedStory(story);
     setViewerOpen(true);
     markSeen(story.id);
-  };
-
-  const handleQuickBrief = (story: PartnerStory) => {
-    markListened(story.id);
-    if (onCreateQuickBrief) onCreateQuickBrief();
-    toast.success('Added to Quick Brief', { description: 'Signal context transferred.' });
-  };
-
-  const handlePromote = (story: PartnerStory) => {
-    markListened(story.id);
-    const el = document.getElementById('section-partner-mode');
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    toast.success('Promoted to Deal Planning', { description: 'Signal evidence added to planning workspace.' });
   };
 
   const handleClose = () => {
@@ -143,17 +110,14 @@ export function PartnerStoriesRow({
     }
   }, [selectedIndex, currentPlaylist]);
 
-  const handleListenMicrocast = useCallback((microcastType: MicrocastType) => {
-    if (!ctx) return;
-    const artifact = provider.getMicrocastByType(ctx.focusId, microcastType);
-    if (artifact) {
-      setActiveMicrocast(artifact.content);
-      setMicrocastOpen(true);
-    } else {
-      setActiveMicrocast(null);
-      setMicrocastOpen(true); // will show fallback
-    }
-  }, [provider, ctx]);
+  const handleBuildAccountBrief = useCallback((anchorStory: PartnerStory, selectedSignals: PartnerStory[]) => {
+    // Scroll to customer brief section if it exists
+    const el = document.getElementById('section-customer-brief');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    toast.success('Account Brief initiated', {
+      description: `Based on "${anchorStory.headline}" + ${selectedSignals.length} related signals.`,
+    });
+  }, []);
 
   // Show empty state if no WeeklySignals for this customer + week
   const TIME_KEY = '2026-W07';
@@ -205,8 +169,6 @@ export function PartnerStoriesRow({
               story={story}
               listenedState={getState(story.id)}
               onClick={() => handleOpenSignal(story, homepageStories)}
-              onQuickBrief={() => handleQuickBrief(story)}
-              onPromote={() => handlePromote(story)}
             />
           ))}
         </div>
@@ -225,15 +187,7 @@ export function PartnerStoriesRow({
         currentIndex={selectedIndex}
         totalCount={currentPlaylist.length}
         allStories={homepageStories}
-        onAddToQuickBrief={(story) => handleQuickBrief(story)}
-        onPromoteToDealPlanning={(story) => handlePromote(story)}
-      />
-
-      {/* Microcast Viewer */}
-      <MicrocastViewer
-        microcast={activeMicrocast}
-        open={microcastOpen}
-        onOpenChange={setMicrocastOpen}
+        onBuildAccountBrief={handleBuildAccountBrief}
       />
 
       {/* Browse All Sheet */}
@@ -256,8 +210,6 @@ export function PartnerStoriesRow({
                   setBrowseOpen(false);
                   handleOpenSignal(story, homepageStories);
                 }}
-                onQuickBrief={() => handleQuickBrief(story)}
-                onPromote={() => handlePromote(story)}
               />
             ))}
           </div>

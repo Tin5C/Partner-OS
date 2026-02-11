@@ -20,7 +20,7 @@ export const partnerConfig: SpaceConfig = {
   displayName: 'Partner',
   
   sections: [
-    // 1. STORIES — trigger: "what changed?"
+    // 1. STORIES — primary entry point → Story detail → Account Brief
     {
       id: 'stories',
       type: 'storiesRow',
@@ -29,16 +29,7 @@ export const partnerConfig: SpaceConfig = {
       variant: 'primary',
       enabled: true,
     },
-    // 2. PARTNER MODE — Quick Brief ↔ Deal Planning
-    {
-      id: 'partner-mode',
-      type: 'partnerMode',
-      title: 'Execution Mode',
-      subtitle: 'Choose how deep you want to go — fast or thorough.',
-      variant: 'primary',
-      enabled: true,
-    },
-    // 3. ON-DEMAND BRIEFINGS
+    // 2. ON-DEMAND BRIEFINGS
     {
       id: 'on-demand-briefings',
       type: 'onDemandBriefings',
@@ -82,8 +73,8 @@ export const partnerConfig: SpaceConfig = {
     headerSubtitle: 'AI Sales Readiness',
     storiesTitle: 'AI Selling Signals',
     storiesSubtitle: 'What changed, why it matters, what to do.',
-    accountPrepTitle: 'AI Deal Brief',
-    accountPrepSubtitle: 'Turn messy AI deal context into a deal-ready plan in 5–10 minutes.',
+    accountPrepTitle: 'Account Brief',
+    accountPrepSubtitle: 'Structured account intelligence for your next conversation.',
     briefingsTitle: 'On-Demand Briefings',
     briefingsSubtitle: 'Generate short briefings when you need them — audio or read.',
     growthTitle: 'Enablement',
@@ -99,8 +90,8 @@ export const partnerConfig: SpaceConfig = {
     reputation: false, // Hidden for partners - replaced by Capability & Brand
     events: false, // Hidden for partners
     skillOfWeek: true,
-    customerBrief: true, // Partner-only: full AI Deal Brief
-    quickBrief: true, // Partner-only: fast 60-sec situational brief
+    customerBrief: true, // Partner-only: full Account Brief
+    quickBrief: false, // Removed — Stories are the entry point now
     expertCorners: true, // Partner-only feature
     trendingPacks: false, // Replaced by On-Demand Briefings
     onDemandBriefings: true, // Partner-only: unified briefing system
