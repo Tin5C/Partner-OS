@@ -1,5 +1,5 @@
 // Partner Stories Row - Partner-only stories section
-// Stories are the primary entry point → Story detail → Account Brief
+// Stories are the primary entry point → Story detail → Quick Brief / Deal Planning
 
 import { useState, useCallback, useMemo } from 'react';
 import { ChevronRight } from 'lucide-react';
@@ -114,7 +114,7 @@ export function PartnerStoriesRow({
     // Scroll to customer brief section if it exists
     const el = document.getElementById('section-customer-brief');
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    toast.success('Account Brief initiated', {
+    toast.success('Deal Planning initiated', {
       description: `Based on "${anchorStory.headline}" + ${selectedSignals.length} related signals.`,
     });
   }, []);

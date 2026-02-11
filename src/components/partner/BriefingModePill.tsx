@@ -75,7 +75,7 @@ export function BriefingModePill({ mode, className }: BriefingModePillProps) {
                 </li>
                 <li className="text-[11px] text-muted-foreground flex items-start gap-1.5">
                   <span className="mt-1 h-1 w-1 rounded-full bg-accent/60 shrink-0" />
-                  Not saved unless you choose "Save as Story" or "Save to Account Brief"
+                  Not saved unless you choose "Save as Story" or "Save to Deal Planning"
                 </li>
               </ul>
             </div>

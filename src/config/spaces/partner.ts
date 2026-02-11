@@ -29,12 +29,12 @@ export const partnerConfig: SpaceConfig = {
       variant: 'primary',
       enabled: true,
     },
-    // 2. QUICK BRIEF — fast situational refresh, auto-populated from Stories
+    // 2. PARTNER MODE — Quick Brief ↔ Deal Planning toggle
     {
-      id: 'quick-brief',
-      type: 'quickBrief',
-      title: 'Quick Brief',
-      subtitle: 'Fast situational refresh before a call or meeting — 60 seconds.',
+      id: 'partner-mode',
+      type: 'partnerMode',
+      title: 'Execution',
+      subtitle: 'Quick Brief for fast prep, Deal Planning for structured strategy.',
       variant: 'primary',
       enabled: true,
     },
@@ -82,7 +82,7 @@ export const partnerConfig: SpaceConfig = {
     headerSubtitle: 'AI Sales Readiness',
     storiesTitle: 'AI Selling Signals',
     storiesSubtitle: 'What changed, why it matters, what to do.',
-    accountPrepTitle: 'Account Brief',
+    accountPrepTitle: 'Deal Planning',
     accountPrepSubtitle: 'Structured account intelligence for your next conversation.',
     briefingsTitle: 'On-Demand Briefings',
     briefingsSubtitle: 'Generate short briefings when you need them — audio or read.',

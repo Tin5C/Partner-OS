@@ -1,6 +1,5 @@
-// Partner Mode Section (legacy — no longer rendered on homepage)
-// Kept for potential reuse; Account Brief flow is now embedded in Stories
-// Deal Planning renamed to Account Brief
+// Partner Mode Section — Quick Brief ↔ Deal Planning toggle
+// Renders both tabs as a unified execution section on the Partner homepage
 
 import { useState } from 'react';
 import { Zap, Brain, Info } from 'lucide-react';
