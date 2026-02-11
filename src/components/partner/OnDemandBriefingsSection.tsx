@@ -112,12 +112,20 @@ const CARDS: CardConfig[] = [
 
 // ============= Main Section =============
 
-type CreatingState = 'idle' | 'creating' | 'ready';
+type CreatingState = 'idle' | 'creating' | 'ready' | 'error';
+
+interface CompetitiveState {
+  status: CreatingState;
+  audioUrl: string | null;
+}
 
 export function OnDemandBriefingsSection() {
   const [picks, setPicks] = useState<Record<string, Record<string, string>>>({});
   const [accountState, setAccountState] = useState<CreatingState>('idle');
+  const [compState, setCompState] = useState<CompetitiveState>({ status: 'idle', audioUrl: null });
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const compTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const compAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const loaded: Record<string, Record<string, string>> = {};
@@ -128,18 +136,17 @@ export function OnDemandBriefingsSection() {
     setPicks(loaded);
   }, []);
 
-  // Cleanup timer on unmount
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
+      if (compTimerRef.current) clearTimeout(compTimerRef.current);
+      compAbortRef.current?.abort();
     };
   }, []);
 
   const handlePick = (type: BriefingType, key: string, value: string) => {
-    // If account microcast selection changes while ready, reset to idle
-    if (type === 'account_microcast') {
-      cancelCreation();
-    }
+    if (type === 'account_microcast') cancelCreation();
+    if (type === 'competitive_microcast') cancelCompetitive();
     setPicks((prev) => {
       const updated = { ...prev, [type]: { ...(prev[type] ?? {}), [key]: value } };
       saveBriefingSelection(type, updated[type]);
@@ -147,48 +154,79 @@ export function OnDemandBriefingsSection() {
     });
   };
 
+  // === Account Microcast (Schindler) ===
   const cancelCreation = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
+    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
     setAccountState('idle');
   }, []);
 
   const handleGenerate = (card: CardConfig, cardPicks: Record<string, string>) => {
+    if (card.type === 'competitive_microcast') {
+      return handleGenerateCompetitive(cardPicks);
+    }
     if (card.type !== 'account_microcast') {
       toast.info('Audio coming soon.');
       return;
     }
-
     const selectedAccount = cardPicks['account'];
-    if (!selectedAccount) {
-      toast.info('Please select an account first.');
-      return;
-    }
+    if (!selectedAccount) { toast.info('Please select an account first.'); return; }
+    if (selectedAccount !== 'schindler') { toast.info('Audio coming soon.'); return; }
 
-    if (selectedAccount !== 'schindler') {
-      toast.info('Audio coming soon.');
-      return;
-    }
-
-    // Schindler: start 15s simulated creation
-    // Clear any existing timer first
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-
+    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
     setAccountState('creating');
-    timerRef.current = setTimeout(() => {
-      timerRef.current = null;
-      setAccountState('ready');
+    timerRef.current = setTimeout(() => { timerRef.current = null; setAccountState('ready'); }, 15000);
+  };
+
+  const handleClosePlayer = () => setAccountState('idle');
+
+  // === Competitive Angle (Google) ===
+  const cancelCompetitive = useCallback(() => {
+    if (compTimerRef.current) { clearTimeout(compTimerRef.current); compTimerRef.current = null; }
+    compAbortRef.current?.abort();
+    compAbortRef.current = null;
+    setCompState({ status: 'idle', audioUrl: null });
+  }, []);
+
+  const handleGenerateCompetitive = (cardPicks: Record<string, string>) => {
+    const selected = cardPicks['competitor'];
+    if (!selected) { toast.info('Please select a competitor first.'); return; }
+    if (selected !== 'google-cloud') { toast.info('Audio coming soon.'); return; }
+
+    // Clear existing
+    if (compTimerRef.current) { clearTimeout(compTimerRef.current); compTimerRef.current = null; }
+    compAbortRef.current?.abort();
+
+    setCompState({ status: 'creating', audioUrl: null });
+
+    const controller = new AbortController();
+    compAbortRef.current = controller;
+
+    // 15s simulated thinking, then POST
+    compTimerRef.current = setTimeout(async () => {
+      compTimerRef.current = null;
+      if (controller.signal.aborted) return;
+      try {
+        const res = await fetch('http://35.245.247.106:3000/generate_audio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+        });
+        if (!res.ok) throw new Error('Request failed');
+        const data = await res.json();
+        if (controller.signal.aborted) return;
+        if (data?.audio_url) {
+          setCompState({ status: 'ready', audioUrl: data.audio_url });
+        } else {
+          throw new Error('No audio_url');
+        }
+      } catch (err: any) {
+        if (err?.name === 'AbortError') return;
+        setCompState({ status: 'error', audioUrl: null });
+      }
     }, 15000);
   };
 
-  const handleClosePlayer = () => {
-    setAccountState('idle');
-  };
+  const handleCloseCompPlayer = () => setCompState({ status: 'idle', audioUrl: null });
 
   return (
     <section className="space-y-4">
@@ -204,8 +242,14 @@ export function OnDemandBriefingsSection() {
         {CARDS.map((card) => {
           const cardPicks = picks[card.type] ?? {};
           const isAccountCard = card.type === 'account_microcast';
+          const isCompCard = card.type === 'competitive_microcast';
           const isCreating = isAccountCard && accountState === 'creating';
           const isReady = isAccountCard && accountState === 'ready';
+          const isCompCreating = isCompCard && compState.status === 'creating';
+          const isCompReady = isCompCard && compState.status === 'ready';
+          const isCompError = isCompCard && compState.status === 'error';
+
+          const disablePickers = isCreating || isCompCreating;
 
           return (
             <div
@@ -230,7 +274,7 @@ export function OnDemandBriefingsSection() {
                   <Select
                     value={cardPicks[picker.key] || undefined}
                     onValueChange={(val) => handlePick(card.type, picker.key, val)}
-                    disabled={isCreating}
+                    disabled={isAccountCard ? isCreating : isCompCard ? isCompCreating : false}
                   >
                     <SelectTrigger className="h-8 text-xs">
                       <SelectValue placeholder={`Select ${picker.label.toLowerCase()}`} />
@@ -246,38 +290,48 @@ export function OnDemandBriefingsSection() {
                 </div>
               ))}
 
-              {/* Creating state */}
+              {/* Account creating state */}
               {isCreating && (
                 <div className="flex items-center justify-between gap-2 py-1.5 px-2 rounded-lg bg-primary/5 border border-primary/10">
                   <div className="flex items-center gap-2">
                     <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
                     <span className="text-xs text-primary font-medium">Creating microcast…</span>
                   </div>
-                  <button
-                    onClick={cancelCreation}
-                    className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    Cancel
-                  </button>
+                  <button onClick={cancelCreation} className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">Cancel</button>
                 </div>
               )}
 
-              {/* Ready state: show player */}
+              {/* Account ready state */}
               {isReady && (
-                <AccountMicrocastPlayer
-                  src={SCHINDLER_MP3}
-                  accountLabel="Schindler"
-                  onClose={handleClosePlayer}
-                />
+                <AccountMicrocastPlayer src={SCHINDLER_MP3} accountLabel="Schindler" onClose={handleClosePlayer} />
+              )}
+
+              {/* Competitive creating state */}
+              {isCompCreating && (
+                <div className="flex items-center justify-between gap-2 py-1.5 px-2 rounded-lg bg-primary/5 border border-primary/10">
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
+                    <span className="text-xs text-primary font-medium">Analyzing Google positioning vs Microsoft…</span>
+                  </div>
+                  <button onClick={cancelCompetitive} className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">Cancel</button>
+                </div>
+              )}
+
+              {/* Competitive ready state */}
+              {isCompReady && compState.audioUrl && (
+                <AccountMicrocastPlayer src={compState.audioUrl} accountLabel="Google Cloud" onClose={handleCloseCompPlayer} />
+              )}
+
+              {/* Competitive error state */}
+              {isCompError && (
+                <div className="py-1.5 px-2 rounded-lg bg-destructive/5 border border-destructive/10">
+                  <p className="text-xs text-destructive">Competitive briefing unavailable. Please try again.</p>
+                </div>
               )}
 
               {/* Generate button */}
-              {!isCreating && !isReady && (
-                <GenerateButton
-                  card={card}
-                  cardPicks={cardPicks}
-                  onGenerate={handleGenerate}
-                />
+              {!isCreating && !isReady && !isCompCreating && !isCompReady && (
+                <GenerateButton card={card} cardPicks={cardPicks} onGenerate={handleGenerate} />
               )}
             </div>
           );
@@ -299,11 +353,11 @@ function GenerateButton({
   onGenerate: (card: CardConfig, picks: Record<string, string>) => void;
 }) {
   const isAccountCard = card.type === 'account_microcast';
+  const isCompCard = card.type === 'competitive_microcast';
   const allFilled = card.pickers.every((p) => cardPicks[p.key]);
-  const isDisabled = !isAccountCard || !allFilled;
+  const isGeneratable = isAccountCard || isCompCard;
 
-  if (!isAccountCard) {
-    // Non-account cards: keep disabled with tooltip
+  if (!isGeneratable) {
     return (
       <TooltipProvider>
         <Tooltip>
