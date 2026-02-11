@@ -178,7 +178,7 @@ export function SignalIntelligencePanel({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={cn(
-        "p-0 gap-0 overflow-hidden",
+        "p-0 gap-0 overflow-hidden flex flex-col",
         "max-sm:h-[100dvh] max-sm:max-h-[100dvh] max-sm:w-full max-sm:max-w-full max-sm:rounded-none",
         "sm:max-w-2xl sm:max-h-[90vh] sm:rounded-2xl"
       )}>
@@ -231,7 +231,7 @@ export function SignalIntelligencePanel({
         </div>
 
         {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-5">
+        <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-5">
 
           {/* A. Signal Summary */}
           <div className="flex items-center gap-3 flex-wrap">

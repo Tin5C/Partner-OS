@@ -84,10 +84,10 @@ export function PartnerStoryViewer({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn(
-        "p-0 gap-0 overflow-hidden",
+        <DialogContent className={cn(
+        "p-0 gap-0 overflow-hidden flex flex-col",
         "max-sm:h-[100dvh] max-sm:max-h-[100dvh] max-sm:w-full max-sm:max-w-full max-sm:rounded-none",
-        "sm:max-w-md sm:rounded-2xl"
+        "sm:max-w-md sm:max-h-[90vh] sm:rounded-2xl"
       )}>
         <DialogTitle className="sr-only">{story.headline}</DialogTitle>
 
@@ -122,7 +122,7 @@ export function PartnerStoryViewer({
         </div>
 
         {/* Main content */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+        <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-4">
           {/* Headline */}
           <h2 className="text-xl font-semibold leading-tight">{story.headline}</h2>
 

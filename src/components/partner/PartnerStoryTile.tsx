@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { PartnerStory, signalTypeColors } from '@/data/partnerStories';
 import { ListenedState } from '@/lib/stories';
-import { Volume2, Zap, Brain, ArrowUpRight, Check, Clock, Users } from 'lucide-react';
+import { Volume2, Check, Clock, Users } from 'lucide-react';
 import { getRotatedCategoryImage, CATEGORY_TINTS, getTimeAgo } from '@/data/partner/signalImageTaxonomy';
 import type { SignalCategory } from '@/data/partner/signalImageTaxonomy';
 
@@ -41,7 +41,7 @@ interface PartnerStoryTileProps {
   onPromote?: () => void;
 }
 
-export function PartnerStoryTile({ story, listenedState, onClick, onQuickBrief, onPromote }: PartnerStoryTileProps) {
+export function PartnerStoryTile({ story, listenedState, onClick }: PartnerStoryTileProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   const category = story.signalType as SignalCategory;
@@ -172,33 +172,7 @@ export function PartnerStoryTile({ story, listenedState, onClick, onQuickBrief, 
         </div>
       </div>
 
-      {/* ===== Hover Actions Overlay ===== */}
-      <div className={cn(
-        "absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/80 backdrop-blur-sm transition-opacity duration-200 z-20",
-        isHovered ? "opacity-100" : "opacity-0 pointer-events-none"
-      )}>
-        <button
-          onClick={(e) => { e.stopPropagation(); onQuickBrief?.(); }}
-          className="px-4 py-1.5 rounded-lg bg-card border border-border text-foreground text-xs font-medium shadow-sm flex items-center gap-1.5 hover:bg-muted transition-colors"
-        >
-          <Zap className="w-3 h-3" />
-          Quick Brief
-        </button>
-        <button
-          onClick={(e) => { e.stopPropagation(); onClick(); }}
-          className="px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium shadow-sm flex items-center gap-1.5 hover:bg-primary/90 transition-colors"
-        >
-          <Brain className="w-3 h-3" />
-          Open
-        </button>
-        <button
-          onClick={(e) => { e.stopPropagation(); onPromote?.(); }}
-          className="px-4 py-1.5 rounded-lg bg-card border border-border text-foreground text-xs font-medium shadow-sm flex items-center gap-1.5 hover:bg-muted transition-colors"
-        >
-          <ArrowUpRight className="w-3 h-3" />
-          Promote
-        </button>
-      </div>
+      {/* Removed hover action overlay — actions live in the modal now */}
     </button>
   );
 }
