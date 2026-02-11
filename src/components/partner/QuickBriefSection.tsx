@@ -1,8 +1,7 @@
 // Quick Brief Section (Partner-only)
-// Wired to PartnerDataProvider artifacts
-// Input form generates from demo artifacts, output renders QuickBriefV1
+// Reads from canonical signalStore + quickBriefStore
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Zap,
   Sparkles,
@@ -15,11 +14,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QuickBriefOutput } from './QuickBriefOutput';
-import type { QuickBriefResult, QuickBriefNeed, QuickBriefSignal, SignalBriefingRef } from './QuickBriefOutput';
-import { usePartnerData } from '@/contexts/FocusDataContext';
-import type { QuickBriefV1, DealBriefV1, PlayV1 } from '@/data/partner/contracts';
-import { listAccountSignals } from '@/data/partner/accountSignalStore';
-import { listBriefingArtifacts } from '@/data/partner/briefingArtifactStore';
+import type { QuickBriefNeed } from './QuickBriefOutput';
+import { listSignals } from '@/data/partner/signalStore';
 import {
   Tooltip,
   TooltipContent,
@@ -36,34 +32,21 @@ const NEED_OPTIONS: { value: QuickBriefNeed; label: string; icon: React.ReactNod
 ];
 
 const MAX_CHIPS = 2;
+const FOCUS_ID = 'schindler';
+const WEEK_OF = '2026-02-10';
 
 interface QuickBriefSectionProps {
   onOpenDealBrief?: () => void;
 }
 
 export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
-  const { provider } = usePartnerData();
-  const ctx = provider.getActiveContext();
-
   const [customerName, setCustomerName] = useState('');
   const [situation, setSituation] = useState('');
   const [selectedNeeds, setSelectedNeeds] = useState<QuickBriefNeed[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [output, setOutput] = useState<QuickBriefResult | null>(null);
+  const [showOutput, setShowOutput] = useState(false);
 
-  // Get touchpoint context for the selected focus
-  const touchpoints = useMemo(() => {
-    if (!ctx) return null;
-    return provider.getFocusTouchpoints(ctx.focusId);
-  }, [provider, ctx]);
-
-  // Build situation placeholder from touchpoint context
-  const situationPlaceholder = useMemo(() => {
-    if (!touchpoints?.lastTouchpoint) {
-      return "What's happening? e.g. Follow-up after Copilot demo with IT + Security";
-    }
-    return `e.g. Follow-up: ${touchpoints.lastTouchpoint.summary.split('—')[0].trim()}`;
-  }, [touchpoints]);
+  const signals = useMemo(() => listSignals(FOCUS_ID, WEEK_OF), []);
 
   const canGenerate = customerName.trim() && selectedNeeds.length > 0;
 
@@ -75,171 +58,24 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
     });
   };
 
-  // Pick recommended play based on story tags / needs
-  const recommendedPlay = useMemo(() => {
-    if (!ctx) return null;
-    // Check deal brief for recommended plays
-    const dealArt = provider.getArtifact({ runId: ctx.runId, artifactType: 'dealBrief' });
-    if (!dealArt) return null;
-    const deal = dealArt.content as DealBriefV1;
-    if (!deal.recommendedPlays?.length) return null;
-
-    // Simple heuristic: objection if needs include objection-help, competitive if competitive, else product
-    const hasObjection = selectedNeeds.includes('objection-help');
-    const hasCompetitive = selectedNeeds.includes('competitive-position');
-
-    const pick = hasObjection
-      ? deal.recommendedPlays.find(p => p.playType === 'objection')
-      : hasCompetitive
-        ? deal.recommendedPlays.find(p => p.playType === 'competitive')
-        : deal.recommendedPlays.find(p => p.playType === 'product');
-
-    return pick || deal.recommendedPlays[0];
-  }, [ctx, provider, selectedNeeds]);
-
   const handleGenerate = () => {
-    if (!canGenerate || !ctx) return;
+    if (!canGenerate) return;
     setIsGenerating(true);
-
     setTimeout(() => {
-      // Determine persona — default seller
-      const persona = 'seller';
-      const artifact = provider.getArtifact({
-        runId: ctx.runId,
-        artifactType: 'quickBrief',
-        persona,
-      });
-
-      if (!artifact) {
-        setIsGenerating(false);
-        return;
-      }
-
-      const qb = artifact.content as QuickBriefV1;
-      const hasObjection = selectedNeeds.includes('objection-help');
-
-      // Build objections from play artifact if "Objection help" chip selected
-      let objections: QuickBriefResult['objections'] = undefined;
-      if (hasObjection && ctx) {
-        const playArt = provider.getArtifact({ runId: ctx.runId, artifactType: 'play', playType: 'objection' });
-        if (playArt) {
-          const play = playArt.content as PlayV1;
-          objections = play.objections.slice(0, 3).map((o) => ({
-            theme: o.objection,
-            responses: [o.response],
-            proofArtifact: o.proofArtifact,
-          }));
-        }
-      }
-
-      // Build per-signal data from account signals
-      const accountSignals = listAccountSignals('demo_helioworks', { account_id: 'acct_schindler' });
-      const briefingArts = listBriefingArtifacts('demo_helioworks', { account_id: 'acct_schindler' });
-
-
-      // Engineer artifact for engineer context
-      const engArt = provider.getArtifact({
-        runId: ctx.runId,
-        artifactType: 'quickBrief',
-        persona: 'engineer',
-      });
-      const engQb = engArt ? (engArt.content as QuickBriefV1) : null;
-
-      const signals: QuickBriefSignal[] = qb.whatChanged.map((wc, i) => {
-        const acctSig = accountSignals[i];
-        const slug = wc.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40);
-        const signalId = acctSig?.id ?? `qb-sig-${slug}`;
-
-        // Map briefing artifacts relevant to this signal
-        const relBriefings: SignalBriefingRef[] = [];
-        if (i === 0 && briefingArts.length > 0) {
-          const ba = briefingArts.find(b => b.type === 'account_microcast');
-          if (ba) relBriefings.push({ id: ba.id, title: ba.title, type: ba.type });
-        }
-        if (i === 1) {
-          const ba = briefingArts.find(b => b.type === 'objection_briefing');
-          if (ba) relBriefings.push({ id: ba.id, title: ba.title, type: ba.type });
-        }
-        if (i === 2) {
-          const ba = briefingArts.find(b => b.type === 'industry_microcast');
-          if (ba) relBriefings.push({ id: ba.id, title: ba.title, type: ba.type });
-        }
-
-        return {
-          id: signalId,
-          headline: wc,
-          soWhat: i === 0 ? qb.soWhat : (acctSig?.why_it_converts ?? ''),
-          whatToDo: qb.actions[i] || '',
-          sellerTalkTrack: [qb.actions[i] || ''].filter(Boolean),
-          engineerContext: engQb ? [engQb.actions[i] || ''].filter(Boolean) : ['Technical context not available.'],
-          confidence: {
-            score: acctSig
-              ? (acctSig.confidence === 'High' ? 75 : acctSig.confidence === 'Medium' ? 55 : 30)
-              : (qb.confidence === 'High' ? 75 : qb.confidence === 'Medium' ? 55 : 30),
-            label: acctSig?.confidence ?? qb.confidence,
-            reason: acctSig?.why_it_converts ?? qb.soWhat,
-          },
-          whatsMissing: acctSig?.gaps ?? [qb.whatsMissing[i] || ''].filter(Boolean),
-          proofToRequest: acctSig?.proof_artifacts_needed ?? [],
-          recommendedBriefings: relBriefings,
-          sources: (qb.sources ?? []).map(s => ({ label: s.label, sourceType: s.sourceType })),
-        };
-      });
-
-      const hasEmail = selectedNeeds.includes('intro-email');
-
-      const result: QuickBriefResult = {
-        customerName: customerName.trim(),
-        needs: selectedNeeds,
-        accountId: 'acct_schindler',
-        signals,
-        whatChanged: qb.whatChanged.map((wc, i) => ({
-          headline: wc,
-          soWhat: i === 0 ? qb.soWhat : '',
-          whatToDo: qb.actions[i] || '',
-        })),
-        sellerView: {
-          talkTrack: qb.actions,
-          emailDraft: hasEmail && qb.optionalEmail
-            ? `Subject: ${qb.optionalEmail.subject}\n\n${qb.optionalEmail.body}`
-            : undefined,
-        },
-        engineerView: {
-          technicalContext: engQb?.actions ?? ['Technical context not available.'],
-          architectureNotes: engQb?.soWhat ?? '',
-        },
-        confidence: {
-          score: qb.confidence === 'High' ? 75 : qb.confidence === 'Medium' ? 55 : 30,
-          label: qb.confidence,
-          reason: qb.confidence === 'High'
-            ? 'Strong signal coverage from multiple sources.'
-            : 'Based on available signals. Add a Deal Brief for higher confidence.',
-        },
-        whatsMissing: [...qb.whatsMissing],
-        recommendedPlay: recommendedPlay ? {
-          playType: recommendedPlay.playType,
-          title: recommendedPlay.title,
-        } : undefined,
-        objections,
-        contextLine: touchpoints
-          ? 'Context used: last touchpoint + upcoming meeting (simulated in demo).'
-          : undefined,
-      };
-
-      setOutput(result);
+      setShowOutput(true);
       setIsGenerating(false);
-    }, 800);
-  };
-
-  const handlePromoteToDealBrief = () => {
-    onOpenDealBrief?.();
+    }, 600);
   };
 
   const handleReset = () => {
     setCustomerName('');
     setSituation('');
     setSelectedNeeds([]);
-    setOutput(null);
+    setShowOutput(false);
+  };
+
+  const handlePromoteToDealBrief = () => {
+    onOpenDealBrief?.();
   };
 
   return (
@@ -256,9 +92,9 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
       <div className={cn(
         "rounded-2xl border border-[#E0E3FF] bg-[#F6F7FF] dark:bg-[#6D6AF6]/5",
         "shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
-        output && "border-solid border-border bg-card"
+        showOutput && "border-solid border-border bg-card"
       )}>
-      {!output ? (
+        {!showOutput ? (
           <div className="p-5 space-y-4">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="sm:w-[220px]">
@@ -299,7 +135,7 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
                   type="text"
                   value={situation}
                   onChange={(e) => setSituation(e.target.value)}
-                  placeholder={situationPlaceholder}
+                  placeholder="What's happening? e.g. Follow-up after Copilot demo with IT + Security"
                   className={cn(
                     "w-full h-10 px-3 rounded-lg text-sm",
                     "bg-background border border-border",
@@ -369,7 +205,10 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
           </div>
         ) : (
           <QuickBriefOutput
-            result={output}
+            customerName={customerName.trim()}
+            focusId={FOCUS_ID}
+            weekOf={WEEK_OF}
+            signals={signals}
             onPromoteToDealBrief={handlePromoteToDealBrief}
             onReset={handleReset}
           />
