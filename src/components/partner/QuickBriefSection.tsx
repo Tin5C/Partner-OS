@@ -14,6 +14,7 @@ import {
   Info,
   ArrowRightLeft,
   Search,
+  Lock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QuickBriefOutput } from './QuickBriefOutput';
@@ -64,7 +65,7 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
   const rawSignals = useMemo(() => listSignals(FOCUS_ID, WEEK_OF), []);
   const signals = useMemo(() => enrichSignals(rawSignals, FOCUS_ID), [rawSignals]);
 
-  const canGenerate = customerName.trim() && selectedNeeds.length > 0;
+  const canGenerate = customerName.trim().length > 0;
 
   const handleToggleNeed = (value: QuickBriefNeed) => {
     setSelectedNeeds((prev) => {
@@ -279,30 +280,32 @@ function CuratedInput({
 
       <div>
         <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-medium text-muted-foreground">What do you need?</p>
-          <p className="text-[10px] text-muted-foreground/70">
-            Pick up to 2 — this stays fast.
+          <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+            What do you need?
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex items-center gap-1 text-muted-foreground/50">
+                    <Lock className="w-3 h-3" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[220px] text-xs">
+                  Enhanced brief modes — unlocking in next release.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {NEED_OPTIONS.map((option) => {
-            const isSelected = selectedNeeds.includes(option.value);
-            return (
-              <button
-                key={option.value}
-                onClick={() => onToggleNeed(option.value)}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
-                  isSelected
-                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                    : "bg-background text-muted-foreground border-border hover:border-primary/30 hover:text-foreground"
-                )}
-              >
-                {option.icon}
-                {option.label}
-              </button>
-            );
-          })}
+          {NEED_OPTIONS.map((option) => (
+            <div
+              key={option.value}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-border/60 bg-muted/30 text-muted-foreground/40 cursor-not-allowed select-none opacity-60"
+            >
+              {option.icon}
+              {option.label}
+            </div>
+          ))}
         </div>
       </div>
 
