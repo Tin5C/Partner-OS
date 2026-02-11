@@ -32,6 +32,10 @@ export * from './dealPlanStore';
 export * from './signalStore';
 export * from './quickBriefStore';
 
+// On-Demand Briefing taxonomy + selection
+export * from './briefingTaxonomy';
+export * from './briefingSelectionStore';
+
 // HelioWorks demo seed (auto-runs on import)
 import './demo/helioworksSeed';
 
