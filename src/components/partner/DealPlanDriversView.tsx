@@ -39,6 +39,7 @@ import {
   ExternalLink,
   Plus,
   Search,
+  FolderOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -50,7 +51,6 @@ import {
   type PromotedSignal,
 } from '@/data/partner/dealPlanStore';
 import { listSignals, type Signal } from '@/data/partner/signalStore';
-import { BriefingModePill } from './BriefingModePill';
 import { AccountInbox } from './AccountInbox';
 import {
   DealPlanMetadata,
@@ -58,8 +58,14 @@ import {
   type TriggerOption,
 } from './DealPlanMetadata';
 
-const FOCUS_ID = 'schindler';
 const WEEK_OF = '2026-02-10';
+
+// Available accounts (demo data)
+const ACCOUNTS = [
+  { id: 'schindler', label: 'Schindler' },
+  { id: 'sulzer', label: 'Sulzer' },
+  { id: 'ubs', label: 'UBS' },
+];
 
 type RoleView = 'seller' | 'engineer';
 
@@ -243,14 +249,16 @@ function SignalPicker({
   onSelect,
   onClose,
   existingIds,
+  accountId,
 }: {
   onSelect: (signals: Signal[]) => void;
   onClose: () => void;
   existingIds: Set<string>;
+  accountId: string;
 }) {
   const available = useMemo(
-    () => listSignals(FOCUS_ID, WEEK_OF).filter((s) => !existingIds.has(s.id)),
-    [existingIds],
+    () => listSignals(accountId, WEEK_OF).filter((s) => !existingIds.has(s.id)),
+    [existingIds, accountId],
   );
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -287,7 +295,7 @@ function SignalPicker({
         </p>
         <button onClick={onClose} className="text-xs text-muted-foreground hover:text-foreground">Cancel</button>
       </div>
-      <p className="text-[11px] text-muted-foreground">Schindler · Week of {WEEK_OF}</p>
+      <p className="text-[11px] text-muted-foreground">Week of {WEEK_OF}</p>
       <div className="space-y-2 max-h-[300px] overflow-y-auto">
         {available.map((sig) => {
           const isSelected = selected.has(sig.id);
@@ -342,13 +350,76 @@ function SignalPicker({
   );
 }
 
+// ============= Account Selector Dropdown =============
+
+function AccountSelector({
+  selectedId,
+  onSelect,
+}: {
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-border/60 bg-background hover:border-primary/30 transition-colors"
+      >
+        {selectedId ? (
+          <>
+            <span className="text-foreground">
+              {ACCOUNTS.find((a) => a.id === selectedId)?.label ?? selectedId}
+            </span>
+          </>
+        ) : (
+          <span className="text-muted-foreground">Select account…</span>
+        )}
+        <ChevronDown className="w-3 h-3 text-muted-foreground" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 w-52 rounded-lg border border-border bg-card shadow-lg z-50 py-1">
+          {ACCOUNTS.map((acc) => (
+            <button
+              key={acc.id}
+              onClick={() => { onSelect(acc.id); setOpen(false); }}
+              className={cn(
+                'w-full text-left px-3 py-2 text-xs hover:bg-muted/40 transition-colors',
+                selectedId === acc.id ? 'text-primary font-medium' : 'text-foreground'
+              )}
+            >
+              {acc.label}
+            </button>
+          ))}
+          <div className="border-t border-border/40 mt-1 pt-1">
+            <button
+              onClick={() => { toast.info('Add account — coming soon'); setOpen(false); }}
+              className="w-full text-left px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors flex items-center gap-1.5"
+            >
+              <Plus className="w-3 h-3" />
+              Add new account
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ============= Main Component =============
 
 export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewProps) {
   const [, forceUpdate] = useState(0);
   const refresh = useCallback(() => forceUpdate((n) => n + 1), []);
 
-  const plan = useMemo(() => getDealPlan(FOCUS_ID, WEEK_OF), []);
+  // Account selection — null = no account chosen yet
+  const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
+
+  const plan = useMemo(
+    () => selectedAccount ? getDealPlan(selectedAccount, WEEK_OF) : undefined,
+    [selectedAccount],
+  );
   const drivers = plan?.promotedSignals ?? [];
 
   const [showPicker, setShowPicker] = useState(false);
@@ -393,11 +464,12 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
 
   const handleRemove = useCallback(
     (signalId: string) => {
-      removePromotedSignal(FOCUS_ID, WEEK_OF, signalId);
+      if (!selectedAccount) return;
+      removePromotedSignal(selectedAccount, WEEK_OF, signalId);
       refresh();
       toast.success('Removed from Deal Planning');
     },
-    [refresh],
+    [refresh, selectedAccount],
   );
 
   const handleCopy = (text: string) => {
@@ -425,327 +497,354 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
   const existingIds = useMemo(() => new Set(drivers.map((d) => d.signalId)), [drivers]);
 
   const handleAddSignals = useCallback((signals: Signal[]) => {
-    promoteSignalsToDealPlan(FOCUS_ID, WEEK_OF, signals);
+    if (!selectedAccount) return;
+    promoteSignalsToDealPlan(selectedAccount, WEEK_OF, signals);
     refresh();
     toast.success(`Added ${signals.length} signal${signals.length > 1 ? 's' : ''} to Deal Plan`);
-  }, [refresh]);
+  }, [refresh, selectedAccount]);
 
-  // ============= Always-on Workspace (no blocking empty state) =============
-  return (
-    <div className="flex gap-4">
-      {/* Left: Main workspace */}
-      <div className="flex-1 min-w-0 space-y-4">
-        {/* Header + Role Toggle */}
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-2">
-            <Brain className="w-5 h-5 text-primary" />
-            <h3 className="text-base font-semibold text-foreground">
-              Deal Planning — Schindler
-            </h3>
-            <BriefingModePill mode="curated" />
-            {avgConfidence && (
-              <span className={cn('text-xs font-bold ml-2', confidenceColor(avgConfidence.score))}>
-                {avgConfidence.score}% avg
-              </span>
-            )}
+  // ============= HEADER =============
+  const header = (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <Brain className="w-5 h-5 text-primary" />
+        <h3 className="text-base font-semibold text-foreground">Deal Planning</h3>
+        {avgConfidence && (
+          <span className={cn('text-xs font-bold ml-1', confidenceColor(avgConfidence.score))}>
+            {avgConfidence.score}% avg
+          </span>
+        )}
+      </div>
+      <AccountSelector selectedId={selectedAccount} onSelect={setSelectedAccount} />
+    </div>
+  );
+
+  // ============= EMPTY STATE (no account selected) =============
+  if (!selectedAccount) {
+    return (
+      <div className="space-y-4">
+        {header}
+        <div className="flex flex-col items-center justify-center text-center py-20 px-6">
+          <div className="w-14 h-14 rounded-2xl bg-muted/60 flex items-center justify-center mb-4">
+            <FolderOpen className="w-7 h-7 text-muted-foreground" />
           </div>
-
-          <div className="flex items-center gap-2">
-            <div className="inline-flex rounded-lg bg-muted/50 p-0.5 border border-border/60">
-              <button
-                onClick={() => setRoleView('seller')}
-                className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all',
-                  roleView === 'seller'
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                <Briefcase className="w-3 h-3" />
-                Seller view
-              </button>
-              <button
-                onClick={() => setRoleView('engineer')}
-                className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all',
-                  roleView === 'engineer'
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                <Wrench className="w-3 h-3" />
-                Engineer view
-              </button>
-            </div>
-
-            {/* Quick Brief link */}
+          <p className="text-sm font-medium text-foreground mb-1">Select or create an account to start planning.</p>
+          <p className="text-xs text-muted-foreground mb-5 max-w-xs">
+            Choose an existing account or add a new one to build your deal plan.
+          </p>
+          <div className="flex flex-col items-center gap-2">
+            <AccountSelector selectedId={null} onSelect={setSelectedAccount} />
             <button
-              onClick={onGoToQuickBrief}
-              className="text-[11px] text-muted-foreground hover:text-primary underline underline-offset-2 transition-colors"
+              onClick={() => toast.info('Add account — coming soon')}
+              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
             >
-              Quick Brief →
+              <Plus className="w-3 h-3" />
+              Add new account
             </button>
           </div>
         </div>
+      </div>
+    );
+  }
 
-        {/* Metadata strip */}
-        <DealPlanMetadata
-          accountId={FOCUS_ID}
-          hasPromotedSignals={drivers.length > 0}
-          engagementMode={engagementMode}
-          onEngagementModeChange={setEngagementMode}
-          trigger={trigger}
-          onTriggerChange={setTrigger}
-        />
+  // ============= WORKSPACE (account selected) =============
+  return (
+    <div className="space-y-4">
+      {header}
 
-        {/* ===== 1) Promoted Drivers ===== */}
-        <Section number={1} title="Promoted Drivers" icon={<Zap className="w-3.5 h-3.5" />}>
-          {drivers.length > 0 ? (
-            <div className="space-y-2">
-              {drivers.map((d) => {
-                const s = d.snapshot;
-                const isExpanded = expandedIds.has(d.signalId);
-                const typeColor = TYPE_COLORS[s.type] ?? 'bg-muted text-muted-foreground border-border';
+      {/* Compact metadata row: Mode | Trigger | Readiness */}
+      <DealPlanMetadata
+        accountId={selectedAccount}
+        hasPromotedSignals={drivers.length > 0}
+        engagementMode={engagementMode}
+        onEngagementModeChange={setEngagementMode}
+        trigger={trigger}
+        onTriggerChange={setTrigger}
+      />
 
-                return (
-                  <div key={d.signalId} className="rounded-lg border border-border/50 bg-background overflow-hidden">
-                    <div
-                      className="flex items-start gap-3 p-3 cursor-pointer hover:bg-muted/20 transition-colors"
-                      onClick={() => toggleExpand(d.signalId)}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full border', typeColor)}>
-                            {s.type}
-                          </span>
-                          <span className={cn('text-[10px] font-bold', confidenceColor(s.confidence))}>
-                            {s.confidence}%
-                          </span>
-                        </div>
-                        <p className="text-sm font-medium text-foreground leading-snug">{s.title}</p>
-                        {!isExpanded && (
-                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{s.soWhat}</p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1 flex-shrink-0 mt-1">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleRemove(d.signalId); }}
-                          className="p-1 rounded-md text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                        {isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
-                      </div>
-                    </div>
-
-                    {isExpanded && (
-                      <div className="px-3 pb-3 space-y-3 border-t border-border/40 pt-3">
-                        <div className="p-2.5 rounded-lg bg-primary/5 border border-primary/10">
-                          <p className="text-[10px] font-semibold text-primary uppercase tracking-wide mb-1">So what</p>
-                          <p className="text-xs text-foreground">{s.soWhat}</p>
-                        </div>
-                        <div className="p-2.5 rounded-lg bg-muted/30 border border-border/40">
-                          <p className="text-[10px] font-semibold text-primary uppercase tracking-wide mb-1">Action</p>
-                          <p className="text-xs text-foreground">{s.recommendedAction}</p>
-                        </div>
-                        <div className={cn("p-2.5 rounded-lg bg-muted/20 border border-border/40", roleView === 'seller' && 'ring-1 ring-primary/20')}>
-                          <div className="flex items-center justify-between mb-1">
-                            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                              <MessageSquare className="w-3 h-3" /> Talk Track
-                              {roleView === 'seller' && <span className="text-primary ml-1">★</span>}
-                            </p>
-                            <button onClick={() => handleCopy(s.talkTrack)} className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-0.5">
-                              <Copy className="w-3 h-3" /> Copy
-                            </button>
-                          </div>
-                          <p className="text-xs text-foreground leading-relaxed">{s.talkTrack}</p>
-                        </div>
-                        {s.whoCares.length > 0 && (
-                          <div>
-                            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Who cares</p>
-                            <div className="flex flex-wrap gap-1.5">
-                              {s.whoCares.map((r, i) => (
-                                <span key={i} className="px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground border border-border/50 text-[10px] font-medium">
-                                  {r}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        {s.proofToRequest.length > 0 && (
-                          <div>
-                            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Proof to request</p>
-                            <div className="space-y-1">
-                              {s.proofToRequest.map((item, i) => (
-                                <div key={i} className="flex items-start gap-1.5 text-xs">
-                                  <Link2 className="w-3 h-3 text-primary/50 mt-0.5 flex-shrink-0" />
-                                  <span className="text-muted-foreground">{item}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        {s.sources.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 pt-1 border-t border-border/30">
-                            {s.sources.map((src, i) => (
-                              <span key={i} className="px-2 py-0.5 rounded-full bg-muted/40 border border-border/40 text-[10px] text-muted-foreground">{src}</span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground italic">No promoted signals yet — use Add Signals or the Inbox to attach intelligence.</p>
-          )}
-
-          {/* Add Signals button always visible in workspace */}
+      {/* Role toggle */}
+      <div className="flex items-center justify-between">
+        <div className="inline-flex rounded-lg bg-muted/50 p-0.5 border border-border/60">
           <button
-            onClick={() => setShowPicker(true)}
-            className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-primary/[0.02] transition-all"
+            onClick={() => setRoleView('seller')}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all',
+              roleView === 'seller'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
           >
-            <Plus className="w-3.5 h-3.5" />
-            Add Signals
+            <Briefcase className="w-3 h-3" />
+            Seller view
           </button>
-
-          {/* Inline signal picker */}
-          {showPicker && (
-            <div className="mt-3">
-              <SignalPicker
-                existingIds={existingIds}
-                onSelect={handleAddSignals}
-                onClose={() => setShowPicker(false)}
-              />
-            </div>
-          )}
-        </Section>
-
-        {/* ===== 2) Strategic Positioning ===== */}
-        <Section
-          number={2}
-          title="Strategic Positioning"
-          icon={<Crosshair className="w-3.5 h-3.5" />}
-          roleHighlight={roleView === 'seller'}
-        >
-          <div className="space-y-3">
-            <EditableBlock label="Why Now" icon={<Clock className="w-3 h-3" />} value={whyNow} onChange={setWhyNow} placeholder="What creates urgency for this deal right now?" compact />
-            <EditableBlock label="Wedge" icon={<Target className="w-3 h-3" />} value={wedge} onChange={setWedge} placeholder="What's our differentiated entry point?" compact />
-            <EditableBlock label="Competitive Pressure" icon={<Swords className="w-3 h-3" />} value={competitivePressure} onChange={setCompetitivePressure} placeholder="Key competitive dynamics to navigate." compact />
-            <EditableBlock label="Executive Framing" icon={<Crown className="w-3 h-3" />} value={execFraming} onChange={setExecFraming} placeholder="How should we frame this to the C-suite?" compact />
-          </div>
-        </Section>
-
-        {/* ===== 3) Political Map ===== */}
-        <Section
-          number={3}
-          title="Political Map"
-          icon={<Users className="w-3.5 h-3.5" />}
-          roleHighlight={roleView === 'seller'}
-        >
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <StakeholderRow role="Sponsor" icon={<Crown className="w-3 h-3" />} name={sponsor.name} notes={sponsor.notes} onChange={(n, no) => setSponsor({ name: n, notes: no })} />
-            <StakeholderRow role="Champion" icon={<UserCheck className="w-3 h-3" />} name={champion.name} notes={champion.notes} onChange={(n, no) => setChampion({ name: n, notes: no })} />
-            <StakeholderRow role="Blocker" icon={<UserX className="w-3 h-3" />} name={blocker.name} notes={blocker.notes} onChange={(n, no) => setBlocker({ name: n, notes: no })} />
-            <StakeholderRow role="Procurement" icon={<ShoppingCart className="w-3 h-3" />} name={procurement.name} notes={procurement.notes} onChange={(n, no) => setProcurement({ name: n, notes: no })} />
-          </div>
-        </Section>
-
-        {/* ===== 4) Execution Motion ===== */}
-        <Section
-          number={4}
-          title="Execution Motion"
-          icon={<Rocket className="w-3.5 h-3.5" />}
-          roleHighlight={roleView === 'engineer'}
-        >
-          <div className="space-y-3">
-            <EditableBlock label="Recommended Entry Pack" icon={<Package className="w-3 h-3" />} value={entryPack} onChange={setEntryPack} placeholder="Which package or engagement model opens the door?" compact />
-            <EditableBlock label="Pilot Scope" icon={<Target className="w-3 h-3" />} value={pilotScope} onChange={setPilotScope} placeholder="Define the initial pilot: users, scope, success criteria." compact />
-            <EditableBlock label="Timeline Hypothesis" icon={<CalendarDays className="w-3 h-3" />} value={timeline} onChange={setTimeline} placeholder="Week-by-week execution plan." compact />
-          </div>
-        </Section>
-
-        {/* ===== 5) CRM + Account Signals ===== */}
-        <Section number={5} title="CRM + Account Signals" icon={<Activity className="w-3.5 h-3.5" />}>
-          <div className="space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <div className="p-2.5 rounded-lg bg-muted/20 border border-border/40">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
-                  <CalendarDays className="w-3 h-3" /> Last Meeting
-                </p>
-                <p className="text-xs text-foreground">{lastMeeting.split('—')[0]}</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">{lastMeeting.split('—')[1]}</p>
-              </div>
-              <div className="p-2.5 rounded-lg bg-muted/20 border border-border/40">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
-                  <BarChart3 className="w-3 h-3" /> Engagement Score
-                </p>
-                <p className="text-xs font-bold text-green-600">72 / 100</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Active, multi-stakeholder</p>
-              </div>
-              <div className="p-2.5 rounded-lg bg-muted/20 border border-border/40">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
-                  <Building2 className="w-3 h-3" /> Vendor Involvement
-                </p>
-                <p className="text-xs text-foreground">Microsoft CSA assigned</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Azure Swiss GA ✓ · Copilot preview pending</p>
-              </div>
-            </div>
-          </div>
-        </Section>
-
-        {/* ===== 6) Risks & Blockers ===== */}
-        <Section number={6} title="Risks & Blockers" icon={<AlertTriangle className="w-3.5 h-3.5" />}>
-          {aggregatedRisks.length > 0 ? (
-            <div className="space-y-1.5">
-              {aggregatedRisks.map((item, i) => (
-                <div key={i} className="flex items-start gap-2 text-xs">
-                  <AlertTriangle className="w-3 h-3 text-destructive/60 mt-0.5 flex-shrink-0" />
-                  <p className="text-muted-foreground">{item}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground italic">No risks identified yet — add signals to surface gaps.</p>
-          )}
-        </Section>
-
-        {/* ===== 7) Asset Packs ===== */}
-        <Section number={7} title="Asset Packs" icon={<Package className="w-3.5 h-3.5" />}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <AssetPackCard
-              label="Assessment Pack"
-              icon={<FileCheck className="w-4 h-4" />}
-              description="AI readiness assessment framework + scoring template."
-            />
-            <AssetPackCard
-              label="Governance Pack"
-              icon={<Shield className="w-4 h-4" />}
-              description="RACI, data classification, approval gate templates."
-            />
-            <AssetPackCard
-              label="Competitive Pack"
-              icon={<Swords className="w-4 h-4" />}
-              description="Positioning guides against Google Cloud, AWS, SAP."
-            />
-            <AssetPackCard
-              label="ROI Pack"
-              icon={<TrendingUp className="w-4 h-4" />}
-              description="TCO models, business case templates, FinOps framework."
-            />
-          </div>
-        </Section>
+          <button
+            onClick={() => setRoleView('engineer')}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all',
+              roleView === 'engineer'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <Wrench className="w-3 h-3" />
+            Engineer view
+          </button>
+        </div>
       </div>
 
-      {/* Right: Account Inbox */}
-      <div className="w-72 flex-shrink-0 hidden lg:block">
-        <div className="sticky top-4">
-          <AccountInbox
-            accountId={FOCUS_ID}
-            onSignalPicker={() => setShowPicker(true)}
-          />
+      <div className="flex gap-4">
+        {/* Left: Main workspace */}
+        <div className="flex-1 min-w-0 space-y-4">
+          {/* ===== 1) Promoted Drivers ===== */}
+          <Section number={1} title="Promoted Drivers" icon={<Zap className="w-3.5 h-3.5" />}>
+            {drivers.length > 0 ? (
+              <div className="space-y-2">
+                {drivers.map((d) => {
+                  const s = d.snapshot;
+                  const isExpanded = expandedIds.has(d.signalId);
+                  const typeColor = TYPE_COLORS[s.type] ?? 'bg-muted text-muted-foreground border-border';
+
+                  return (
+                    <div key={d.signalId} className="rounded-lg border border-border/50 bg-background overflow-hidden">
+                      <div
+                        className="flex items-start gap-3 p-3 cursor-pointer hover:bg-muted/20 transition-colors"
+                        onClick={() => toggleExpand(d.signalId)}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full border', typeColor)}>
+                              {s.type}
+                            </span>
+                            <span className={cn('text-[10px] font-bold', confidenceColor(s.confidence))}>
+                              {s.confidence}%
+                            </span>
+                          </div>
+                          <p className="text-sm font-medium text-foreground leading-snug">{s.title}</p>
+                          {!isExpanded && (
+                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{s.soWhat}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0 mt-1">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleRemove(d.signalId); }}
+                            className="p-1 rounded-md text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                          {isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                        </div>
+                      </div>
+
+                      {isExpanded && (
+                        <div className="px-3 pb-3 space-y-3 border-t border-border/40 pt-3">
+                          <div className="p-2.5 rounded-lg bg-primary/5 border border-primary/10">
+                            <p className="text-[10px] font-semibold text-primary uppercase tracking-wide mb-1">So what</p>
+                            <p className="text-xs text-foreground">{s.soWhat}</p>
+                          </div>
+                          <div className="p-2.5 rounded-lg bg-muted/30 border border-border/40">
+                            <p className="text-[10px] font-semibold text-primary uppercase tracking-wide mb-1">Action</p>
+                            <p className="text-xs text-foreground">{s.recommendedAction}</p>
+                          </div>
+                          <div className={cn("p-2.5 rounded-lg bg-muted/20 border border-border/40", roleView === 'seller' && 'ring-1 ring-primary/20')}>
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                                <MessageSquare className="w-3 h-3" /> Talk Track
+                                {roleView === 'seller' && <span className="text-primary ml-1">★</span>}
+                              </p>
+                              <button onClick={() => handleCopy(s.talkTrack)} className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-0.5">
+                                <Copy className="w-3 h-3" /> Copy
+                              </button>
+                            </div>
+                            <p className="text-xs text-foreground leading-relaxed">{s.talkTrack}</p>
+                          </div>
+                          {s.whoCares.length > 0 && (
+                            <div>
+                              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Who cares</p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {s.whoCares.map((r, i) => (
+                                  <span key={i} className="px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground border border-border/50 text-[10px] font-medium">
+                                    {r}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {s.proofToRequest.length > 0 && (
+                            <div>
+                              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Proof to request</p>
+                              <div className="space-y-1">
+                                {s.proofToRequest.map((item, i) => (
+                                  <div key={i} className="flex items-start gap-1.5 text-xs">
+                                    <Link2 className="w-3 h-3 text-primary/50 mt-0.5 flex-shrink-0" />
+                                    <span className="text-muted-foreground">{item}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {s.sources.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 pt-1 border-t border-border/30">
+                              {s.sources.map((src, i) => (
+                                <span key={i} className="px-2 py-0.5 rounded-full bg-muted/40 border border-border/40 text-[10px] text-muted-foreground">{src}</span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground italic">No promoted signals yet — use Add Signals to attach intelligence.</p>
+            )}
+
+            {/* Add Signals button */}
+            <button
+              onClick={() => setShowPicker(true)}
+              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-primary/[0.02] transition-all"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add Signals
+            </button>
+
+            {/* Inline signal picker */}
+            {showPicker && (
+              <div className="mt-3">
+                <SignalPicker
+                  existingIds={existingIds}
+                  onSelect={handleAddSignals}
+                  onClose={() => setShowPicker(false)}
+                  accountId={selectedAccount}
+                />
+              </div>
+            )}
+          </Section>
+
+          {/* ===== 2) Strategic Positioning ===== */}
+          <Section
+            number={2}
+            title="Strategic Positioning"
+            icon={<Crosshair className="w-3.5 h-3.5" />}
+            roleHighlight={roleView === 'seller'}
+          >
+            <div className="space-y-3">
+              <EditableBlock label="Why Now" icon={<Clock className="w-3 h-3" />} value={whyNow} onChange={setWhyNow} placeholder="What creates urgency for this deal right now?" compact />
+              <EditableBlock label="Wedge" icon={<Target className="w-3 h-3" />} value={wedge} onChange={setWedge} placeholder="What's our differentiated entry point?" compact />
+              <EditableBlock label="Competitive Pressure" icon={<Swords className="w-3 h-3" />} value={competitivePressure} onChange={setCompetitivePressure} placeholder="Key competitive dynamics to navigate." compact />
+              <EditableBlock label="Executive Framing" icon={<Crown className="w-3 h-3" />} value={execFraming} onChange={setExecFraming} placeholder="How should we frame this to the C-suite?" compact />
+            </div>
+          </Section>
+
+          {/* ===== 3) Political Map ===== */}
+          <Section
+            number={3}
+            title="Political Map"
+            icon={<Users className="w-3.5 h-3.5" />}
+            roleHighlight={roleView === 'seller'}
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <StakeholderRow role="Sponsor" icon={<Crown className="w-3 h-3" />} name={sponsor.name} notes={sponsor.notes} onChange={(n, no) => setSponsor({ name: n, notes: no })} />
+              <StakeholderRow role="Champion" icon={<UserCheck className="w-3 h-3" />} name={champion.name} notes={champion.notes} onChange={(n, no) => setChampion({ name: n, notes: no })} />
+              <StakeholderRow role="Blocker" icon={<UserX className="w-3 h-3" />} name={blocker.name} notes={blocker.notes} onChange={(n, no) => setBlocker({ name: n, notes: no })} />
+              <StakeholderRow role="Procurement" icon={<ShoppingCart className="w-3 h-3" />} name={procurement.name} notes={procurement.notes} onChange={(n, no) => setProcurement({ name: n, notes: no })} />
+            </div>
+          </Section>
+
+          {/* ===== 4) Execution Motion ===== */}
+          <Section
+            number={4}
+            title="Execution Motion"
+            icon={<Rocket className="w-3.5 h-3.5" />}
+            roleHighlight={roleView === 'engineer'}
+          >
+            <div className="space-y-3">
+              <EditableBlock label="Recommended Entry Pack" icon={<Package className="w-3 h-3" />} value={entryPack} onChange={setEntryPack} placeholder="Which package or engagement model opens the door?" compact />
+              <EditableBlock label="Pilot Scope" icon={<Target className="w-3 h-3" />} value={pilotScope} onChange={setPilotScope} placeholder="Define the initial pilot: users, scope, success criteria." compact />
+              <EditableBlock label="Timeline Hypothesis" icon={<CalendarDays className="w-3 h-3" />} value={timeline} onChange={setTimeline} placeholder="Week-by-week execution plan." compact />
+            </div>
+          </Section>
+
+          {/* ===== 5) CRM + Account Signals ===== */}
+          <Section number={5} title="CRM + Account Signals" icon={<Activity className="w-3.5 h-3.5" />}>
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="p-2.5 rounded-lg bg-muted/20 border border-border/40">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                    <CalendarDays className="w-3 h-3" /> Last Meeting
+                  </p>
+                  <p className="text-xs text-foreground">{lastMeeting.split('—')[0]}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{lastMeeting.split('—')[1]}</p>
+                </div>
+                <div className="p-2.5 rounded-lg bg-muted/20 border border-border/40">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                    <BarChart3 className="w-3 h-3" /> Engagement Score
+                  </p>
+                  <p className="text-xs font-bold text-green-600">72 / 100</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Active, multi-stakeholder</p>
+                </div>
+                <div className="p-2.5 rounded-lg bg-muted/20 border border-border/40">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                    <Building2 className="w-3 h-3" /> Vendor Involvement
+                  </p>
+                  <p className="text-xs text-foreground">Microsoft CSA assigned</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Azure Swiss GA ✓ · Copilot preview pending</p>
+                </div>
+              </div>
+            </div>
+          </Section>
+
+          {/* ===== 6) Risks & Blockers ===== */}
+          <Section number={6} title="Risks & Blockers" icon={<AlertTriangle className="w-3.5 h-3.5" />}>
+            {aggregatedRisks.length > 0 ? (
+              <div className="space-y-1.5">
+                {aggregatedRisks.map((item, i) => (
+                  <div key={i} className="flex items-start gap-2 text-xs">
+                    <AlertTriangle className="w-3 h-3 text-destructive/60 mt-0.5 flex-shrink-0" />
+                    <p className="text-muted-foreground">{item}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground italic">No risks identified yet — add signals to surface gaps.</p>
+            )}
+          </Section>
+
+          {/* ===== 7) Asset Packs ===== */}
+          <Section number={7} title="Asset Packs" icon={<Package className="w-3.5 h-3.5" />}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <AssetPackCard
+                label="Assessment Pack"
+                icon={<FileCheck className="w-4 h-4" />}
+                description="AI readiness assessment framework + scoring template."
+              />
+              <AssetPackCard
+                label="Governance Pack"
+                icon={<Shield className="w-4 h-4" />}
+                description="RACI, data classification, approval gate templates."
+              />
+              <AssetPackCard
+                label="Competitive Pack"
+                icon={<Swords className="w-4 h-4" />}
+                description="Positioning guides against Google Cloud, AWS, SAP."
+              />
+              <AssetPackCard
+                label="ROI Pack"
+                icon={<TrendingUp className="w-4 h-4" />}
+                description="TCO models, business case templates, FinOps framework."
+              />
+            </div>
+          </Section>
+        </div>
+
+        {/* Right: Account Intelligence */}
+        <div className="w-72 flex-shrink-0 hidden lg:block">
+          <div className="sticky top-4">
+            <AccountInbox
+              accountId={selectedAccount}
+              onSignalPicker={() => setShowPicker(true)}
+            />
+          </div>
         </div>
       </div>
     </div>
