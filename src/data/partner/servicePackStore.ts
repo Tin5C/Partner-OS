@@ -1,5 +1,6 @@
 // Service Pack Store — deterministic recommendation engine (v2)
-// Uses servicePackScoringConfig for all weights and thresholds.
+// Uses servicePackScoringConfig for weights/thresholds.
+// Uses partner_service_configuration for seed packs and capabilities.
 
 import type { EngagementMode } from '@/components/partner/DealPlanMetadata';
 import {
@@ -7,6 +8,11 @@ import {
   type PackTag,
   type CapabilityLevel,
 } from './servicePackScoringConfig';
+import {
+  partner_service_configuration,
+  type PartnerServicePack,
+  type ProofAsset,
+} from './partnerServiceConfiguration';
 
 // ============= Types =============
 
@@ -15,11 +21,11 @@ export interface ServicePack {
   name: string;
   description: string;
   tags: PackTag[];
-  delivery_model: 'Workshop' | 'Sprint' | 'Managed' | 'Advisory' | 'Assessment';
+  delivery_model: string;
   duration_band: string;
   pricing_band: string;
-  proof_assets: string[];
-  required_capabilities: PackTag[];
+  proof_assets: ProofAsset[];
+  required_capabilities: string[];
 }
 
 export interface ScoredPack {
@@ -29,98 +35,9 @@ export interface ScoredPack {
   why_recommended: string[];
 }
 
-// ============= Seed Packs =============
+// ============= Service Packs (from seed config) =============
 
-export const SERVICE_PACKS: ServicePack[] = [
-  {
-    id: 'sp-ai-readiness',
-    name: 'AI Readiness Assessment',
-    description: 'Evaluate organizational readiness for AI adoption across governance, data, and infrastructure.',
-    tags: ['ai_readiness', 'ai_governance', 'data_platform'],
-    delivery_model: 'Assessment',
-    duration_band: '2–4 weeks',
-    pricing_band: 'CHF 15K–30K',
-    proof_assets: ['AI Maturity Framework', 'Governance Checklist', 'Readiness Scorecard'],
-    required_capabilities: ['ai_readiness'],
-  },
-  {
-    id: 'sp-copilot-activation',
-    name: 'Copilot Activation Sprint',
-    description: 'Deploy M365 Copilot for a pilot user group with governance guardrails and adoption metrics.',
-    tags: ['m365_copilot', 'adoption_change', 'ai_governance'],
-    delivery_model: 'Sprint',
-    duration_band: '4–6 weeks',
-    pricing_band: 'CHF 25K–50K',
-    proof_assets: ['Copilot ROI Model', 'Adoption Dashboard Template', 'Data Classification Guide'],
-    required_capabilities: ['m365_copilot', 'ai_governance'],
-  },
-  {
-    id: 'sp-architecture-workshop',
-    name: 'Azure Architecture Workshop',
-    description: 'Design target-state cloud architecture aligned to compliance requirements and AI workloads.',
-    tags: ['cloud_ops', 'data_platform', 'security_identity'],
-    delivery_model: 'Workshop',
-    duration_band: '1–2 weeks',
-    pricing_band: 'CHF 10K–20K',
-    proof_assets: ['Reference Architecture', 'Swiss Compliance Matrix', 'Migration Roadmap'],
-    required_capabilities: ['cloud_ops'],
-  },
-  {
-    id: 'sp-security-review',
-    name: 'Security & Governance Review',
-    description: 'Assess AI governance posture, data residency compliance, and RACI alignment.',
-    tags: ['security_identity', 'ai_governance', 'finops'],
-    delivery_model: 'Advisory',
-    duration_band: '2–3 weeks',
-    pricing_band: 'CHF 20K–35K',
-    proof_assets: ['RACI Template', 'Data Residency Posture Map', 'Governance Maturity Assessment'],
-    required_capabilities: ['security_identity', 'ai_governance'],
-  },
-  {
-    id: 'sp-competitive-displacement',
-    name: 'Competitive Displacement Sprint',
-    description: 'Position Microsoft stack against incumbent cloud/AI vendors with proof-based objection handling.',
-    tags: ['ai_governance', 'security_identity', 'data_platform', 'finops'],
-    delivery_model: 'Sprint',
-    duration_band: '3–4 weeks',
-    pricing_band: 'CHF 20K–40K',
-    proof_assets: ['Competitive Battle Card', 'TCO Comparison Model', 'Migration Risk Assessment'],
-    required_capabilities: ['data_platform'],
-  },
-  {
-    id: 'sp-finops-ai',
-    name: 'FinOps for AI Workloads',
-    description: 'Establish cost governance framework for AI consumption with forecasting and optimization.',
-    tags: ['finops', 'ai_governance', 'cloud_ops'],
-    delivery_model: 'Advisory',
-    duration_band: '2–3 weeks',
-    pricing_band: 'CHF 15K–25K',
-    proof_assets: ['FinOps Framework', 'AI Cost Forecasting Model', 'Optimization Playbook'],
-    required_capabilities: ['finops'],
-  },
-  {
-    id: 'sp-rag-agents',
-    name: 'RAG & AI Agents Sprint',
-    description: 'Build retrieval-augmented generation pipeline with agentic orchestration for enterprise use cases.',
-    tags: ['rag_agents', 'data_platform', 'ai_governance'],
-    delivery_model: 'Sprint',
-    duration_band: '4–8 weeks',
-    pricing_band: 'CHF 40K–80K',
-    proof_assets: ['RAG Reference Architecture', 'Agent Orchestration Pattern', 'Evaluation Framework'],
-    required_capabilities: ['rag_agents', 'data_platform'],
-  },
-  {
-    id: 'sp-adoption-change',
-    name: 'Adoption & Change Management',
-    description: 'Drive user adoption for AI/cloud rollouts with structured change management and training.',
-    tags: ['adoption_change', 'm365_copilot', 'cloud_ops'],
-    delivery_model: 'Managed',
-    duration_band: '6–12 weeks',
-    pricing_band: 'CHF 30K–60K',
-    proof_assets: ['Change Readiness Assessment', 'Training Curriculum Template', 'Adoption Metrics Dashboard'],
-    required_capabilities: ['adoption_change'],
-  },
-];
+export const SERVICE_PACKS: ServicePack[] = partner_service_configuration.service_packs;
 
 // ============= Scoring Engine =============
 
@@ -130,6 +47,23 @@ export interface ScoringInput {
   vendorPosture?: string | null;
   partnerCapabilities?: Record<string, CapabilityLevel>;
   signalTags?: string[];
+}
+
+/**
+ * Resolve capability level for a required capability name.
+ * Looks up the human-readable name in partner capabilities map.
+ */
+function resolveCapabilityLevel(
+  capName: string,
+  capabilities: Record<string, CapabilityLevel>,
+): CapabilityLevel {
+  // Direct match
+  if (capabilities[capName]) return capabilities[capName];
+  // Case-insensitive fallback
+  const key = Object.keys(capabilities).find(
+    (k) => k.toLowerCase() === capName.toLowerCase(),
+  );
+  return key ? capabilities[key] : 'None';
 }
 
 function computePackScore(pack: ServicePack, input: ScoringInput): ScoredPack | null {
@@ -178,7 +112,7 @@ function computePackScore(pack: ServicePack, input: ScoringInput): ScoredPack | 
     let capTotal = 0;
     let excluded = false;
     for (const reqCap of pack.required_capabilities) {
-      const level = partnerCapabilities[reqCap] ?? 'None';
+      const level = resolveCapabilityLevel(reqCap, partnerCapabilities);
       const capScore = cfg.capability_scoring[level] ?? -50;
       if (cfg.capability_requirement_rule.excludeIfBelowMinLevel && level === 'None') {
         excluded = true;
@@ -191,7 +125,6 @@ function computePackScore(pack: ServicePack, input: ScoringInput): ScoredPack | 
     score += capTotal;
     if (capTotal >= 15) reasons.push('Required capabilities available');
   } else {
-    // No capability data — assume met
     score += 20;
     reasons.push('Capability requirements assumed met');
   }

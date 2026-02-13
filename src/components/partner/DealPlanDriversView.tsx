@@ -58,6 +58,7 @@ import {
   type TriggerOption,
 } from './DealPlanMetadata';
 import { scoreServicePacks, type ScoredPack } from '@/data/partner/servicePackStore';
+import { partner_service_configuration } from '@/data/partner/partnerServiceConfiguration';
 
 const WEEK_OF = '2026-02-10';
 
@@ -507,6 +508,8 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
     return scoreServicePacks({
       mode: engagementMode,
       trigger,
+      vendorPosture: partner_service_configuration.vendor_posture,
+      partnerCapabilities: partner_service_configuration.partner_capabilities,
     });
   }, [selectedAccount, engagementMode, trigger, planGenerated]);
 
@@ -911,7 +914,15 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
                       {pack.proof_assets.length > 0 && (
                         <div className="flex flex-wrap gap-1 pt-1">
                           {pack.proof_assets.map((a, i) => (
-                            <span key={i} className="px-1.5 py-0.5 rounded text-[9px] bg-muted/40 text-muted-foreground border border-border/30">{a}</span>
+                            <a
+                              key={i}
+                              href={a.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-1.5 py-0.5 rounded text-[9px] bg-muted/40 text-muted-foreground border border-border/30 hover:text-primary hover:border-primary/30 transition-colors"
+                            >
+                              {a.title}
+                            </a>
                           ))}
                         </div>
                       )}
