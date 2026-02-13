@@ -58,12 +58,12 @@ export function getContentRequest(request_id: string): ContentRequest | null {
 
 const REQUEST_TO_MEMORY: Record<RequestType, MemoryItemType> = {
   recording: 'recording',
-  transcript_notes: 'transcript',
-  rfp_requirements: 'rfp',
-  architecture_diagram: 'architecture',
-  slides_deck: 'slides',
-  news_article: 'news',
-  link: 'news',
+  transcript_notes: 'transcript_notes',
+  rfp_requirements: 'rfp_requirements',
+  architecture_diagram: 'architecture_diagram',
+  slides_deck: 'slides_deck',
+  news_article: 'news_article',
+  link: 'link',
   other: 'other',
 };
 
@@ -78,7 +78,7 @@ export function answerContentRequest(
     account_id: req.account_id,
     type: REQUEST_TO_MEMORY[req.request_type] ?? 'other',
     title: answer.title,
-    content: answer.content,
+    content_text: answer.content,
     file_url: answer.file_url,
     file_name: answer.file_name,
   });

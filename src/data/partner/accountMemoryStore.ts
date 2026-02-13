@@ -1,22 +1,25 @@
 // AccountMemory — lightweight inbox items scoped to account_id
 // Stores files, notes, links, signals attached to a deal plan
+// Separate from Extractor Packs (Modules 0–6)
 
 export type MemoryItemType =
   | 'recording'
-  | 'transcript'
-  | 'rfp'
-  | 'architecture'
-  | 'slides'
-  | 'news'
+  | 'transcript_notes'
+  | 'rfp_requirements'
+  | 'architecture_diagram'
+  | 'slides_deck'
+  | 'news_article'
+  | 'link'
   | 'other';
 
 export const MEMORY_TYPE_OPTIONS: { value: MemoryItemType; label: string }[] = [
   { value: 'recording', label: 'Recording' },
-  { value: 'transcript', label: 'Transcript / Notes' },
-  { value: 'rfp', label: 'RFP / Requirements' },
-  { value: 'architecture', label: 'Architecture / Diagram' },
-  { value: 'slides', label: 'Slides / Deck' },
-  { value: 'news', label: 'News / Article' },
+  { value: 'transcript_notes', label: 'Transcript / Notes' },
+  { value: 'rfp_requirements', label: 'RFP / Requirements' },
+  { value: 'architecture_diagram', label: 'Architecture / Diagram' },
+  { value: 'slides_deck', label: 'Slides / Deck' },
+  { value: 'news_article', label: 'News / Article' },
+  { value: 'link', label: 'Link' },
   { value: 'other', label: 'Other' },
 ];
 
@@ -25,10 +28,14 @@ export interface AccountMemoryItem {
   account_id: string;
   type: MemoryItemType;
   title: string;
-  content?: string;       // for text/notes/links
-  file_url?: string;      // for uploaded files (reference only)
-  file_name?: string;     // original file name
+  content_text?: string;    // for pasted text/notes
+  url?: string;             // for links/recordings/articles
+  file_url?: string;        // for uploaded files (reference only)
+  file_name?: string;       // original file name
   created_at: string;
+  updated_at: string;
+  tags?: string[];
+  scope_id?: string | null;
 }
 
 // ============= In-memory store =============
@@ -38,12 +45,14 @@ const store: AccountMemoryItem[] = [];
 // ============= CRUD =============
 
 export function addMemoryItem(
-  payload: Omit<AccountMemoryItem, 'id' | 'created_at'>,
+  payload: Omit<AccountMemoryItem, 'id' | 'created_at' | 'updated_at'>,
 ): AccountMemoryItem {
+  const now = new Date().toISOString();
   const item: AccountMemoryItem = {
     ...payload,
     id: crypto.randomUUID(),
-    created_at: new Date().toISOString(),
+    created_at: now,
+    updated_at: now,
   };
   store.push(item);
   return item;
@@ -59,6 +68,7 @@ export function updateMemoryType(id: string, type: MemoryItemType): boolean {
   const item = store.find((i) => i.id === id);
   if (!item) return false;
   item.type = type;
+  item.updated_at = new Date().toISOString();
   return true;
 }
 
@@ -80,11 +90,12 @@ export type EvidencePillar =
 
 const TYPE_TO_PILLAR: Record<MemoryItemType, EvidencePillar> = {
   recording: 'context',
-  transcript: 'context',
-  rfp: 'technical',
-  architecture: 'technical',
-  slides: 'proof',
-  news: 'competitive',
+  transcript_notes: 'context',
+  rfp_requirements: 'technical',
+  architecture_diagram: 'technical',
+  slides_deck: 'proof',
+  news_article: 'competitive',
+  link: 'context',
   other: 'context',
 };
 

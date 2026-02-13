@@ -1,9 +1,10 @@
-// Account Intelligence — right-side panel for Deal Planning
+// Account Memory — right-side panel for Deal Planning
 // Supports file drop, paste text, add link, classify items, ask teammate
+// Separate from Extractor Packs (Modules 0–6)
 
 import { useState, useRef, useCallback } from 'react';
 import {
-  Lightbulb,
+  Database,
   Upload,
   FileText,
   Link2,
@@ -19,7 +20,9 @@ import {
   Users,
   Send,
   Clock,
-  CheckCircle2,
+  ExternalLink,
+  Copy,
+  Filter,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -43,11 +46,12 @@ const ACCEPTED_TYPES = '.pdf,.docx,.pptx,.mp4,.txt,.png,.jpg,.jpeg';
 
 const TYPE_ICONS: Record<MemoryItemType, React.ReactNode> = {
   recording: <Mic className="w-3.5 h-3.5" />,
-  transcript: <FileText className="w-3.5 h-3.5" />,
-  rfp: <File className="w-3.5 h-3.5" />,
-  architecture: <File className="w-3.5 h-3.5" />,
-  slides: <Presentation className="w-3.5 h-3.5" />,
-  news: <Newspaper className="w-3.5 h-3.5" />,
+  transcript_notes: <FileText className="w-3.5 h-3.5" />,
+  rfp_requirements: <File className="w-3.5 h-3.5" />,
+  architecture_diagram: <File className="w-3.5 h-3.5" />,
+  slides_deck: <Presentation className="w-3.5 h-3.5" />,
+  news_article: <Newspaper className="w-3.5 h-3.5" />,
+  link: <Link2 className="w-3.5 h-3.5" />,
   other: <HelpCircle className="w-3.5 h-3.5" />,
 };
 
@@ -75,15 +79,21 @@ export function AccountInbox({ accountId, onSignalPicker }: AccountInboxProps) {
   const requests = listContentRequests(accountId);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Filter
+  const [filterType, setFilterType] = useState<MemoryItemType | null>(null);
+  const filteredItems = filterType ? items.filter((i) => i.type === filterType) : items;
+
   // Paste text modal
   const [showPaste, setShowPaste] = useState(false);
   const [pasteTitle, setPasteTitle] = useState('');
   const [pasteContent, setPasteContent] = useState('');
+  const [pasteType, setPasteType] = useState<MemoryItemType>('transcript_notes');
 
   // Add link modal
   const [showLink, setShowLink] = useState(false);
   const [linkTitle, setLinkTitle] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
+  const [linkType, setLinkType] = useState<MemoryItemType>('link');
 
   // Ask teammate modal
   const [showAskTeammate, setShowAskTeammate] = useState(false);
@@ -94,6 +104,9 @@ export function AccountInbox({ accountId, onSignalPicker }: AccountInboxProps) {
   // Classification pending
   const [classifyId, setClassifyId] = useState<string | null>(null);
 
+  // Delete confirm
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
   // Drag state
   const [dragOver, setDragOver] = useState(false);
 
@@ -103,7 +116,7 @@ export function AccountInbox({ accountId, onSignalPicker }: AccountInboxProps) {
       const f = files[i];
       const item = addMemoryItem({
         account_id: accountId,
-        type: 'transcript',
+        type: 'other',
         title: f.name,
         file_name: f.name,
         file_url: `local://${f.name}`,
@@ -122,32 +135,32 @@ export function AccountInbox({ accountId, onSignalPicker }: AccountInboxProps) {
 
   const handlePasteSubmit = () => {
     if (!pasteContent.trim()) return;
-    const item = addMemoryItem({
+    addMemoryItem({
       account_id: accountId,
-      type: 'transcript',
-      title: pasteTitle.trim() || 'Pasted notes',
-      content: pasteContent,
+      type: pasteType,
+      title: pasteTitle.trim() || 'New note',
+      content_text: pasteContent,
     });
     setShowPaste(false);
     setPasteTitle('');
     setPasteContent('');
-    setClassifyId(item.id);
+    setPasteType('transcript_notes');
     refresh();
     toast.success('Notes added');
   };
 
   const handleLinkSubmit = () => {
     if (!linkUrl.trim()) return;
-    const item = addMemoryItem({
+    addMemoryItem({
       account_id: accountId,
-      type: 'news',
+      type: linkType,
       title: linkTitle.trim() || linkUrl,
-      content: linkUrl,
+      url: linkUrl,
     });
     setShowLink(false);
     setLinkTitle('');
     setLinkUrl('');
-    setClassifyId(item.id);
+    setLinkType('link');
     refresh();
     toast.success('Link added');
   };
@@ -176,22 +189,43 @@ export function AccountInbox({ accountId, onSignalPicker }: AccountInboxProps) {
 
   const handleDelete = (id: string) => {
     deleteMemoryItem(id);
+    setDeleteConfirmId(null);
     refresh();
     toast.success('Removed');
   };
 
+  const handleCopyUrl = (item: { url?: string; file_url?: string }) => {
+    const toCopy = item.url || item.file_url;
+    if (toCopy) {
+      navigator.clipboard.writeText(toCopy);
+      toast.success('Copied to clipboard');
+    }
+  };
+
+  const handleOpen = (item: { url?: string; file_url?: string }) => {
+    const toOpen = item.url || item.file_url;
+    if (toOpen && toOpen.startsWith('http')) {
+      window.open(toOpen, '_blank');
+    } else {
+      toast.info('File preview not available in MVP');
+    }
+  };
+
   const pendingRequests = requests.filter((r) => r.status === 'pending');
+
+  // Active filter types (only show chips for types that have items)
+  const activeTypes = Array.from(new Set(items.map((i) => i.type)));
 
   return (
     <div className="space-y-3">
       {/* Header */}
       <div>
         <h4 className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-          <Lightbulb className="w-3.5 h-3.5 text-primary" />
-          Account Intelligence
+          <Database className="w-3.5 h-3.5 text-primary" />
+          Account Memory
         </h4>
         <p className="text-[10px] text-muted-foreground mt-0.5">
-          Store customer materials here.
+          Store customer materials here (recordings, RFPs, architectures, notes).
         </p>
       </div>
 
@@ -212,6 +246,7 @@ export function AccountInbox({ accountId, onSignalPicker }: AccountInboxProps) {
         <p className="text-[10px] text-muted-foreground">
           Drop files or <span className="text-primary">browse</span>
         </p>
+        <p className="text-[9px] text-muted-foreground/60 mt-0.5">PDF, DOCX, PPTX, MP4, TXT, PNG/JPG</p>
         <input
           ref={fileInputRef}
           type="file"
@@ -229,14 +264,14 @@ export function AccountInbox({ accountId, onSignalPicker }: AccountInboxProps) {
           className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
         >
           <ClipboardPaste className="w-3 h-3" />
-          Paste
+          Paste text
         </button>
         <button
           onClick={() => setShowLink(true)}
           className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
         >
           <Link2 className="w-3 h-3" />
-          Link
+          Add link
         </button>
         <button
           onClick={onSignalPicker}
@@ -256,7 +291,7 @@ export function AccountInbox({ accountId, onSignalPicker }: AccountInboxProps) {
         Ask teammate
       </button>
 
-      {/* Paste text modal */}
+      {/* ===== Paste text modal ===== */}
       {showPaste && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowPaste(false)}>
           <div className="bg-card border border-border rounded-xl p-4 w-80 space-y-3 shadow-xl" onClick={(e) => e.stopPropagation()}>
@@ -266,6 +301,18 @@ export function AccountInbox({ accountId, onSignalPicker }: AccountInboxProps) {
             </div>
             <Input value={pasteTitle} onChange={(e) => setPasteTitle(e.target.value)} placeholder="Title (optional)" className="h-8 text-xs" />
             <Textarea value={pasteContent} onChange={(e) => setPasteContent(e.target.value)} placeholder="Paste meeting notes, transcript, or context…" className="text-xs min-h-[80px]" autoFocus />
+            <div className="relative">
+              <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Type</label>
+              <select
+                value={pasteType}
+                onChange={(e) => setPasteType(e.target.value as MemoryItemType)}
+                className="w-full appearance-none text-xs font-medium text-foreground bg-background border border-input rounded-md px-2.5 py-1.5 cursor-pointer"
+              >
+                {MEMORY_TYPE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
             <div className="flex gap-2">
               <button onClick={handlePasteSubmit} disabled={!pasteContent.trim()} className={cn('flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors', pasteContent.trim() ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-muted text-muted-foreground cursor-not-allowed')}>Add</button>
               <button onClick={() => { setShowPaste(false); setPasteTitle(''); setPasteContent(''); }} className="px-3 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground">Cancel</button>
@@ -274,7 +321,7 @@ export function AccountInbox({ accountId, onSignalPicker }: AccountInboxProps) {
         </div>
       )}
 
-      {/* Add link modal */}
+      {/* ===== Add link modal ===== */}
       {showLink && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowLink(false)}>
           <div className="bg-card border border-border rounded-xl p-4 w-80 space-y-3 shadow-xl" onClick={(e) => e.stopPropagation()}>
@@ -284,6 +331,18 @@ export function AccountInbox({ accountId, onSignalPicker }: AccountInboxProps) {
             </div>
             <Input value={linkTitle} onChange={(e) => setLinkTitle(e.target.value)} placeholder="Title (optional)" className="h-8 text-xs" />
             <Input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://…" className="h-8 text-xs" autoFocus />
+            <div className="relative">
+              <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Type</label>
+              <select
+                value={linkType}
+                onChange={(e) => setLinkType(e.target.value as MemoryItemType)}
+                className="w-full appearance-none text-xs font-medium text-foreground bg-background border border-input rounded-md px-2.5 py-1.5 cursor-pointer"
+              >
+                {MEMORY_TYPE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
             <div className="flex gap-2">
               <button onClick={handleLinkSubmit} disabled={!linkUrl.trim()} className={cn('flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors', linkUrl.trim() ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-muted text-muted-foreground cursor-not-allowed')}>Add</button>
               <button onClick={() => { setShowLink(false); setLinkTitle(''); setLinkUrl(''); }} className="px-3 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground">Cancel</button>
@@ -292,7 +351,7 @@ export function AccountInbox({ accountId, onSignalPicker }: AccountInboxProps) {
         </div>
       )}
 
-      {/* Ask teammate modal */}
+      {/* ===== Ask teammate modal ===== */}
       {showAskTeammate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowAskTeammate(false)}>
           <div className="bg-card border border-border rounded-xl p-4 w-80 space-y-3 shadow-xl" onClick={(e) => e.stopPropagation()}>
@@ -363,29 +422,96 @@ export function AccountInbox({ accountId, onSignalPicker }: AccountInboxProps) {
         </div>
       )}
 
+      {/* Filter chips */}
+      {items.length > 0 && activeTypes.length > 1 && (
+        <div className="flex flex-wrap gap-1">
+          <button
+            onClick={() => setFilterType(null)}
+            className={cn(
+              'px-2 py-0.5 rounded-full text-[9px] font-medium border transition-colors',
+              filterType === null
+                ? 'bg-primary/10 text-primary border-primary/20'
+                : 'bg-background text-muted-foreground border-border/50 hover:border-primary/20'
+            )}
+          >
+            <Filter className="w-2.5 h-2.5 inline mr-0.5" />
+            All
+          </button>
+          {activeTypes.map((t) => (
+            <button
+              key={t}
+              onClick={() => setFilterType(filterType === t ? null : t)}
+              className={cn(
+                'px-2 py-0.5 rounded-full text-[9px] font-medium border transition-colors',
+                filterType === t
+                  ? 'bg-primary/10 text-primary border-primary/20'
+                  : 'bg-background text-muted-foreground border-border/50 hover:border-primary/20'
+              )}
+            >
+              {MEMORY_TYPE_OPTIONS.find((o) => o.value === t)?.label ?? t}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Items list */}
-      {items.length > 0 && (
+      {filteredItems.length > 0 && (
         <div className="space-y-1">
           <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
-            Items ({items.length})
+            Items ({filteredItems.length}{filterType ? ` of ${items.length}` : ''})
           </p>
-          {items.map((item) => (
+          {filteredItems.map((item) => (
             <div key={item.id} className="flex items-center gap-2 p-1.5 rounded-md hover:bg-muted/20 group">
               <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
                 {TYPE_ICONS[item.type]}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[11px] font-medium text-foreground truncate">{item.title}</p>
-                <span className="text-[9px] text-muted-foreground capitalize">
-                  {MEMORY_TYPE_OPTIONS.find((o) => o.value === item.type)?.label ?? item.type}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] text-muted-foreground">
+                    {MEMORY_TYPE_OPTIONS.find((o) => o.value === item.type)?.label ?? item.type}
+                  </span>
+                  <span className="text-[9px] text-muted-foreground/60">
+                    {new Date(item.created_at).toLocaleDateString()}
+                  </span>
+                </div>
               </div>
-              <button
-                onClick={() => handleDelete(item.id)}
-                className="p-0.5 rounded text-muted-foreground/30 hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
-              >
-                <Trash2 className="w-3 h-3" />
-              </button>
+              {/* Quick actions */}
+              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                {(item.url || item.file_url) && (
+                  <>
+                    <button
+                      onClick={() => handleOpen(item)}
+                      className="p-0.5 rounded text-muted-foreground/50 hover:text-primary transition-colors"
+                      title="Open"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                    </button>
+                    <button
+                      onClick={() => handleCopyUrl(item)}
+                      className="p-0.5 rounded text-muted-foreground/50 hover:text-primary transition-colors"
+                      title="Copy link"
+                    >
+                      <Copy className="w-3 h-3" />
+                    </button>
+                  </>
+                )}
+                {deleteConfirmId === item.id ? (
+                  <button
+                    onClick={() => handleDelete(item.id)}
+                    className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                  >
+                    Confirm
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setDeleteConfirmId(item.id)}
+                    className="p-0.5 rounded text-muted-foreground/30 hover:text-destructive transition-colors"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>
