@@ -57,6 +57,8 @@ import {
   type EngagementMode,
   type TriggerOption,
 } from './DealPlanMetadata';
+import { getReadinessScore } from '@/data/partner/accountMemoryStore';
+import { scoreServicePacks, type ScoredPack } from '@/data/partner/servicePackStore';
 
 const WEEK_OF = '2026-02-10';
 
@@ -496,6 +498,17 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
 
   const existingIds = useMemo(() => new Set(drivers.map((d) => d.signalId)), [drivers]);
 
+  // Service pack recommendations
+  const recommendedPacks = useMemo<ScoredPack[]>(() => {
+    if (!selectedAccount) return [];
+    const { pillars } = getReadinessScore(selectedAccount, drivers.length > 0);
+    return scoreServicePacks({
+      mode: engagementMode,
+      trigger,
+      coveredPillars: pillars,
+    });
+  }, [selectedAccount, engagementMode, trigger, drivers.length]);
+
   const handleAddSignals = useCallback((signals: Signal[]) => {
     if (!selectedAccount) return;
     promoteSignalsToDealPlan(selectedAccount, WEEK_OF, signals);
@@ -834,6 +847,50 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
                 description="TCO models, business case templates, FinOps framework."
               />
             </div>
+
+            {/* Recommended Service Packs */}
+            {recommendedPacks.length > 0 && (
+              <div className="mt-4 space-y-2">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                  <Scale className="w-3 h-3" />
+                  Recommended Service Packs
+                </p>
+                {recommendedPacks.map(({ pack, rationale, why_recommended }) => (
+                  <div key={pack.id} className="rounded-lg border border-primary/15 bg-primary/[0.02] p-3 space-y-1.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-xs font-semibold text-foreground">{pack.name}</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">{rationale}</p>
+                      </div>
+                      <span className="text-[10px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full flex-shrink-0">
+                        {pack.delivery_model}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-3 text-[10px] text-muted-foreground">
+                      <span>⏱ {pack.duration_band}</span>
+                      <span>💰 {pack.pricing_band}</span>
+                    </div>
+                    {why_recommended.length > 0 && (
+                      <div className="space-y-0.5 pt-1">
+                        {why_recommended.slice(0, 3).map((r, i) => (
+                          <p key={i} className="text-[10px] text-muted-foreground flex items-start gap-1">
+                            <span className="text-primary/60 mt-px">•</span>
+                            {r}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                    {pack.proof_assets.length > 0 && (
+                      <div className="flex flex-wrap gap-1 pt-1">
+                        {pack.proof_assets.map((a, i) => (
+                          <span key={i} className="px-1.5 py-0.5 rounded text-[9px] bg-muted/40 text-muted-foreground border border-border/30">{a}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </Section>
         </div>
 
