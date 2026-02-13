@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface CollapsibleSectionProps {
@@ -26,7 +26,7 @@ export function CollapsibleSection({
         type="button"
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          'w-full flex items-center justify-between gap-3 rounded-xl px-4 py-3 transition-colors select-none',
+          'w-full flex items-center justify-between gap-3 rounded-xl px-4 py-3 transition-colors select-none group',
           isSecondary
             ? 'bg-muted/40 hover:bg-muted/60'
             : 'bg-primary/[0.04] hover:bg-primary/[0.07]'
@@ -48,13 +48,23 @@ export function CollapsibleSection({
             </p>
           )}
         </div>
-        {open ? (
-          <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-        ) : (
-          <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-        )}
+        <ChevronDown
+          className={cn(
+            'w-4 h-4 text-muted-foreground flex-shrink-0 transition-transform duration-200',
+            !open && '-rotate-90'
+          )}
+        />
       </button>
-      {open && <div className="pt-3">{children}</div>}
+      <div
+        className={cn(
+          'grid transition-all duration-200 ease-in-out',
+          open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+        )}
+      >
+        <div className="overflow-hidden">
+          <div className="pt-3">{children}</div>
+        </div>
+      </div>
     </section>
   );
 }
