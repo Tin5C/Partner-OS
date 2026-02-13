@@ -119,7 +119,7 @@ interface CompetitiveState {
   audioUrl: string | null;
 }
 
-export function OnDemandBriefingsSection() {
+export function OnDemandBriefingsSection({ hideHeader = false }: { hideHeader?: boolean }) {
   const [picks, setPicks] = useState<Record<string, Record<string, string>>>({});
   const [accountState, setAccountState] = useState<CreatingState>('idle');
   const [compState, setCompState] = useState<CompetitiveState>({ status: 'idle', audioUrl: null });
@@ -230,13 +230,15 @@ export function OnDemandBriefingsSection() {
 
   return (
     <section className="space-y-4">
-      <div className="flex items-center gap-2">
-        <SectionHeader
-          title="On-Demand Briefings"
-          subtitle="Select a topic then generate — audio briefings coming soon."
-        />
-        <BriefingModePill mode="on-demand" className="mt-0.5" />
-      </div>
+      {!hideHeader && (
+        <div className="flex items-center gap-2">
+          <SectionHeader
+            title="On-Demand Briefings"
+            subtitle="Select a topic then generate — audio briefings coming soon."
+          />
+          <BriefingModePill mode="on-demand" className="mt-0.5" />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {CARDS.map((card) => {
