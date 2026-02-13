@@ -2,6 +2,7 @@
 // Reads space config and renders sections using shared components
 
 import { useState } from 'react';
+import { CollapsibleSection } from '@/components/shared/CollapsibleSection';
 import { useSpace } from '@/contexts/SpaceContext';
 import { SpaceHeader } from '@/components/shared/SpaceHeader';
 import { BottomNav } from '@/components/BottomNav';
@@ -311,11 +312,26 @@ export function HomeRenderer() {
 
       case 'expertCorners':
         return spaceConfig.features.expertCorners ? (
-          <ExpertCornersRail
-            key={section.id}
-            title={section.title}
-            subtitle={section.subtitle}
-          />
+          spaceType === 'partner' ? (
+            <CollapsibleSection
+              key={section.id}
+              title="Learning & Explainers"
+              subtitle="Educational deep dives and solution explainers."
+              defaultOpen={false}
+              variant="secondary"
+            >
+              <ExpertCornersRail
+                title={section.title}
+                subtitle=""
+              />
+            </CollapsibleSection>
+          ) : (
+            <ExpertCornersRail
+              key={section.id}
+              title={section.title}
+              subtitle={section.subtitle}
+            />
+          )
         ) : null;
 
       case 'trendingPacks':
@@ -324,9 +340,15 @@ export function HomeRenderer() {
 
       case 'onDemandBriefings':
         return spaceConfig.features.onDemandBriefings ? (
-          <OnDemandBriefingsSection
+          <CollapsibleSection
             key={section.id}
-          />
+            title="On-Demand Briefings"
+            subtitle="Generate focused tactical briefings."
+            defaultOpen={true}
+            variant="primary"
+          >
+            <OnDemandBriefingsSection hideHeader />
+          </CollapsibleSection>
         ) : null;
 
       case 'capabilityBrand':
