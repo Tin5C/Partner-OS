@@ -37,6 +37,9 @@ import {
   Swords,
   TrendingUp,
   ExternalLink,
+  Plus,
+  Play,
+  Search,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -44,8 +47,10 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   getDealPlan,
   removePromotedSignal,
+  promoteSignalsToDealPlan,
   type PromotedSignal,
 } from '@/data/partner/dealPlanStore';
+import { listSignals, type Signal } from '@/data/partner/signalStore';
 import { BriefingModePill } from './BriefingModePill';
 
 const FOCUS_ID = 'schindler';
@@ -227,6 +232,111 @@ const TYPE_COLORS: Record<string, string> = {
   localMarket: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
 };
 
+// ============= Signal Picker (inline) =============
+
+function SignalPicker({
+  onSelect,
+  onClose,
+  existingIds,
+}: {
+  onSelect: (signals: Signal[]) => void;
+  onClose: () => void;
+  existingIds: Set<string>;
+}) {
+  const available = useMemo(
+    () => listSignals(FOCUS_ID, WEEK_OF).filter((s) => !existingIds.has(s.id)),
+    [existingIds],
+  );
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const toggle = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const handleAdd = () => {
+    const picks = available.filter((s) => selected.has(s.id));
+    if (picks.length === 0) return;
+    onSelect(picks);
+    onClose();
+  };
+
+  if (available.length === 0) {
+    return (
+      <div className="rounded-xl border border-dashed border-border bg-muted/10 p-5 text-center space-y-2">
+        <p className="text-sm text-muted-foreground">All signals for this week are already promoted.</p>
+        <button onClick={onClose} className="text-xs text-primary hover:text-primary/80">Close</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-4 space-y-3 shadow-sm">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+          <Search className="w-4 h-4 text-primary" />
+          Select signals to attach
+        </p>
+        <button onClick={onClose} className="text-xs text-muted-foreground hover:text-foreground">Cancel</button>
+      </div>
+      <p className="text-[11px] text-muted-foreground">Schindler · Week of {WEEK_OF}</p>
+      <div className="space-y-2 max-h-[300px] overflow-y-auto">
+        {available.map((sig) => {
+          const isSelected = selected.has(sig.id);
+          const typeColor = TYPE_COLORS[sig.type] ?? 'bg-muted text-muted-foreground border-border';
+          return (
+            <button
+              key={sig.id}
+              onClick={() => toggle(sig.id)}
+              className={cn(
+                'w-full text-left p-3 rounded-lg border transition-all',
+                isSelected
+                  ? 'border-primary/40 bg-primary/[0.04] ring-1 ring-primary/20'
+                  : 'border-border/50 bg-background hover:border-primary/20 hover:bg-muted/20'
+              )}
+            >
+              <div className="flex items-start gap-2">
+                <div className={cn(
+                  'w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors',
+                  isSelected ? 'bg-primary border-primary' : 'border-border'
+                )}>
+                  {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full border', typeColor)}>
+                      {sig.type}
+                    </span>
+                    <span className="text-[10px] font-bold text-muted-foreground">{sig.confidence}%</span>
+                  </div>
+                  <p className="text-xs font-medium text-foreground leading-snug">{sig.title}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">{sig.soWhat}</p>
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+      <button
+        onClick={handleAdd}
+        disabled={selected.size === 0}
+        className={cn(
+          'w-full py-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1.5',
+          selected.size > 0
+            ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+            : 'bg-muted text-muted-foreground cursor-not-allowed'
+        )}
+      >
+        <Plus className="w-3.5 h-3.5" />
+        Add {selected.size > 0 ? `${selected.size} signal${selected.size > 1 ? 's' : ''}` : 'signals'}
+      </button>
+    </div>
+  );
+}
+
 // ============= Main Component =============
 
 export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewProps) {
@@ -235,6 +345,10 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
 
   const plan = useMemo(() => getDealPlan(FOCUS_ID, WEEK_OF), []);
   const drivers = plan?.promotedSignals ?? [];
+
+  // "started" = user clicked Start Plan (account-wide) even without promoted signals
+  const [started, setStarted] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
 
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [roleView, setRoleView] = useState<RoleView>('seller');
@@ -301,30 +415,80 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
     return Array.from(items);
   }, [drivers]);
 
-  // Empty state
-  if (drivers.length === 0) {
+  const existingIds = useMemo(() => new Set(drivers.map((d) => d.signalId)), [drivers]);
+
+  const handleAddSignals = useCallback((signals: Signal[]) => {
+    promoteSignalsToDealPlan(FOCUS_ID, WEEK_OF, signals);
+    refresh();
+    toast.success(`Added ${signals.length} signal${signals.length > 1 ? 's' : ''} to Deal Plan`);
+  }, [refresh]);
+
+  const handleStartPlan = () => {
+    setStarted(true);
+  };
+
+  const isWorkspaceVisible = started || drivers.length > 0;
+
+  // ============= Start Deal Plan State =============
+  if (!isWorkspaceVisible) {
     return (
-      <div className="rounded-2xl border border-dashed border-border bg-muted/10 p-8 text-center space-y-4">
-        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto">
-          <Brain className="w-6 h-6 text-primary" />
-        </div>
-        <div>
-          <h3 className="text-base font-semibold text-foreground">No promoted signals yet</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Add signals from Stories to build your Deal Plan.
-          </p>
-        </div>
-        <button
-          onClick={onGoToQuickBrief}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-        >
-          <Zap className="w-4 h-4" />
-          Go to Quick Brief
-        </button>
+      <div className="space-y-4">
+        {/* Signal picker overlay */}
+        {showPicker && (
+          <SignalPicker
+            existingIds={existingIds}
+            onSelect={handleAddSignals}
+            onClose={() => setShowPicker(false)}
+          />
+        )}
+
+        {!showPicker && (
+          <div className="rounded-2xl border border-dashed border-border bg-muted/10 p-8 text-center space-y-5">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto">
+              <Brain className="w-6 h-6 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-foreground">Start your Deal Plan</h3>
+              <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
+                Build a comprehensive execution plan using account context, competitive positioning, objections, and vendor leverage.
+              </p>
+            </div>
+
+            <div className="flex flex-col items-center gap-2.5">
+              {/* Primary: Start Plan (Account-wide) */}
+              <button
+                onClick={handleStartPlan}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm"
+              >
+                <Play className="w-4 h-4" />
+                Start Plan (Account-wide)
+              </button>
+
+              {/* Secondary: Add Signals */}
+              <button
+                onClick={() => setShowPicker(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border border-border bg-card text-foreground hover:bg-muted/40 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Add Signals
+              </button>
+            </div>
+
+            {/* Tertiary: Quick Brief link */}
+            <p className="text-xs text-muted-foreground">
+              or{' '}
+              <button onClick={onGoToQuickBrief} className="text-primary hover:text-primary/80 underline underline-offset-2">
+                go to Quick Brief
+              </button>{' '}
+              to discover signals first
+            </p>
+          </div>
+        )}
       </div>
     );
   }
 
+  // ============= Full Workspace =============
   return (
     <div className="space-y-4">
       {/* Header + Role Toggle */}
@@ -332,7 +496,7 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
         <div className="flex items-center gap-2">
           <Brain className="w-5 h-5 text-primary" />
           <h3 className="text-base font-semibold text-foreground">
-            Deal Planning — {drivers.length} driver{drivers.length !== 1 ? 's' : ''}
+            Deal Planning — Schindler
           </h3>
           <BriefingModePill mode="curated" />
           {avgConfidence && (
@@ -372,103 +536,127 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
 
       {/* ===== 1) Promoted Drivers ===== */}
       <Section number={1} title="Promoted Drivers" icon={<Zap className="w-3.5 h-3.5" />}>
-        <div className="space-y-2">
-          {drivers.map((d) => {
-            const s = d.snapshot;
-            const isExpanded = expandedIds.has(d.signalId);
-            const typeColor = TYPE_COLORS[s.type] ?? 'bg-muted text-muted-foreground border-border';
+        {drivers.length > 0 ? (
+          <div className="space-y-2">
+            {drivers.map((d) => {
+              const s = d.snapshot;
+              const isExpanded = expandedIds.has(d.signalId);
+              const typeColor = TYPE_COLORS[s.type] ?? 'bg-muted text-muted-foreground border-border';
 
-            return (
-              <div key={d.signalId} className="rounded-lg border border-border/50 bg-background overflow-hidden">
-                <div
-                  className="flex items-start gap-3 p-3 cursor-pointer hover:bg-muted/20 transition-colors"
-                  onClick={() => toggleExpand(d.signalId)}
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full border', typeColor)}>
-                        {s.type}
-                      </span>
-                      <span className={cn('text-[10px] font-bold', confidenceColor(s.confidence))}>
-                        {s.confidence}%
-                      </span>
+              return (
+                <div key={d.signalId} className="rounded-lg border border-border/50 bg-background overflow-hidden">
+                  <div
+                    className="flex items-start gap-3 p-3 cursor-pointer hover:bg-muted/20 transition-colors"
+                    onClick={() => toggleExpand(d.signalId)}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full border', typeColor)}>
+                          {s.type}
+                        </span>
+                        <span className={cn('text-[10px] font-bold', confidenceColor(s.confidence))}>
+                          {s.confidence}%
+                        </span>
+                      </div>
+                      <p className="text-sm font-medium text-foreground leading-snug">{s.title}</p>
+                      {!isExpanded && (
+                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{s.soWhat}</p>
+                      )}
                     </div>
-                    <p className="text-sm font-medium text-foreground leading-snug">{s.title}</p>
-                    {!isExpanded && (
-                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{s.soWhat}</p>
-                    )}
+                    <div className="flex items-center gap-1 flex-shrink-0 mt-1">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleRemove(d.signalId); }}
+                        className="p-1 rounded-md text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                      {isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1 flex-shrink-0 mt-1">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleRemove(d.signalId); }}
-                      className="p-1 rounded-md text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                    {isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
-                  </div>
+
+                  {isExpanded && (
+                    <div className="px-3 pb-3 space-y-3 border-t border-border/40 pt-3">
+                      <div className="p-2.5 rounded-lg bg-primary/5 border border-primary/10">
+                        <p className="text-[10px] font-semibold text-primary uppercase tracking-wide mb-1">So what</p>
+                        <p className="text-xs text-foreground">{s.soWhat}</p>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-muted/30 border border-border/40">
+                        <p className="text-[10px] font-semibold text-primary uppercase tracking-wide mb-1">Action</p>
+                        <p className="text-xs text-foreground">{s.recommendedAction}</p>
+                      </div>
+                      <div className={cn("p-2.5 rounded-lg bg-muted/20 border border-border/40", roleView === 'seller' && 'ring-1 ring-primary/20')}>
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                            <MessageSquare className="w-3 h-3" /> Talk Track
+                            {roleView === 'seller' && <span className="text-primary ml-1">★</span>}
+                          </p>
+                          <button onClick={() => handleCopy(s.talkTrack)} className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-0.5">
+                            <Copy className="w-3 h-3" /> Copy
+                          </button>
+                        </div>
+                        <p className="text-xs text-foreground leading-relaxed">{s.talkTrack}</p>
+                      </div>
+                      {s.whoCares.length > 0 && (
+                        <div>
+                          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Who cares</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {s.whoCares.map((r, i) => (
+                              <span key={i} className="px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground border border-border/50 text-[10px] font-medium">
+                                {r}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {s.proofToRequest.length > 0 && (
+                        <div>
+                          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Proof to request</p>
+                          <div className="space-y-1">
+                            {s.proofToRequest.map((item, i) => (
+                              <div key={i} className="flex items-start gap-1.5 text-xs">
+                                <Link2 className="w-3 h-3 text-primary/50 mt-0.5 flex-shrink-0" />
+                                <span className="text-muted-foreground">{item}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {s.sources.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1 border-t border-border/30">
+                          {s.sources.map((src, i) => (
+                            <span key={i} className="px-2 py-0.5 rounded-full bg-muted/40 border border-border/40 text-[10px] text-muted-foreground">{src}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground italic">No promoted signals yet.</p>
+        )}
 
-                {isExpanded && (
-                  <div className="px-3 pb-3 space-y-3 border-t border-border/40 pt-3">
-                    <div className="p-2.5 rounded-lg bg-primary/5 border border-primary/10">
-                      <p className="text-[10px] font-semibold text-primary uppercase tracking-wide mb-1">So what</p>
-                      <p className="text-xs text-foreground">{s.soWhat}</p>
-                    </div>
-                    <div className="p-2.5 rounded-lg bg-muted/30 border border-border/40">
-                      <p className="text-[10px] font-semibold text-primary uppercase tracking-wide mb-1">Action</p>
-                      <p className="text-xs text-foreground">{s.recommendedAction}</p>
-                    </div>
-                    <div className={cn("p-2.5 rounded-lg bg-muted/20 border border-border/40", roleView === 'seller' && 'ring-1 ring-primary/20')}>
-                      <div className="flex items-center justify-between mb-1">
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                          <MessageSquare className="w-3 h-3" /> Talk Track
-                          {roleView === 'seller' && <span className="text-primary ml-1">★</span>}
-                        </p>
-                        <button onClick={() => handleCopy(s.talkTrack)} className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-0.5">
-                          <Copy className="w-3 h-3" /> Copy
-                        </button>
-                      </div>
-                      <p className="text-xs text-foreground leading-relaxed">{s.talkTrack}</p>
-                    </div>
-                    {s.whoCares.length > 0 && (
-                      <div>
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Who cares</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {s.whoCares.map((r, i) => (
-                            <span key={i} className="px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground border border-border/50 text-[10px] font-medium">
-                              {r}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {s.proofToRequest.length > 0 && (
-                      <div>
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Proof to request</p>
-                        <div className="space-y-1">
-                          {s.proofToRequest.map((item, i) => (
-                            <div key={i} className="flex items-start gap-1.5 text-xs">
-                              <Link2 className="w-3 h-3 text-primary/50 mt-0.5 flex-shrink-0" />
-                              <span className="text-muted-foreground">{item}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {s.sources.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 pt-1 border-t border-border/30">
-                        {s.sources.map((src, i) => (
-                          <span key={i} className="px-2 py-0.5 rounded-full bg-muted/40 border border-border/40 text-[10px] text-muted-foreground">{src}</span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        {/* Add Signals button always visible in workspace */}
+        <button
+          onClick={() => setShowPicker(true)}
+          className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-primary/[0.02] transition-all"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          Add Signals
+        </button>
+
+        {/* Inline signal picker */}
+        {showPicker && (
+          <div className="mt-3">
+            <SignalPicker
+              existingIds={existingIds}
+              onSelect={handleAddSignals}
+              onClose={() => setShowPicker(false)}
+            />
+          </div>
+        )}
       </Section>
 
       {/* ===== 2) Strategic Positioning ===== */}
@@ -556,7 +744,7 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
             ))}
           </div>
         ) : (
-          <p className="text-xs text-muted-foreground italic">No risks identified yet.</p>
+          <p className="text-xs text-muted-foreground italic">No risks identified yet — add signals to surface gaps.</p>
         )}
       </Section>
 
