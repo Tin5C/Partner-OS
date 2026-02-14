@@ -10,6 +10,9 @@ import { listContentRequests } from '@/data/partner/contentRequestStore';
 import { listSignals } from '@/data/partner/signalStore';
 import { listAccountSignals } from '@/data/partner/accountSignalStore';
 import { getByFocusId as getPartnerInvolvement } from '@/data/partner/partnerInvolvementStore';
+import { getByFocusId as getStrategyPillars } from '@/data/partner/strategyPillarsStore';
+import { getByFocusId as getPublicInitiatives } from '@/data/partner/publicInitiativesStore';
+import { getByFocusId as getProofArtifacts } from '@/data/partner/proofArtifactsStore';
 import { toIsoWeekKeyFromWeekOf } from '@/lib/partnerIds';
 
 export function resolveAccountIntelligence(input: {
@@ -37,6 +40,9 @@ export function resolveAccountIntelligence(input: {
   const commercial = getCommercial(meta.focusId);
   const technical = getTechnical(meta.focusId);
   const partnerInvolvement = getPartnerInvolvement(meta.focusId);
+  const strategyPillars = getStrategyPillars(meta.focusId);
+  const publicInitiatives = getPublicInitiatives(meta.focusId);
+  const proofArtifacts = getProofArtifacts(meta.focusId);
 
   // Signal history — combine signalStore + accountSignalStore
   const signalHistory: SignalHistoryItem[] = [];
@@ -93,6 +99,9 @@ export function resolveAccountIntelligence(input: {
     commercial,
     technical,
     partnerInvolvement,
+    strategyPillars,
+    publicInitiatives,
+    proofArtifacts,
     signalHistory,
     inbox,
     requests,

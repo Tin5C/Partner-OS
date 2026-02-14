@@ -11,6 +11,10 @@ import {
   MessageSquare,
   FileText,
   Users,
+  Target,
+  Lightbulb,
+  Award,
+  ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ReadinessPanel } from '@/components/partner/accountIntelligence/ReadinessPanel';
@@ -134,7 +138,7 @@ export function AccountIntelligenceView({ focusId }: AccountIntelligenceViewProp
 
   if (!vm) return null;
 
-  const { snapshot, commercial, technical, partnerInvolvement, signalHistory, inbox, requests, readiness } = vm;
+  const { snapshot, commercial, technical, partnerInvolvement, strategyPillars, publicInitiatives, proofArtifacts, signalHistory, inbox, requests, readiness } = vm;
 
   return (
     <div className="space-y-4">
@@ -224,6 +228,114 @@ export function AccountIntelligenceView({ focusId }: AccountIntelligenceViewProp
 
       {/* Partner Involvement */}
       {partnerInvolvement && <PartnerInvolvementCard data={partnerInvolvement} />}
+
+      {/* Strategy Pillars */}
+      <SectionCard title={`Strategy (${strategyPillars?.strategy_pillars.length ?? 0})`} icon={<Target className="w-3.5 h-3.5" />}>
+        {strategyPillars && strategyPillars.strategy_pillars.length > 0 ? (
+          <div className="space-y-2.5">
+            {strategyPillars.strategy_pillars.map((sp) => (
+              <div key={sp.id} className="p-2.5 rounded-lg border border-border/40 bg-muted/10 space-y-1">
+                <div className="flex items-center gap-2">
+                  <p className="text-xs font-medium text-foreground flex-1">{sp.title}</p>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-medium bg-primary/5 text-primary border border-primary/10 flex-shrink-0">
+                    {sp.time_horizon}
+                  </span>
+                </div>
+                <p className="text-[11px] text-muted-foreground line-clamp-2">{sp.summary}</p>
+                <div className="flex items-center gap-2 pt-0.5">
+                  <span className="text-[10px] text-muted-foreground/60">{sp.source_type.replace(/_/g, ' ')}</span>
+                  <span className={cn("text-[10px]", sp.confidence_level === 'high' ? 'text-primary' : 'text-muted-foreground/60')}>
+                    {sp.confidence_level}
+                  </span>
+                  {sp.source_url && (
+                    <a href={sp.source_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 ml-auto">
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground/60">No strategy data.</p>
+        )}
+      </SectionCard>
+
+      {/* Public IT Initiatives */}
+      <SectionCard title={`Public IT Initiatives (${publicInitiatives?.public_it_initiatives.length ?? 0})`} icon={<Lightbulb className="w-3.5 h-3.5" />}>
+        {publicInitiatives && publicInitiatives.public_it_initiatives.length > 0 ? (
+          <div className="space-y-2.5">
+            {publicInitiatives.public_it_initiatives.map((init) => (
+              <div key={init.id} className="p-2.5 rounded-lg border border-border/40 bg-muted/10 space-y-1">
+                <div className="flex items-start gap-2">
+                  <p className="text-xs font-medium text-foreground flex-1">{init.title}</p>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-medium bg-primary/5 text-primary border border-primary/10 flex-shrink-0">
+                    {init.estimated_magnitude}
+                  </span>
+                </div>
+                <p className="text-[11px] text-muted-foreground line-clamp-2">{init.summary}</p>
+                {init.business_objective && (
+                  <p className="text-[11px] text-muted-foreground/70 italic line-clamp-1">{init.business_objective}</p>
+                )}
+                <div className="flex items-center gap-2 flex-wrap pt-0.5">
+                  {init.technology_domain.filter((d) => d !== 'other').map((d) => (
+                    <span key={d} className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-muted/40 text-muted-foreground border border-border/40">
+                      {d}
+                    </span>
+                  ))}
+                  {init.geographic_scope !== 'unknown' && (
+                    <span className="text-[10px] text-muted-foreground/60">{init.geographic_scope}</span>
+                  )}
+                  {init.source_url && (
+                    <a href={init.source_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 ml-auto">
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground/60">No public initiatives.</p>
+        )}
+      </SectionCard>
+
+      {/* Proof / Success Artifacts */}
+      <SectionCard title={`Proof / Success Stories (${proofArtifacts?.proof_artifacts.length ?? 0})`} icon={<Award className="w-3.5 h-3.5" />}>
+        {proofArtifacts && proofArtifacts.proof_artifacts.length > 0 ? (
+          <div className="space-y-2.5">
+            {proofArtifacts.proof_artifacts.map((pa) => (
+              <div key={pa.id} className="p-2.5 rounded-lg border border-border/40 bg-muted/10 space-y-1">
+                <div className="flex items-center gap-2">
+                  <p className="text-xs font-medium text-foreground flex-1">{pa.title}</p>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-medium bg-primary/5 text-primary border border-primary/10 flex-shrink-0">
+                    {pa.artifact_type.replace(/_/g, ' ')}
+                  </span>
+                </div>
+                <p className="text-[11px] text-muted-foreground line-clamp-2">{pa.summary}</p>
+                <div className="flex items-center gap-2 flex-wrap pt-0.5">
+                  {pa.capability_proven.filter((c) => c !== 'other').map((c) => (
+                    <span key={c} className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-muted/40 text-muted-foreground border border-border/40">
+                      {c.replace(/_/g, ' ')}
+                    </span>
+                  ))}
+                  {pa.year && <span className="text-[10px] text-muted-foreground/60">{pa.year}</span>}
+                  <span className={cn("text-[10px]", pa.confidence_level === 'high' ? 'text-primary' : 'text-muted-foreground/60')}>
+                    {pa.confidence_level}
+                  </span>
+                  {pa.source_url && (
+                    <a href={pa.source_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 ml-auto">
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground/60">No proof artifacts.</p>
+        )}
+      </SectionCard>
 
       {/* Signal History */}
       <SectionCard title={`Signal History (${signalHistory.length})`} icon={<Signal className="w-3.5 h-3.5" />}>
