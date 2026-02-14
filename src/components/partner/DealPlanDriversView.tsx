@@ -500,7 +500,7 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
 
   // Plan generation state
   const [planGenerated, setPlanGenerated] = useState(false);
-  const canGenerate = engagementMode !== null && trigger !== null;
+  const canGenerate = selectedAccount !== null && engagementMode !== null && trigger !== null;
 
   // Service pack recommendations (computed after plan generated)
   const recommendedPacks = useMemo<ScoredPack[]>(() => {
@@ -536,26 +536,21 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
     </div>
   );
 
-  // ============= EMPTY STATE (no account selected) =============
-  if (!selectedAccount) {
-    return (
-      <div className="space-y-2">
-        {header}
-        <p className="text-xs text-muted-foreground">
-          Select or create an account to start planning.
-        </p>
-      </div>
-    );
-  }
-
-  // ============= WORKSPACE (account selected) =============
+  // ============= ALWAYS-ON WORKSPACE =============
   return (
     <div className="space-y-4">
       {header}
 
+      {/* Inline hint when no account */}
+      {!selectedAccount && (
+        <p className="text-xs text-muted-foreground -mt-2">
+          Select or create an account to ground this plan.
+        </p>
+      )}
+
       {/* Compact metadata row: Mode | Trigger | Readiness */}
       <DealPlanMetadata
-        accountId={selectedAccount}
+        accountId={selectedAccount ?? ''}
         hasPromotedSignals={drivers.length > 0}
         engagementMode={engagementMode}
         onEngagementModeChange={setEngagementMode}
@@ -565,23 +560,25 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
 
       {/* Generate Plan CTA */}
       {!planGenerated && (
-        <div className="flex flex-col items-center gap-2 py-6">
+        <div className="flex flex-col items-center gap-3 py-4">
           <button
             onClick={() => setPlanGenerated(true)}
             disabled={!canGenerate}
             className={cn(
-              'inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all',
+              'w-full max-w-md inline-flex items-center justify-center gap-2 px-8 py-3 rounded-xl text-sm font-bold transition-all',
               canGenerate
                 ? 'bg-primary text-primary-foreground shadow-soft hover:bg-primary/90 hover:shadow-card active:scale-[0.98]'
                 : 'bg-muted text-muted-foreground cursor-not-allowed'
             )}
           >
-            <Rocket className="w-4 h-4" />
+            <Rocket className="w-4.5 h-4.5" />
             Generate Plan
           </button>
           {!canGenerate && (
-            <p className="text-[11px] text-muted-foreground">
-              Select Mode and Trigger to generate the plan.
+            <p className="text-[11px] text-muted-foreground text-center">
+              {!selectedAccount
+                ? 'Select an account, then choose Mode and Trigger to generate the plan.'
+                : 'Select Mode and Trigger to generate the plan.'}
             </p>
           )}
         </div>
