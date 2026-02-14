@@ -539,27 +539,11 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
   // ============= EMPTY STATE (no account selected) =============
   if (!selectedAccount) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-2">
         {header}
-        <div className="flex flex-col items-center justify-center text-center py-20 px-6">
-          <div className="w-14 h-14 rounded-2xl bg-muted/60 flex items-center justify-center mb-4">
-            <FolderOpen className="w-7 h-7 text-muted-foreground" />
-          </div>
-          <p className="text-sm font-medium text-foreground mb-1">Select or create an account to start planning.</p>
-          <p className="text-xs text-muted-foreground mb-5 max-w-xs">
-            Choose an existing account or add a new one to build your deal plan.
-          </p>
-          <div className="flex flex-col items-center gap-2">
-            <AccountSelector selectedId={null} onSelect={setSelectedAccount} />
-            <button
-              onClick={() => toast.info('Add account — coming soon')}
-              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
-            >
-              <Plus className="w-3 h-3" />
-              Add new account
-            </button>
-          </div>
-        </div>
+        <p className="text-xs text-muted-foreground">
+          Select or create an account to start planning.
+        </p>
       </div>
     );
   }
