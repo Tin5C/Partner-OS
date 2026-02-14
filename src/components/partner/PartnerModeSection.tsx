@@ -85,7 +85,12 @@ export function PartnerModeSection() {
       {mode === 'quick-brief' ? (
         <QuickBriefSection onOpenDealBrief={handlePromoteToDealBrief} />
       ) : (
-        <DealPlanDriversView onGoToQuickBrief={() => setMode('quick-brief')} />
+        <div className={cn(
+          "rounded-2xl border border-primary/20 bg-primary/[0.02]",
+          "p-5"
+        )}>
+          <DealPlanDriversView onGoToQuickBrief={() => setMode('quick-brief')} />
+        </div>
       )}
     </section>
   );
