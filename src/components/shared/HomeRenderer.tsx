@@ -344,7 +344,7 @@ export function HomeRenderer() {
             key={section.id}
             title="On-Demand Briefings"
             subtitle="Generate focused tactical briefings."
-            defaultOpen={true}
+            defaultOpen={false}
             variant="primary"
           >
             <OnDemandBriefingsSection hideHeader />
@@ -353,10 +353,15 @@ export function HomeRenderer() {
 
       case 'capabilityBrand':
         return spaceConfig.features.capabilityBrand ? (
-          <section key={section.id} className="space-y-4">
-            <SectionHeader title={section.title} />
+          <CollapsibleSection
+            key={section.id}
+            title={section.title}
+            subtitle="Build pricing power with the right capability signals."
+            defaultOpen={false}
+            variant="secondary"
+          >
             <CapabilitySnapshotCard />
-          </section>
+          </CollapsibleSection>
         ) : null;
 
       default:
@@ -369,7 +374,7 @@ export function HomeRenderer() {
       <SpaceHeader showGreeting showSearch />
 
       {/* Main Content - Centered container */}
-      <main className="max-w-[1140px] mx-auto px-5 lg:px-8 space-y-10">
+      <main className="max-w-[1140px] mx-auto px-5 lg:px-8 space-y-6">
         {/* Render sections in order from config */}
         {spaceConfig.sections.map(renderSection)}
       </main>
