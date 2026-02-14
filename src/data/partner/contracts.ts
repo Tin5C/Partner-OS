@@ -241,6 +241,13 @@ export interface ModulePacks {
   module6?: Record<string, unknown>;
 }
 
+export interface ExtractionRunMeta {
+  hubOrgId: string;
+  focusId: string;
+  vendorId: string;
+  weekKey: string; // canonical ISO week YYYY-Www
+}
+
 export interface ExtractionRun {
   runId: string;
   motionType: MotionType;
@@ -252,6 +259,7 @@ export interface ExtractionRun {
   isSimulated: boolean;
   createdAt: string;
   modulePacks: ModulePacks;
+  meta?: ExtractionRunMeta;
 }
 
 // ============= Package Recs V1 =============

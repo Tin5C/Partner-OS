@@ -3,6 +3,14 @@
 // On save, parses Module 1 signals and materializes WeeklySignal items.
 
 import { materializeWeeklySignals } from './weeklySignalStore';
+import { canonicalHubOrgId, canonicalFocusId, canonicalVendorId, toIsoWeekKey } from '@/lib/partnerIds';
+
+export interface ExtractorRunMeta {
+  hubOrgId: string;
+  focusId: string;
+  vendorId: string;
+  weekKey: string; // canonical ISO week YYYY-Www
+}
 
 export interface ExtractorRun {
   id: string;
@@ -12,6 +20,7 @@ export interface ExtractorRun {
   weekOfDate?: string; // optional ISO date
   rawText: string;
   createdAt: string;
+  meta?: ExtractorRunMeta;
 }
 
 // ============= In-memory store =============
@@ -43,15 +52,24 @@ export function saveExtractorRun(params: {
   timeKey?: string;
   weekOfDate?: string;
   rawText: string;
+  hubOrgId?: string;
+  vendorId?: string;
 }): ExtractorRun {
+  const timeKey = params.timeKey ?? currentTimeKey();
   const run: ExtractorRun = {
     id: `extr-${nextId++}`,
     spaceId: 'partner',
     customerId: params.customerId,
-    timeKey: params.timeKey ?? currentTimeKey(),
+    timeKey,
     weekOfDate: params.weekOfDate,
     rawText: params.rawText,
     createdAt: new Date().toISOString(),
+    meta: {
+      hubOrgId: canonicalHubOrgId(params.hubOrgId),
+      focusId: canonicalFocusId(params.customerId),
+      vendorId: canonicalVendorId(params.vendorId),
+      weekKey: toIsoWeekKey({ timeKey, weekOf: params.weekOfDate }),
+    },
   };
   store.push(run);
 
