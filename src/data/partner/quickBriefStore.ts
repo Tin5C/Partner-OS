@@ -1,9 +1,12 @@
 // QuickBrief store — links 5 signals for a focus+week
 
+import { resolveWeekAlias } from './weeklySignalStore';
+
 export interface QuickBrief {
   id: string;
   focusId: string;
   weekOf: string;
+  weekKey?: string; // canonical ISO week (additive)
   signalIds: [string, string, string, string, string];
   contextUsed: string;
   createdAt: string;
@@ -11,8 +14,28 @@ export interface QuickBrief {
 
 const store: QuickBrief[] = [];
 
-export function getQuickBrief(focusId: string, weekOf: string): QuickBrief | null {
-  return store.find((q) => q.focusId === focusId && q.weekOf === weekOf) ?? null;
+/**
+ * Get a Quick Brief, preferring canonical weekKey lookup, falling back to legacy weekOf.
+ */
+export function getQuickBrief(focusId: string, weekOfOrKey: string): QuickBrief | null {
+  // Try exact match on weekOf first (legacy)
+  const byWeekOf = store.find((q) => q.focusId === focusId && q.weekOf === weekOfOrKey);
+  if (byWeekOf) return byWeekOf;
+
+  // Try exact match on weekKey (canonical)
+  const byWeekKey = store.find((q) => q.focusId === focusId && q.weekKey === weekOfOrKey);
+  if (byWeekKey) return byWeekKey;
+
+  // Try resolving alias (weekKey→weekOf or weekOf→weekKey)
+  const alias = resolveWeekAlias(weekOfOrKey);
+  if (alias) {
+    const byAlias = store.find(
+      (q) => q.focusId === focusId && (q.weekOf === alias || q.weekKey === alias)
+    );
+    if (byAlias) return byAlias;
+  }
+
+  return null;
 }
 
 export function createQuickBrief(payload: Omit<QuickBrief, 'id' | 'createdAt'>): QuickBrief {

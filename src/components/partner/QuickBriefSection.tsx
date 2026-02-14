@@ -27,6 +27,8 @@ import { createGeneratedDraft } from '@/data/partner/generatedDraftStore';
 import { BriefingModePill } from './BriefingModePill';
 import { toast } from 'sonner';
 import { consumeQuickBriefTrigger, QUICK_BRIEF_TRIGGER_EVENT } from '@/data/partner/quickBriefTrigger';
+import { resolveCanonicalMeta } from '@/services/ids';
+import { toIsoWeekKey } from '@/lib/partnerIds';
 import {
   Tooltip,
   TooltipContent,
@@ -73,6 +75,17 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
   const handleTrigger = useRef(() => {
     const ctx = consumeQuickBriefTrigger();
     if (ctx) {
+      // Dev-only canonical meta log
+      if (import.meta.env.DEV) {
+        const meta = ctx.canonicalMeta ?? resolveCanonicalMeta({ focusId: FOCUS_ID, weekOf: WEEK_OF });
+        console.log('[Quick Brief launch]', {
+          focusId: meta.focusId,
+          weekOf: WEEK_OF,
+          weekKey: meta.weekKey,
+          vendorId: meta.vendorId,
+        });
+      }
+
       // Auto-populate
       if (ctx.customer) setCustomerName(ctx.customer);
       setSituation(`Triggered from: ${ctx.storyTitle}`);
@@ -95,8 +108,14 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
     return () => window.removeEventListener(QUICK_BRIEF_TRIGGER_EVENT, handler);
   }, []);
 
-  // Check WeeklySignal index first, fall back to legacy signalStore
-  const weeklySignals = useMemo(() => listWeeklySignals(FOCUS_ID, TIME_KEY), []);
+  // Check WeeklySignal index first (canonical weekKey), fall back to legacy signalStore
+  const canonicalWeekKey = useMemo(() => toIsoWeekKey({ weekOf: WEEK_OF }), []);
+  const weeklySignals = useMemo(() => {
+    // Try canonical weekKey first, then legacy TIME_KEY
+    const byCanonical = listWeeklySignals(FOCUS_ID, canonicalWeekKey);
+    if (byCanonical.length > 0) return byCanonical;
+    return listWeeklySignals(FOCUS_ID, TIME_KEY);
+  }, [canonicalWeekKey]);
   const hasWeekly = weeklySignals.length > 0;
 
   const rawSignals = useMemo(() => listSignals(FOCUS_ID, WEEK_OF), []);
