@@ -31,6 +31,7 @@ import type { SignalCategory } from '@/data/partner/signalImageTaxonomy';
 import { toast } from 'sonner';
 import { BriefingModePill } from './BriefingModePill';
 import { setQuickBriefTrigger } from '@/data/partner/quickBriefTrigger';
+import { resolveCanonicalMeta } from '@/services/ids';
 
 interface SignalIntelligencePanelProps {
   story: PartnerStory | null;
@@ -234,11 +235,21 @@ export function SignalIntelligencePanel({
   };
 
   const triggerQuickBrief = () => {
+    const meta = resolveCanonicalMeta({
+      focusId: 'schindler',
+      weekOf: '2026-02-10',
+    });
+
+    if (import.meta.env.DEV) {
+      console.log('[Quick Brief launch]', meta);
+    }
+
     setQuickBriefTrigger({
       storyTitle: story.headline,
-      customer: 'Schindler', // from focus context
+      customer: 'Schindler',
       category: story.signalType,
       tags: story.tags,
+      canonicalMeta: meta,
     });
     onClose();
     // Scroll to Quick Brief section

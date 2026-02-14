@@ -9,6 +9,13 @@ export interface QuickBriefTriggerContext {
   vendor?: string;
   category?: string; // e.g. Vendor, Regulatory, LocalMarket
   tags?: string[];
+  /** Canonical meta passed from Story → Quick Brief (optional, additive) */
+  canonicalMeta?: {
+    focusId: string;
+    vendorId: string;
+    weekKey: string;
+    hubOrgId: string;
+  };
 }
 
 let _pending: QuickBriefTriggerContext | null = null;
