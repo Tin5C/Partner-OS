@@ -29,6 +29,19 @@ export interface CuratedWeeklySignal {
 const store: CuratedWeeklySignal[] = [];
 let nextId = 1;
 
+// ============= Week alias map (weekOf ↔ weekKey) =============
+
+const weekAliasMap = new Map<string, string>(); // bidirectional: weekOf→weekKey, weekKey→weekOf
+
+export function registerWeekAlias(weekOf: string, weekKey: string): void {
+  weekAliasMap.set(weekOf, weekKey);
+  weekAliasMap.set(weekKey, weekOf);
+}
+
+export function resolveWeekAlias(input: string): string | undefined {
+  return weekAliasMap.get(input);
+}
+
 // ============= Query =============
 
 export function listWeeklySignals(customerId: string, timeKey: string): CuratedWeeklySignal[] {
@@ -48,6 +61,14 @@ export function hasWeeklySignals(customerId: string, timeKey: string): boolean {
 // ============= Materialization from ExtractorRun =============
 
 export function materializeWeeklySignals(run: ExtractorRun): CuratedWeeklySignal[] {
+  // Register week alias if both formats available
+  if (run.weekOfDate && run.timeKey) {
+    registerWeekAlias(run.weekOfDate, run.timeKey);
+  }
+  if (run.meta?.weekKey && run.weekOfDate) {
+    registerWeekAlias(run.weekOfDate, run.meta.weekKey);
+  }
+
   // Remove existing signals for this customer+timeKey+run to avoid duplicates
   const existing = store.filter(
     (s) => s.customerId === run.customerId && s.timeKey === run.timeKey && s.linkedExtractorRunId === run.id
@@ -160,6 +181,10 @@ import { listSignals } from './signalStore';
 export function seedWeeklySignalsFromSignalStore(): void {
   const CUSTOMER = 'schindler';
   const TIME_KEY = '2026-W07';
+  const WEEK_OF = '2026-02-10';
+
+  // Register alias so both formats resolve
+  registerWeekAlias(WEEK_OF, TIME_KEY);
 
   if (hasWeeklySignals(CUSTOMER, TIME_KEY)) return;
 
