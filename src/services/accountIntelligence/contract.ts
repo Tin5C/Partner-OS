@@ -6,6 +6,7 @@ import type { TechnicalLandscape } from '@/data/partner/technicalLandscapeStore'
 import type { AccountMemoryItem } from '@/data/partner/accountMemoryStore';
 import type { ContentRequest } from '@/data/partner/contentRequestStore';
 import type { EvidencePillar } from '@/data/partner/accountMemoryStore';
+import type { PartnerInvolvement } from '@/data/partner/partnerInvolvementStore';
 
 export interface SignalHistoryItem {
   id: string;
@@ -25,6 +26,7 @@ export interface AccountIntelligenceVM {
   snapshot: AccountSnapshot | null;
   commercial: CommercialFootprint | null;
   technical: TechnicalLandscape | null;
+  partnerInvolvement: PartnerInvolvement | null;
   signalHistory: SignalHistoryItem[];
   inbox: AccountMemoryItem[];
   requests: ContentRequest[];

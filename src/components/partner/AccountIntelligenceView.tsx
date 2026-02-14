@@ -4,24 +4,26 @@
 import { useMemo } from 'react';
 import {
   Building2,
-  Globe,
   DollarSign,
   Server,
   Signal,
   Inbox,
   MessageSquare,
   ShieldCheck,
-  Tag,
-  TrendingUp,
   FileText,
+  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Progress } from '@/components/ui/progress';
 import { resolveAccountIntelligence } from '@/services/accountIntelligence';
 import type { AccountIntelligenceVM } from '@/services/accountIntelligence';
+import type { PartnerInvolvement } from '@/data/partner/partnerInvolvementStore';
 
 interface AccountIntelligenceViewProps {
   focusId: string | null;
 }
+
+/* ─── Shared primitives ─── */
 
 function SectionCard({ title, icon, children, className }: {
   title: string;
@@ -77,6 +79,72 @@ function PillarBadge({ label, active }: { label: string; active: boolean }) {
   );
 }
 
+/* ─── Readiness Banner (top) ─── */
+
+function ReadinessBanner({ score, pillars }: {
+  score: number;
+  pillars: Record<string, boolean>;
+}) {
+  return (
+    <div className="rounded-xl border border-border/60 bg-card p-4 space-y-3">
+      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+        <ShieldCheck className="w-3.5 h-3.5" />
+        Readiness
+      </h3>
+      <div className="flex items-center gap-4">
+        <span className="text-2xl font-bold text-primary tabular-nums min-w-[52px]">{score}%</span>
+        <Progress value={score} className="h-2.5 flex-1" />
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        <PillarBadge label="Context" active={pillars.context} />
+        <PillarBadge label="Technical" active={pillars.technical} />
+        <PillarBadge label="Stakeholders" active={pillars.stakeholders} />
+        <PillarBadge label="Competitive" active={pillars.competitive} />
+        <PillarBadge label="Proof" active={pillars.proof} />
+      </div>
+    </div>
+  );
+}
+
+/* ─── Partner Involvement Card ─── */
+
+function PartnerInvolvementCard({ data }: { data: PartnerInvolvement }) {
+  return (
+    <SectionCard title="Partner Involvement" icon={<Users className="w-3.5 h-3.5" />}>
+      <div className="space-y-1.5">
+        <KVRow label="MS Account Team" value={data.microsoft_account_team_known} />
+        {data.active_partners && data.active_partners.length > 0 && (
+          <div className="flex items-start gap-2 text-sm">
+            <span className="text-muted-foreground min-w-[140px] flex-shrink-0">Active Partners</span>
+            <div className="flex flex-wrap gap-1.5">
+              {data.active_partners.map((p) => (
+                <span key={p} className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-primary/5 text-primary border border-primary/10">{p}</span>
+              ))}
+            </div>
+          </div>
+        )}
+        {data.competitor_partners && data.competitor_partners.length > 0 && (
+          <div className="flex items-start gap-2 text-sm">
+            <span className="text-muted-foreground min-w-[140px] flex-shrink-0">Competitor Partners</span>
+            <div className="flex flex-wrap gap-1.5">
+              {data.competitor_partners.map((p) => (
+                <span key={p} className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-muted/40 text-muted-foreground border border-border/40">{p}</span>
+              ))}
+            </div>
+          </div>
+        )}
+        <KVRow label="Public Case Studies" value={data.public_case_studies} />
+        {data.recent_partner_activity_count != null && (
+          <KVRow label="Recent Activity" value={`${data.recent_partner_activity_count} engagements (12 mo)`} />
+        )}
+        {data.notes && <KVRow label="Notes" value={data.notes} />}
+      </div>
+    </SectionCard>
+  );
+}
+
+/* ─── Main View ─── */
+
 export function AccountIntelligenceView({ focusId }: AccountIntelligenceViewProps) {
   const vm = useMemo<AccountIntelligenceVM | null>(() => {
     if (!focusId) return null;
@@ -94,10 +162,13 @@ export function AccountIntelligenceView({ focusId }: AccountIntelligenceViewProp
 
   if (!vm) return null;
 
-  const { snapshot, commercial, technical, signalHistory, inbox, requests, readiness } = vm;
+  const { snapshot, commercial, technical, partnerInvolvement, signalHistory, inbox, requests, readiness } = vm;
 
   return (
     <div className="space-y-4">
+      {/* Readiness Banner — top */}
+      <ReadinessBanner score={readiness.score} pillars={readiness.pillars} />
+
       {/* Snapshot */}
       <SectionCard title="Account Snapshot" icon={<Building2 className="w-3.5 h-3.5" />}>
         {snapshot ? (
@@ -179,6 +250,9 @@ export function AccountIntelligenceView({ focusId }: AccountIntelligenceViewProp
         </SectionCard>
       </div>
 
+      {/* Partner Involvement */}
+      {partnerInvolvement && <PartnerInvolvementCard data={partnerInvolvement} />}
+
       {/* Signal History */}
       <SectionCard title={`Signal History (${signalHistory.length})`} icon={<Signal className="w-3.5 h-3.5" />}>
         {signalHistory.length > 0 ? (
@@ -248,24 +322,6 @@ export function AccountIntelligenceView({ focusId }: AccountIntelligenceViewProp
           )}
         </SectionCard>
       </div>
-
-      {/* Readiness */}
-      <SectionCard title="Readiness" icon={<ShieldCheck className="w-3.5 h-3.5" />}>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-full border-2 border-primary/30 flex items-center justify-center">
-              <span className="text-sm font-bold text-primary">{readiness.score}%</span>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            <PillarBadge label="Context" active={readiness.pillars.context} />
-            <PillarBadge label="Technical" active={readiness.pillars.technical} />
-            <PillarBadge label="Stakeholders" active={readiness.pillars.stakeholders} />
-            <PillarBadge label="Competitive" active={readiness.pillars.competitive} />
-            <PillarBadge label="Proof" active={readiness.pillars.proof} />
-          </div>
-        </div>
-      </SectionCard>
     </div>
   );
 }
