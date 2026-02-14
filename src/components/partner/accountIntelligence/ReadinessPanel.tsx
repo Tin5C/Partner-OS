@@ -15,12 +15,12 @@ function getStateLabel(pct: number): string {
   return 'Not ready';
 }
 
-const PILLAR_PRIORITY: { key: string; label: string; insight: string }[] = [
-  { key: 'proof', label: 'Proof', insight: 'Missing proof artifacts.' },
-  { key: 'stakeholders', label: 'Stakeholders', insight: 'Stakeholder coverage is missing.' },
-  { key: 'technical', label: 'Technical', insight: 'Technical clarity is missing.' },
-  { key: 'competitive', label: 'Competitive', insight: 'Competitive positioning is missing.' },
-  { key: 'context', label: 'Context', insight: 'Account context is incomplete.' },
+const PILLAR_PRIORITY: { key: string; label: string; shortLabel: string; insight: string }[] = [
+  { key: 'proof', label: 'Proof', shortLabel: 'Proof', insight: 'Missing proof artifacts.' },
+  { key: 'stakeholders', label: 'Stakeholders', shortLabel: 'Stakeh.', insight: 'Stakeholder coverage is missing.' },
+  { key: 'technical', label: 'Technical', shortLabel: 'Tech.', insight: 'Technical clarity is missing.' },
+  { key: 'competitive', label: 'Competitive', shortLabel: 'Comp.', insight: 'Competitive positioning is missing.' },
+  { key: 'context', label: 'Context', shortLabel: 'Context', insight: 'Account context is incomplete.' },
 ];
 
 function getMicroInsight(pillars: Record<string, boolean>): string {
@@ -35,17 +35,18 @@ export function ReadinessPanel({ readinessPercent, pillars }: ReadinessPanelProp
   const insight = getMicroInsight(pillars);
 
   return (
-    <div className="rounded-xl border border-border/60 bg-card p-5 space-y-4">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-        Readiness
-      </p>
-
-      {/* Centered metric */}
-      <div className="flex flex-col items-center gap-0.5">
-        <span className="text-3xl font-bold text-primary tabular-nums leading-none">
-          {readinessPercent}%
-        </span>
-        <span className="text-xs font-medium text-muted-foreground">{stateLabel}</span>
+    <div className="rounded-xl border border-border/60 bg-card px-4 py-3 space-y-2">
+      {/* Header row: label left, metric right */}
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Readiness
+        </p>
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-xl font-bold text-primary tabular-nums leading-none">
+            {readinessPercent}%
+          </span>
+          <span className="text-xs font-medium text-muted-foreground">{stateLabel}</span>
+        </div>
       </div>
 
       {/* Thin progress bar */}
@@ -56,30 +57,31 @@ export function ReadinessPanel({ readinessPercent, pillars }: ReadinessPanelProp
         />
       </div>
 
-      {/* Pillar indicators */}
-      <div className="flex items-center justify-center gap-4 flex-wrap">
-        {PILLAR_PRIORITY.map((p) => {
-          const active = !!pillars[p.key];
-          return (
-            <div key={p.key} className="flex items-center gap-1">
-              {active ? (
-                <Check className="w-3 h-3 text-primary" />
-              ) : (
-                <Minus className="w-3 h-3 text-muted-foreground/40" />
-              )}
-              <span className={cn(
-                "text-[11px] font-medium",
-                active ? "text-primary" : "text-muted-foreground/50"
-              )}>
-                {p.label}
-              </span>
-            </div>
-          );
-        })}
+      {/* Pillar indicators — single row, no wrap */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-3">
+          {PILLAR_PRIORITY.map((p) => {
+            const active = !!pillars[p.key];
+            return (
+              <div key={p.key} className="flex items-center gap-0.5">
+                {active ? (
+                  <Check className="w-2.5 h-2.5 text-primary" />
+                ) : (
+                  <Minus className="w-2.5 h-2.5 text-muted-foreground/40" />
+                )}
+                <span className={cn(
+                  "text-[10px] font-medium",
+                  active ? "text-primary" : "text-muted-foreground/50"
+                )}>
+                  {p.shortLabel}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        {/* Micro insight — hidden on small screens */}
+        <p className="hidden sm:block text-[10px] text-muted-foreground truncate max-w-[200px]">{insight}</p>
       </div>
-
-      {/* Micro insight */}
-      <p className="text-[11px] text-muted-foreground text-center">{insight}</p>
     </div>
   );
 }
