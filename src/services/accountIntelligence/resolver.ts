@@ -9,6 +9,7 @@ import { listMemoryItems, getReadinessScore } from '@/data/partner/accountMemory
 import { listContentRequests } from '@/data/partner/contentRequestStore';
 import { listSignals } from '@/data/partner/signalStore';
 import { listAccountSignals } from '@/data/partner/accountSignalStore';
+import { getByFocusId as getPartnerInvolvement } from '@/data/partner/partnerInvolvementStore';
 import { toIsoWeekKeyFromWeekOf } from '@/lib/partnerIds';
 
 export function resolveAccountIntelligence(input: {
@@ -35,6 +36,7 @@ export function resolveAccountIntelligence(input: {
   const snapshot = getSnapshot(meta.focusId);
   const commercial = getCommercial(meta.focusId);
   const technical = getTechnical(meta.focusId);
+  const partnerInvolvement = getPartnerInvolvement(meta.focusId);
 
   // Signal history — combine signalStore + accountSignalStore
   const signalHistory: SignalHistoryItem[] = [];
@@ -90,6 +92,7 @@ export function resolveAccountIntelligence(input: {
     snapshot,
     commercial,
     technical,
+    partnerInvolvement,
     signalHistory,
     inbox,
     requests,
