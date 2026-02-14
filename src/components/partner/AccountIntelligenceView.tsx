@@ -9,12 +9,11 @@ import {
   Signal,
   Inbox,
   MessageSquare,
-  ShieldCheck,
   FileText,
   Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Progress } from '@/components/ui/progress';
+import { ReadinessPanel } from '@/components/partner/accountIntelligence/ReadinessPanel';
 import { resolveAccountIntelligence } from '@/services/accountIntelligence';
 import type { AccountIntelligenceVM } from '@/services/accountIntelligence';
 import type { PartnerInvolvement } from '@/data/partner/partnerInvolvementStore';
@@ -79,33 +78,6 @@ function PillarBadge({ label, active }: { label: string; active: boolean }) {
   );
 }
 
-/* ─── Readiness Banner (top) ─── */
-
-function ReadinessBanner({ score, pillars }: {
-  score: number;
-  pillars: Record<string, boolean>;
-}) {
-  return (
-    <div className="rounded-xl border border-border/60 bg-card p-4 space-y-3">
-      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-        <ShieldCheck className="w-3.5 h-3.5" />
-        Readiness
-      </h3>
-      <div className="flex items-center gap-4">
-        <span className="text-2xl font-bold text-primary tabular-nums min-w-[52px]">{score}%</span>
-        <Progress value={score} className="h-2.5 flex-1" />
-      </div>
-      <div className="flex flex-wrap gap-1.5">
-        <PillarBadge label="Context" active={pillars.context} />
-        <PillarBadge label="Technical" active={pillars.technical} />
-        <PillarBadge label="Stakeholders" active={pillars.stakeholders} />
-        <PillarBadge label="Competitive" active={pillars.competitive} />
-        <PillarBadge label="Proof" active={pillars.proof} />
-      </div>
-    </div>
-  );
-}
-
 /* ─── Partner Involvement Card ─── */
 
 function PartnerInvolvementCard({ data }: { data: PartnerInvolvement }) {
@@ -166,8 +138,8 @@ export function AccountIntelligenceView({ focusId }: AccountIntelligenceViewProp
 
   return (
     <div className="space-y-4">
-      {/* Readiness Banner — top */}
-      <ReadinessBanner score={readiness.score} pillars={readiness.pillars} />
+      {/* Readiness Panel — top */}
+      <ReadinessPanel readinessPercent={readiness.score} pillars={readiness.pillars} />
 
       {/* Snapshot */}
       <SectionCard title="Account Snapshot" icon={<Building2 className="w-3.5 h-3.5" />}>
