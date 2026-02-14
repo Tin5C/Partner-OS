@@ -7,6 +7,9 @@ import type { AccountMemoryItem } from '@/data/partner/accountMemoryStore';
 import type { ContentRequest } from '@/data/partner/contentRequestStore';
 import type { EvidencePillar } from '@/data/partner/accountMemoryStore';
 import type { PartnerInvolvement } from '@/data/partner/partnerInvolvementStore';
+import type { StrategyPillarsRecord } from '@/data/partner/strategyPillarsStore';
+import type { PublicInitiativesRecord } from '@/data/partner/publicInitiativesStore';
+import type { ProofArtifactsRecord } from '@/data/partner/proofArtifactsStore';
 
 export interface SignalHistoryItem {
   id: string;
@@ -27,6 +30,9 @@ export interface AccountIntelligenceVM {
   commercial: CommercialFootprint | null;
   technical: TechnicalLandscape | null;
   partnerInvolvement: PartnerInvolvement | null;
+  strategyPillars: StrategyPillarsRecord | null;
+  publicInitiatives: PublicInitiativesRecord | null;
+  proofArtifacts: ProofArtifactsRecord | null;
   signalHistory: SignalHistoryItem[];
   inbox: AccountMemoryItem[];
   requests: ContentRequest[];
