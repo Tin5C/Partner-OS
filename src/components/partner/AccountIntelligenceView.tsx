@@ -17,6 +17,7 @@ import {
   ExternalLink,
   TrendingUp,
   ChevronDown,
+  Newspaper,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ReadinessPanel } from '@/components/partner/accountIntelligence/ReadinessPanel';
@@ -24,6 +25,7 @@ import { resolveAccountIntelligence } from '@/services/accountIntelligence';
 import type { AccountIntelligenceVM } from '@/services/accountIntelligence';
 import type { PartnerInvolvement } from '@/data/partner/partnerInvolvementStore';
 import type { IndustryAuthorityTrendsPack } from '@/data/partner/industryAuthorityTrendsStore';
+import type { IndustryNewsPack } from '@/data/partner/industryNewsStore';
 
 interface AccountIntelligenceViewProps {
   focusId: string | null;
@@ -176,6 +178,101 @@ function IndustryAuthorityTrendsSection({ pack }: { pack: IndustryAuthorityTrend
   );
 }
 
+/* ─── Industry Pulse (Weekly News) Card ─── */
+
+function IndustryPulseSection({ pack }: { pack: IndustryNewsPack }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="rounded-xl border border-border/60 bg-card">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-1.5 p-4 text-left"
+      >
+        <Newspaper className="w-3.5 h-3.5 text-muted-foreground" />
+        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex-1">
+          Industry Pulse — {pack.weekKey} ({pack.signals.length})
+        </h3>
+        <ChevronDown className={cn("w-3.5 h-3.5 text-muted-foreground transition-transform", open && "rotate-180")} />
+      </button>
+      {open && (
+        <div className="px-4 pb-4 space-y-3">
+          {/* Signals */}
+          <div className="space-y-2.5">
+            {pack.signals.slice(0, 5).map((s) => (
+              <div key={s.id} className="p-2.5 rounded-lg border border-border/40 bg-muted/10 space-y-1">
+                <div className="flex items-center gap-2">
+                  {s.source_url ? (
+                    <a href={s.source_url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-foreground hover:text-primary flex-1 underline-offset-2 hover:underline">
+                      {s.title}
+                    </a>
+                  ) : (
+                    <p className="text-xs font-medium text-foreground flex-1">{s.title}</p>
+                  )}
+                  <span className={cn(
+                    "px-1.5 py-0.5 rounded text-[9px] font-medium border flex-shrink-0",
+                    s.category === 'regulation' ? 'bg-primary/10 text-primary border-primary/20' :
+                    s.category === 'cybersecurity' ? 'bg-destructive/10 text-destructive border-destructive/20' :
+                    s.category === 'market' ? 'bg-accent/60 text-accent-foreground border-accent/40' :
+                    'bg-muted/40 text-muted-foreground border-border/40'
+                  )}>
+                    {s.category}
+                  </span>
+                  <span className={cn(
+                    "px-1.5 py-0.5 rounded-full text-[9px] font-medium border flex-shrink-0",
+                    s.confidence === 'High' ? 'bg-primary/10 text-primary border-primary/20' :
+                    s.confidence === 'Medium' ? 'bg-muted/40 text-muted-foreground border-border/40' :
+                    'bg-muted/30 text-muted-foreground/50 border-border/30'
+                  )}>
+                    {s.confidence}
+                  </span>
+                </div>
+                <p className="text-[11px] text-muted-foreground/70">
+                  {s.source_org}{s.source_published_at ? ` · ${s.source_published_at}` : ''}
+                </p>
+                <p className="text-[11px] text-muted-foreground line-clamp-2">{s.summary}</p>
+                <p className="text-[11px] text-muted-foreground/60 italic line-clamp-1">
+                  Applied to account: {s.applied_to_focus.why_it_matters}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Big Paper of the Week */}
+          {pack.big_paper_of_week && (
+            <div className="p-3 rounded-lg border border-primary/20 bg-primary/5 space-y-2">
+              <div className="flex items-center gap-2">
+                <FileText className="w-3.5 h-3.5 text-primary" />
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">Big Paper of the Week</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {pack.big_paper_of_week.source_url ? (
+                  <a href={pack.big_paper_of_week.source_url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-foreground hover:text-primary underline-offset-2 hover:underline flex-1">
+                    {pack.big_paper_of_week.title}
+                  </a>
+                ) : (
+                  <p className="text-xs font-medium text-foreground flex-1">{pack.big_paper_of_week.title}</p>
+                )}
+              </div>
+              <p className="text-[11px] text-muted-foreground/70">
+                {pack.big_paper_of_week.source_org}{pack.big_paper_of_week.source_published_at ? ` · ${pack.big_paper_of_week.source_published_at}` : ''}
+              </p>
+              <ul className="space-y-0.5">
+                {pack.big_paper_of_week.core_theses.slice(0, 3).map((t, i) => (
+                  <li key={i} className="text-[11px] text-muted-foreground flex items-start gap-1.5">
+                    <span className="text-muted-foreground/40 mt-0.5 flex-shrink-0">•</span>
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── Main View ─── */
 
 export function AccountIntelligenceView({ focusId }: AccountIntelligenceViewProps) {
@@ -195,7 +292,7 @@ export function AccountIntelligenceView({ focusId }: AccountIntelligenceViewProp
 
   if (!vm) return null;
 
-  const { snapshot, commercial, technical, partnerInvolvement, strategyPillars, publicInitiatives, proofArtifacts, industryAuthorityTrends, signalHistory, inbox, requests, readiness } = vm;
+  const { snapshot, commercial, technical, partnerInvolvement, strategyPillars, publicInitiatives, proofArtifacts, industryAuthorityTrends, industryNews, signalHistory, inbox, requests, readiness } = vm;
 
   return (
     <div className="space-y-4">
@@ -401,6 +498,11 @@ export function AccountIntelligenceView({ focusId }: AccountIntelligenceViewProp
       {/* Industry Authority Trends */}
       {industryAuthorityTrends && industryAuthorityTrends.trends.length > 0 && (
         <IndustryAuthorityTrendsSection pack={industryAuthorityTrends} />
+      )}
+
+      {/* Industry Pulse (Weekly) — collapsed by default */}
+      {industryNews && industryNews.signals.length > 0 && (
+        <IndustryPulseSection pack={industryNews} />
       )}
 
       {/* Signal History */}
