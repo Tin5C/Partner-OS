@@ -102,61 +102,59 @@ export function DealPlanMetadata({
   );
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-3">
-        {/* Engagement Mode */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Mode</span>
-          <div className="relative">
-            <select
-              value={engagementMode ?? ''}
-              onChange={(e) =>
-                onEngagementModeChange(
-                  e.target.value ? (e.target.value as EngagementMode) : null,
-                )
-              }
-              className="appearance-none text-xs font-medium text-foreground bg-muted/30 border border-border/60 rounded-lg px-2.5 py-1.5 pr-7 cursor-pointer hover:border-primary/30 transition-colors"
-            >
-              <option value="">Select mode…</option>
-              {ENGAGEMENT_MODES.map((m) => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
-            <ChevronDown className="w-3 h-3 text-muted-foreground absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-          </div>
+    <>
+      {/* Mode */}
+      <div className="flex items-center gap-1.5">
+        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Mode</span>
+        <div className="relative">
+          <select
+            value={engagementMode ?? ''}
+            onChange={(e) =>
+              onEngagementModeChange(
+                e.target.value ? (e.target.value as EngagementMode) : null,
+              )
+            }
+            className="appearance-none text-xs font-medium text-foreground bg-muted/30 border border-border/60 rounded-lg px-2.5 py-1.5 pr-7 cursor-pointer hover:border-primary/30 transition-colors"
+          >
+            <option value="">Select mode…</option>
+            {ENGAGEMENT_MODES.map((m) => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
+          <ChevronDown className="w-3 h-3 text-muted-foreground absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
-
-        {/* Trigger */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Trigger</span>
-          <div className="relative">
-            <select
-              value={trigger ?? ''}
-              onChange={(e) =>
-                onTriggerChange(
-                  e.target.value ? (e.target.value as TriggerOption) : null,
-                )
-              }
-              className="appearance-none text-xs font-medium text-foreground bg-muted/30 border border-border/60 rounded-lg px-2.5 py-1.5 pr-7 cursor-pointer hover:border-primary/30 transition-colors"
-            >
-              <option value="">Select trigger…</option>
-              {TRIGGER_OPTIONS.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-            <ChevronDown className="w-3 h-3 text-muted-foreground absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-          </div>
-        </div>
-
-        {/* Readiness — subtle badge */}
-        <span className="text-[11px] text-muted-foreground ml-auto">
-          Readiness: <span className={cn('font-medium', score >= 60 ? 'text-green-600' : 'text-muted-foreground')}>{score}%</span>
-        </span>
       </div>
 
-      {/* Next Best Adds — max 3 */}
+      {/* Trigger */}
+      <div className="flex items-center gap-1.5">
+        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Trigger</span>
+        <div className="relative">
+          <select
+            value={trigger ?? ''}
+            onChange={(e) =>
+              onTriggerChange(
+                e.target.value ? (e.target.value as TriggerOption) : null,
+              )
+            }
+            className="appearance-none text-xs font-medium text-foreground bg-muted/30 border border-border/60 rounded-lg px-2.5 py-1.5 pr-7 cursor-pointer hover:border-primary/30 transition-colors"
+          >
+            <option value="">Select trigger…</option>
+            {TRIGGER_OPTIONS.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+          <ChevronDown className="w-3 h-3 text-muted-foreground absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+        </div>
+      </div>
+
+      {/* Readiness — far right */}
+      <span className="text-[11px] text-muted-foreground ml-auto whitespace-nowrap">
+        Readiness: <span className={cn('font-medium', score >= 60 ? 'text-green-600' : 'text-muted-foreground')}>{score}%</span>
+      </span>
+
+      {/* Next Best Adds — render below the row via parent flex-wrap */}
       {nextAdds.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1.5 w-full">
           {nextAdds.map((add, i) => (
             <span
               key={i}
@@ -168,6 +166,6 @@ export function DealPlanMetadata({
           ))}
         </div>
       )}
-    </div>
+    </>
   );
 }

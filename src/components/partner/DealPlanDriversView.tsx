@@ -532,9 +532,20 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
           </span>
         )}
       </div>
-      <div className="flex items-center gap-2">
-        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Account</span>
-        <AccountSelector selectedId={selectedAccount} onSelect={setSelectedAccount} />
+      {/* Single row: Account + Mode + Trigger + Readiness */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Account</span>
+          <AccountSelector selectedId={selectedAccount} onSelect={setSelectedAccount} />
+        </div>
+        <DealPlanMetadata
+          accountId={selectedAccount ?? ''}
+          hasPromotedSignals={drivers.length > 0}
+          engagementMode={engagementMode}
+          onEngagementModeChange={setEngagementMode}
+          trigger={trigger}
+          onTriggerChange={setTrigger}
+        />
       </div>
     </div>
   );
@@ -581,15 +592,7 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
         </div>
       </div>
 
-      {/* Compact metadata row: Mode | Trigger | Readiness */}
-      <DealPlanMetadata
-        accountId={selectedAccount ?? ''}
-        hasPromotedSignals={drivers.length > 0}
-        engagementMode={engagementMode}
-        onEngagementModeChange={setEngagementMode}
-        trigger={trigger}
-        onTriggerChange={setTrigger}
-      />
+      {/* DealPlanMetadata now rendered inline in header row above */}
 
       {/* Generate Plan CTA */}
       {!planGenerated && (
