@@ -73,10 +73,10 @@ export function upsert(record: PublicInitiativesRecord): PublicInitiativesRecord
 // ============= Seed =============
 
 function seedDemoData(): void {
-  if (getByFocusId('focus_schindler')) return;
+  if (getByFocusId('schindler')) return;
   upsert({
-    focusId: 'focus_schindler',
-    hubOrgId: 'hub_helioworks_ag',
+    focusId: 'schindler',
+    hubOrgId: 'helioworks',
     generated_at: '2026-02-16T12:00:00+01:00',
     time_range_years: 5,
     public_it_initiatives: [
