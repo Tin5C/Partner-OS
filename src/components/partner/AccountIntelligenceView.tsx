@@ -278,6 +278,9 @@ export function AccountIntelligenceView({ focusId }: AccountIntelligenceViewProp
                   <p className="text-[11px] text-muted-foreground/70 italic line-clamp-1">{init.business_objective}</p>
                 )}
                 <div className="flex items-center gap-2 flex-wrap pt-0.5">
+                  <span className="text-[10px] text-muted-foreground/60">
+                    Date: {init.announcement_date ?? init.source_published_at ?? 'Unknown'}
+                  </span>
                   <span className="text-[10px] text-muted-foreground/60">{init.initiative_type.replace(/_/g, ' ')}</span>
                   {init.technology_domain.filter((d) => d !== 'other').map((d) => (
                     <span key={d} className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-muted/40 text-muted-foreground border border-border/40">
