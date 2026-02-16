@@ -11,6 +11,7 @@ import type { StrategyPillarsRecord } from '@/data/partner/strategyPillarsStore'
 import type { PublicInitiativesRecord } from '@/data/partner/publicInitiativesStore';
 import type { ProofArtifactsRecord } from '@/data/partner/proofArtifactsStore';
 import type { IndustryAuthorityTrendsPack } from '@/data/partner/industryAuthorityTrendsStore';
+import type { IndustryNewsPack } from '@/data/partner/industryNewsStore';
 
 export interface SignalHistoryItem {
   id: string;
@@ -35,6 +36,7 @@ export interface AccountIntelligenceVM {
   publicInitiatives: PublicInitiativesRecord | null;
   proofArtifacts: ProofArtifactsRecord | null;
   industryAuthorityTrends: IndustryAuthorityTrendsPack | null;
+  industryNews: IndustryNewsPack | null;
   signalHistory: SignalHistoryItem[];
   inbox: AccountMemoryItem[];
   requests: ContentRequest[];
