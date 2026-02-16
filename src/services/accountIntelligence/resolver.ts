@@ -22,6 +22,7 @@ import { getByFocusId as getPublicInitiatives } from '@/data/partner/publicIniti
 import { getByFocusId as getProofArtifacts } from '@/data/partner/proofArtifactsStore';
 import { getByScope as getTrendsByScope, getByFocusId as getTrendsByFocus } from '@/data/partner/industryAuthorityTrendsStore';
 import { toIsoWeekKeyFromWeekOf } from '@/lib/partnerIds';
+import { orgIdCandidates } from '@/lib/orgIdAliases';
 
 export function resolveAccountIntelligence(input: {
   focusId?: string;
@@ -74,10 +75,12 @@ export function resolveAccountIntelligence(input: {
     });
   }
 
-  // From accountSignalStore
-  const acctSignals = listAccountSignals(snapshot?.hubOrgId ?? meta.hubOrgId, {
-    account_id: meta.focusId,
-  });
+  // From accountSignalStore — try alias candidates for org-scoped reads
+  let acctSignals: ReturnType<typeof listAccountSignals> = [];
+  for (const candidateOrg of orgIdCandidates(snapshot?.hubOrgId ?? meta.hubOrgId)) {
+    acctSignals = listAccountSignals(candidateOrg, { account_id: meta.focusId });
+    if (acctSignals.length) break;
+  }
   for (const as of acctSignals) {
     // Avoid duplicates by ID
     if (signalHistory.some((h) => h.id === as.id)) continue;
