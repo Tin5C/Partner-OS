@@ -54,8 +54,8 @@ import { listSignals, type Signal } from '@/data/partner/signalStore';
 import { AccountInbox } from './AccountInbox';
 import {
   DealPlanMetadata,
-  type EngagementMode,
-  type TriggerOption,
+  type EngagementType,
+  type Motion,
 } from './DealPlanMetadata';
 import { scoreServicePacks, type ScoredPack } from '@/data/partner/servicePackStore';
 import { partner_service_configuration } from '@/data/partner/partnerServiceConfiguration';
@@ -430,8 +430,8 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
   const [roleView, setRoleView] = useState<RoleView>('seller');
 
   // Metadata state
-  const [engagementMode, setEngagementMode] = useState<EngagementMode | null>(null);
-  const [trigger, setTrigger] = useState<TriggerOption | null>(null);
+  const [engagementType, setEngagementType] = useState<EngagementType | null>(null);
+  const [motion, setMotion] = useState<Motion | null>(null);
 
   // Section 2: Strategic Positioning
   const [whyNow, setWhyNow] = useState('Azure OpenAI available in Swiss North + EU Machinery Regulation deadline 2027 = dual urgency window.');
@@ -500,18 +500,18 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
 
   // Plan generation state
   const [planGenerated, setPlanGenerated] = useState(false);
-  const canGenerate = selectedAccount !== null && engagementMode !== null && trigger !== null;
+  const canGenerate = selectedAccount !== null && engagementType !== null && motion !== null;
 
   // Service pack recommendations (computed after plan generated)
   const recommendedPacks = useMemo<ScoredPack[]>(() => {
     if (!selectedAccount || !planGenerated) return [];
     return scoreServicePacks({
-      mode: engagementMode,
-      trigger,
+      mode: engagementType,
+      trigger: motion,
       vendorPosture: partner_service_configuration.vendor_posture,
       partnerCapabilities: partner_service_configuration.partner_capabilities,
     });
-  }, [selectedAccount, engagementMode, trigger, planGenerated]);
+  }, [selectedAccount, engagementType, motion, planGenerated]);
 
   const handleAddSignals = useCallback((signals: Signal[]) => {
     if (!selectedAccount) return;
@@ -541,10 +541,10 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
         <DealPlanMetadata
           accountId={selectedAccount ?? ''}
           hasPromotedSignals={drivers.length > 0}
-          engagementMode={engagementMode}
-          onEngagementModeChange={setEngagementMode}
-          trigger={trigger}
-          onTriggerChange={setTrigger}
+          engagementType={engagementType}
+          onEngagementTypeChange={setEngagementType}
+          motion={motion}
+          onMotionChange={setMotion}
         />
       </div>
     </div>
@@ -613,8 +613,8 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
           {!canGenerate && (
             <p className="text-[11px] text-muted-foreground text-center">
               {!selectedAccount
-                ? 'Select an account, then choose Mode and Trigger to generate the plan.'
-                : 'Select Mode and Trigger to generate the plan.'}
+                ? 'Select an account, then choose Engagement Type and Motion to generate the plan.'
+                : 'Select Engagement Type and Motion to generate the plan.'}
             </p>
           )}
         </div>
@@ -918,7 +918,7 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
                   ))
                 ) : (
                   <p className="text-[11px] text-muted-foreground italic py-2">
-                    No strong match yet — add context or adjust Mode / Trigger.
+                    No strong match yet — add context or adjust Engagement Type / Motion.
                   </p>
                 )}
               </div>
