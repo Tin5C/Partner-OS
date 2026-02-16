@@ -20,7 +20,7 @@ import { getByFocusId as getPartnerInvolvement } from '@/data/partner/partnerInv
 import { getByFocusId as getStrategyPillars } from '@/data/partner/strategyPillarsStore';
 import { getByFocusId as getPublicInitiatives } from '@/data/partner/publicInitiativesStore';
 import { getByFocusId as getProofArtifacts } from '@/data/partner/proofArtifactsStore';
-import { getByScope as getTrendsByScope, getByFocusId as getTrendsByFocus } from '@/data/partner/industryAuthorityTrendsStore';
+import { getByFocusId as getTrendsByFocus } from '@/data/partner/industryAuthorityTrendsStore';
 import { toIsoWeekKeyFromWeekOf } from '@/lib/partnerIds';
 import { orgIdCandidates } from '@/lib/orgIdAliases';
 
@@ -52,8 +52,7 @@ export function resolveAccountIntelligence(input: {
   const strategyPillars = getStrategyPillars(meta.focusId);
   const publicInitiatives = getPublicInitiatives(meta.focusId);
   const proofArtifacts = getProofArtifacts(meta.focusId);
-  const industryAuthorityTrends =
-    getTrendsByScope(meta.hubOrgId, meta.focusId) ?? getTrendsByFocus(meta.focusId);
+  const industryAuthorityTrends = getTrendsByFocus(meta.focusId);
 
   // Signal history — combine signalStore + accountSignalStore
   const signalHistory: SignalHistoryItem[] = [];

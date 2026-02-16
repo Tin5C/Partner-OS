@@ -1,7 +1,7 @@
 // Account Intelligence View — read-only tab in Partner execution section
 // Renders structured sections from AccountIntelligenceVM
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Building2,
   DollarSign,
@@ -16,12 +16,14 @@ import {
   Award,
   ExternalLink,
   TrendingUp,
+  ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ReadinessPanel } from '@/components/partner/accountIntelligence/ReadinessPanel';
 import { resolveAccountIntelligence } from '@/services/accountIntelligence';
 import type { AccountIntelligenceVM } from '@/services/accountIntelligence';
 import type { PartnerInvolvement } from '@/data/partner/partnerInvolvementStore';
+import type { IndustryAuthorityTrendsPack } from '@/data/partner/industryAuthorityTrendsStore';
 
 interface AccountIntelligenceViewProps {
   focusId: string | null;
@@ -116,6 +118,60 @@ function PartnerInvolvementCard({ data }: { data: PartnerInvolvement }) {
         )}
         {data.notes && <KVRow label="Notes" value={data.notes} />}
       </div>
+    </SectionCard>
+  );
+}
+
+/* ─── Industry Authority Trends Card ─── */
+
+function IndustryAuthorityTrendsSection({ pack }: { pack: IndustryAuthorityTrendsPack }) {
+  const [expanded, setExpanded] = useState(false);
+  const COLLAPSED_LIMIT = 5;
+  const hasMore = pack.trends.length > COLLAPSED_LIMIT;
+  const visible = expanded ? pack.trends : pack.trends.slice(0, COLLAPSED_LIMIT);
+
+  return (
+    <SectionCard
+      title={`Industry Authority Trends (${pack.trends.length})`}
+      icon={<TrendingUp className="w-3.5 h-3.5" />}
+    >
+      <div className="space-y-2.5">
+        {visible.map((t) => (
+          <div key={t.id} className="p-2.5 rounded-lg border border-border/40 bg-muted/10 space-y-1">
+            <div className="flex items-center gap-2">
+              {t.source_url ? (
+                <a href={t.source_url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-foreground hover:text-primary flex-1 underline-offset-2 hover:underline">
+                  {t.trend_title}
+                </a>
+              ) : (
+                <p className="text-xs font-medium text-foreground flex-1">{t.trend_title}</p>
+              )}
+              <span className={cn(
+                "px-2 py-0.5 rounded-full text-[9px] font-medium border flex-shrink-0",
+                t.confidence === 'High' ? 'bg-primary/10 text-primary border-primary/20' :
+                t.confidence === 'Medium' ? 'bg-accent/60 text-accent-foreground border-accent/40' :
+                'bg-muted/40 text-muted-foreground border-border/40'
+              )}>
+                {t.confidence}
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground/70">
+              {t.source_org}{t.source_published_at ? ` · ${t.source_published_at}` : ''}
+            </p>
+            <p className="text-[11px] text-muted-foreground line-clamp-2">{t.thesis_summary}</p>
+            <p className="text-[11px] text-muted-foreground/60 italic line-clamp-1">{t.applied_to_focus.why_it_matters}</p>
+          </div>
+        ))}
+      </div>
+      {hasMore && (
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className="flex items-center gap-1 text-[11px] font-medium text-primary hover:text-primary/80 pt-1"
+        >
+          {expanded ? 'Show less' : `View all (${pack.trends.length})`}
+          <ChevronDown className={cn("w-3 h-3 transition-transform", expanded && "rotate-180")} />
+        </button>
+      )}
     </SectionCard>
   );
 }
@@ -343,51 +399,8 @@ export function AccountIntelligenceView({ focusId }: AccountIntelligenceViewProp
       </SectionCard>
 
       {/* Industry Authority Trends */}
-      {industryAuthorityTrends && industryAuthorityTrends.items.length > 0 && (
-        <SectionCard
-          title={`Industry Authority Trends (${industryAuthorityTrends.items.length})`}
-          icon={<TrendingUp className="w-3.5 h-3.5" />}
-        >
-          <div className="space-y-2.5">
-            {industryAuthorityTrends.items.slice(0, 5).map((t) => (
-              <div key={t.id} className="p-2.5 rounded-lg border border-border/40 bg-muted/10 space-y-1">
-                <div className="flex items-center gap-2">
-                  {t.source_url ? (
-                    <a href={t.source_url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-foreground hover:text-primary flex-1 underline-offset-2 hover:underline">
-                      {t.trend_title}
-                    </a>
-                  ) : (
-                    <p className="text-xs font-medium text-foreground flex-1">{t.trend_title}</p>
-                  )}
-                  {t.urgency_level && (
-                    <span className={cn(
-                      "px-2 py-0.5 rounded-full text-[9px] font-medium border flex-shrink-0",
-                      t.urgency_level === 'high' ? 'bg-destructive/10 text-destructive border-destructive/20' :
-                      t.urgency_level === 'medium' ? 'bg-primary/10 text-primary border-primary/20' :
-                      'bg-muted/40 text-muted-foreground border-border/40'
-                    )}>
-                      {t.urgency_level}
-                    </span>
-                  )}
-                </div>
-                <p className="text-[11px] text-muted-foreground/70">
-                  {t.source_org}{t.source_published_at ? ` · ${t.source_published_at}` : ''}
-                </p>
-                <p className="text-[11px] text-muted-foreground line-clamp-2">{t.thesis_summary}</p>
-                <p className="text-[11px] text-muted-foreground/60 italic line-clamp-1">{t.why_it_matters}</p>
-                {t.strategic_direction_tags && t.strategic_direction_tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 pt-0.5">
-                    {t.strategic_direction_tags.map((tag) => (
-                      <span key={tag} className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-muted/40 text-muted-foreground border border-border/40">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </SectionCard>
+      {industryAuthorityTrends && industryAuthorityTrends.trends.length > 0 && (
+        <IndustryAuthorityTrendsSection pack={industryAuthorityTrends} />
       )}
 
       {/* Signal History */}
