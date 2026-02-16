@@ -181,6 +181,16 @@ export function QuickBriefOutput({
           };
           const typeColor = typeColors[signal.type] ?? 'bg-muted text-muted-foreground border-border';
 
+          // Origin label for MECE clarity
+          const originLabels: Record<string, string> = {
+            vendor: 'Vendor',
+            regulatory: 'Regulatory',
+            internalActivity: 'Focus',
+            competitive: 'Competitor',
+            localMarket: 'Industry',
+          };
+          const originLabel = originLabels[signal.type] ?? 'Industry';
+
           return (
             <div
               key={signal.id}
@@ -215,6 +225,9 @@ export function QuickBriefOutput({
                   <div className="flex items-center gap-2 mb-0.5">
                     <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full border', typeColor)}>
                       {signal.type}
+                    </span>
+                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded border border-border/50 bg-muted/30 text-muted-foreground">
+                      {originLabel}
                     </span>
                     <span className={cn(
                       'text-[10px] font-bold',

@@ -187,12 +187,17 @@ function IndustryPulseSection({ pack }: { pack: IndustryNewsPack }) {
     <div className="rounded-xl border border-border/60 bg-card">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-1.5 p-4 text-left"
+        className="w-full flex items-center gap-1.5 p-4 pb-2 text-left"
       >
         <Newspaper className="w-3.5 h-3.5 text-muted-foreground" />
-        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex-1">
-          Industry Pulse — {pack.weekKey} ({pack.signals.length})
-        </h3>
+        <div className="flex-1">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Industry Pulse — {pack.weekKey} ({pack.signals.length})
+          </h3>
+          <p className="text-[10px] text-muted-foreground/60 mt-0.5">
+            Sector-level pulse. Not account-specific triggers.
+          </p>
+        </div>
         <ChevronDown className={cn("w-3.5 h-3.5 text-muted-foreground transition-transform", open && "rotate-180")} />
       </button>
       {open && (

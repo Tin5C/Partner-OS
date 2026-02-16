@@ -59,6 +59,15 @@ const TYPE_COLORS: Record<string, string> = {
   localMarket: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
 };
 
+// Signal type → origin label for MECE clarity
+const ORIGIN_LABELS: Record<string, string> = {
+  vendor: 'Vendor',
+  regulatory: 'Regulatory',
+  internalActivity: 'Focus',
+  competitive: 'Competitor',
+  localMarket: 'Industry',
+};
+
 interface QuickBriefSectionProps {
   onOpenDealBrief?: () => void;
 }
@@ -361,6 +370,9 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
                         <div className="flex items-center gap-2 mb-1">
                           <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full border', tagColor)}>
                             {tag}
+                          </span>
+                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded border border-border/50 bg-muted/30 text-muted-foreground">
+                            {ORIGIN_LABELS[signal.type] ?? 'Industry'}
                           </span>
                           <span className={cn(
                             'text-[10px] font-bold',
