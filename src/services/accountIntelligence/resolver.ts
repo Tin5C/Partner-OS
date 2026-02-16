@@ -1,4 +1,11 @@
 // Account Intelligence Resolver — single read model for account context
+//
+// MODULE NUMBERING AUDIT (2026-02-16)
+// Hardcoded references found:
+// - src/data/partner/contracts.ts lines 237-241: module2?–module6? optional typed fields in ModulePacks interface
+// - src/data/partner/demo/demoDataset.ts line 96: modulePacks object (uses module0A, module0V, module0B, module1 keys only)
+// No direct numeric module indexing (modules[2], parseInt, Object.keys) detected in runtime code.
+// Safe alias resolver introduced at src/services/extractor/moduleResolver.ts for future-proof access.
 
 import type { AccountIntelligenceVM, SignalHistoryItem } from './contract';
 import { resolveCanonicalMeta } from '@/services/ids';
