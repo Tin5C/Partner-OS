@@ -2,13 +2,17 @@
 // In-memory singleton. Additive only.
 
 export type InitiativeType =
-  | 'field_service_digitalization'
-  | 'security_modernization'
-  | 'platform_consolidation'
   | 'cloud_migration'
-  | 'ai_adoption'
-  | 'erp_modernization'
-  | 'workplace_transformation'
+  | 'erp_transformation'
+  | 'ai_deployment'
+  | 'security_modernization'
+  | 'digital_workplace'
+  | 'data_platform'
+  | 'field_service_digitalization'
+  | 'automation_program'
+  | 'vendor_strategic_partnership'
+  | 'platform_consolidation'
+  | 'modernization_program'
   | 'other';
 
 export type TechnologyDomain =
@@ -24,8 +28,10 @@ export type TechnologyDomain =
 
 export interface PublicITInitiative {
   id: string;
+  announcement_date: string | null;
+  source_published_at: string | null;
   year: number | null;
-  source_published_year?: number | null;
+  source_published_year: number | null;
   title: string;
   initiative_type: InitiativeType;
   summary: string;
@@ -67,15 +73,17 @@ export function upsert(record: PublicInitiativesRecord): PublicInitiativesRecord
 // ============= Seed =============
 
 function seedDemoData(): void {
-  if (getByFocusId('schindler')) return;
+  if (getByFocusId('focus_schindler')) return;
   upsert({
-    focusId: 'schindler',
-    hubOrgId: 'helioworks',
-    generated_at: '2026-02-14T19:30:00+01:00',
+    focusId: 'focus_schindler',
+    hubOrgId: 'hub_helioworks_ag',
+    generated_at: '2026-02-16T12:00:00+01:00',
     time_range_years: 5,
     public_it_initiatives: [
       {
         id: 'init_schindler_0001',
+        announcement_date: null,
+        source_published_at: null,
         year: null,
         source_published_year: null,
         title: 'Schindler ActionBoard (customer digital dashboard for connected units)',
@@ -95,6 +103,8 @@ function seedDemoData(): void {
       },
       {
         id: 'init_schindler_0002',
+        announcement_date: null,
+        source_published_at: null,
         year: null,
         source_published_year: null,
         title: 'Schindler Ahead ActionBoard (portfolio management with real-time insights)',
@@ -114,6 +124,8 @@ function seedDemoData(): void {
       },
       {
         id: 'init_schindler_0003',
+        announcement_date: null,
+        source_published_at: null,
         year: null,
         source_published_year: null,
         title: 'Organization-wide cyber resilience program (24/7 SOC)',
@@ -134,6 +146,8 @@ function seedDemoData(): void {
       },
       {
         id: 'init_schindler_0004',
+        announcement_date: null,
+        source_published_at: null,
         year: null,
         source_published_year: null,
         title: 'Schindler Developer Portal and trial environment for APIs',
