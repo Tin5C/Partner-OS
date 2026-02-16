@@ -28,10 +28,7 @@ export type TechnologyDomain =
 
 export interface PublicITInitiative {
   id: string;
-  announcement_date: string | null;
-  source_published_at: string | null;
   year: number | null;
-  source_published_year: number | null;
   title: string;
   initiative_type: InitiativeType;
   summary: string;
@@ -82,16 +79,11 @@ function seedDemoData(): void {
     public_it_initiatives: [
       {
         id: 'init_schindler_0001',
-        announcement_date: null,
-        source_published_at: null,
         year: null,
-        source_published_year: null,
         title: 'Schindler ActionBoard (customer digital dashboard for connected units)',
         initiative_type: 'field_service_digitalization',
-        summary:
-          'Customer-facing dashboard providing overview of connected units and related service/portfolio information (digital services layer).',
-        business_objective:
-          'Improve transparency and portfolio management for customers; enable faster prioritization and service planning.',
+        summary: 'Customer-facing dashboard providing overview of connected units and related service/portfolio information (digital services layer).',
+        business_objective: 'Improve transparency and portfolio management for customers; enable faster prioritization and service planning.',
         technology_domain: ['iot', 'data', 'automation', 'other'],
         vendors_mentioned: [],
         internal_business_units_affected: ['Service', 'Digital Services'],
@@ -103,16 +95,11 @@ function seedDemoData(): void {
       },
       {
         id: 'init_schindler_0002',
-        announcement_date: null,
-        source_published_at: null,
         year: null,
-        source_published_year: null,
         title: 'Schindler Ahead ActionBoard (portfolio management with real-time insights)',
         initiative_type: 'field_service_digitalization',
-        summary:
-          'Portfolio management platform emphasizing real-time and actionable insights to help prioritize tasks and improve service schedule planning.',
-        business_objective:
-          'Reduce interruptions and improve maintenance/service planning through visibility and faster issue detection.',
+        summary: 'Portfolio management platform emphasizing real-time and actionable insights to help prioritize tasks and improve service schedule planning.',
+        business_objective: 'Reduce interruptions and improve maintenance/service planning through visibility and faster issue detection.',
         technology_domain: ['iot', 'data', 'automation'],
         vendors_mentioned: [],
         internal_business_units_affected: ['Service', 'Field Operations'],
@@ -124,38 +111,27 @@ function seedDemoData(): void {
       },
       {
         id: 'init_schindler_0003',
-        announcement_date: null,
-        source_published_at: null,
         year: null,
-        source_published_year: null,
         title: 'Organization-wide cyber resilience program (24/7 SOC)',
         initiative_type: 'security_modernization',
-        summary:
-          'Schindler describes an always-on cybersecurity approach with a 24/7 Security Operations Center (SOC) involving internal and external experts.',
-        business_objective:
-          'Protect information assets and enable rapid detection/response to incidents.',
+        summary: 'Schindler describes an always-on cybersecurity approach with a 24/7 Security Operations Center (SOC) involving internal and external experts.',
+        business_objective: 'Protect information assets and enable rapid detection/response to incidents.',
         technology_domain: ['security', 'other'],
         vendors_mentioned: [],
         internal_business_units_affected: ['IT', 'Security'],
         geographic_scope: 'global',
         estimated_magnitude: 'enterprise-wide',
         source_type: 'press_release',
-        source_url:
-          'https://group.schindler.com/en/responsibility/value-chain/cyber-resilient-across-the-organization.html',
+        source_url: 'https://group.schindler.com/en/responsibility/value-chain/cyber-resilient-across-the-organization.html',
         confidence_level: 'high',
       },
       {
         id: 'init_schindler_0004',
-        announcement_date: null,
-        source_published_at: null,
         year: null,
-        source_published_year: null,
         title: 'Schindler Developer Portal and trial environment for APIs',
         initiative_type: 'platform_consolidation',
-        summary:
-          'Developer Portal provides access to technical documents and a trial environment for specific APIs of Schindler digital products (ecosystem enablement).',
-        business_objective:
-          'Enable third parties to embed Schindler digital products/APIs into broader solutions and workflows.',
+        summary: 'Developer Portal provides access to technical documents and a trial environment for specific APIs of Schindler digital products (ecosystem enablement).',
+        business_objective: 'Enable third parties to embed Schindler digital products/APIs into broader solutions and workflows.',
         technology_domain: ['data', 'automation', 'other'],
         vendors_mentioned: [],
         internal_business_units_affected: ['Digital Products', 'Platform/Engineering'],
