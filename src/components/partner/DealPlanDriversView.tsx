@@ -381,7 +381,7 @@ function AccountSelector({
         <ChevronDown className="w-3 h-3 text-muted-foreground" />
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-52 rounded-lg border border-border bg-card shadow-lg z-50 py-1">
+        <div className="absolute left-0 top-full mt-1 w-52 rounded-lg border border-border bg-card shadow-lg z-50 py-1">
           {ACCOUNTS.map((acc) => (
             <button
               key={acc.id}
@@ -522,7 +522,7 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
 
   // ============= HEADER =============
   const header = (
-    <div className="flex items-center justify-between">
+    <div className="space-y-2">
       <div className="flex items-center gap-2">
         <Brain className="w-5 h-5 text-primary" />
         <h3 className="text-base font-semibold text-foreground">Deal Planning</h3>
@@ -532,7 +532,10 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
           </span>
         )}
       </div>
-      <AccountSelector selectedId={selectedAccount} onSelect={setSelectedAccount} />
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Account</span>
+        <AccountSelector selectedId={selectedAccount} onSelect={setSelectedAccount} />
+      </div>
     </div>
   );
 
@@ -547,6 +550,36 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
           Select or create an account to ground this plan.
         </p>
       )}
+
+      {/* Role toggle — always visible */}
+      <div className="flex items-center justify-between">
+        <div className="inline-flex rounded-lg bg-muted/50 p-0.5 border border-border/60">
+          <button
+            onClick={() => setRoleView('seller')}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all',
+              roleView === 'seller'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <Briefcase className="w-3 h-3" />
+            Business view
+          </button>
+          <button
+            onClick={() => setRoleView('engineer')}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all',
+              roleView === 'engineer'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <Wrench className="w-3 h-3" />
+            Technology view
+          </button>
+        </div>
+      </div>
 
       {/* Compact metadata row: Mode | Trigger | Readiness */}
       <DealPlanMetadata
@@ -586,35 +619,6 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
 
       {/* Plan workspace — only shown after generation */}
       {planGenerated && (<>
-      {/* Role toggle */}
-      <div className="flex items-center justify-between">
-        <div className="inline-flex rounded-lg bg-muted/50 p-0.5 border border-border/60">
-          <button
-            onClick={() => setRoleView('seller')}
-            className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all',
-              roleView === 'seller'
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            <Briefcase className="w-3 h-3" />
-            Seller view
-          </button>
-          <button
-            onClick={() => setRoleView('engineer')}
-            className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all',
-              roleView === 'engineer'
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            <Wrench className="w-3 h-3" />
-            Engineer view
-          </button>
-        </div>
-      </div>
 
       <div className="flex gap-4">
         {/* Left: Main workspace */}
