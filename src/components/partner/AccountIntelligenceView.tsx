@@ -710,13 +710,13 @@ export function AccountIntelligenceView({ focusId }: AccountIntelligenceViewProp
         </CollapsibleSectionCard>
       )}
 
-      {/* ─── Industry Authority Trends (collapsed) ─── */}
+      {/* ─── Industry Trends (collapsed) ─── */}
       {filteredTrends.length > 0 && (
         <CollapsibleSectionCard
-          title="Industry Authority Trends"
+          title="Industry Trends"
           icon={<TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />}
           count={filteredTrends.length}
-          sublabel="Analyst and regulatory trends (12–24 month horizon)"
+          sublabel="Authority-backed trends (12–24 month horizon)"
         >
           <div className="space-y-2.5">
             {sliced(filteredTrends, 'trends', LIMITS.trends).map((t) => (
@@ -768,13 +768,13 @@ export function AccountIntelligenceView({ focusId }: AccountIntelligenceViewProp
         </CollapsibleSectionCard>
       )}
 
-      {/* ─── Industry Pulse (collapsed) ─── */}
+      {/* ─── Industry News (collapsed) ─── */}
       {filteredPulseSignals.length > 0 && industryNews && (
         <CollapsibleSectionCard
-          title={`Industry Pulse — ${industryNews.weekKey}`}
+          title={`Industry News — ${industryNews.weekKey}`}
           icon={<Newspaper className="w-3.5 h-3.5 text-muted-foreground" />}
           count={filteredPulseSignals.length}
-          sublabel="Sector-level pulse. Not account-specific triggers."
+          sublabel="Sector-level news. Not account-specific triggers."
         >
           <div className="space-y-2.5">
             {sliced(filteredPulseSignals, 'pulse', LIMITS.pulse).map((s) => (
