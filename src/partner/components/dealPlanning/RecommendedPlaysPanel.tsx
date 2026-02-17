@@ -3,7 +3,7 @@
 
 import { useState, useMemo } from 'react';
 import {
-  Sparkles, Plus, FileSearch, TrendingUp, AlertTriangle, Check, Info,
+  Sparkles, Plus, TrendingUp, Check, Info,
   ChevronRight, ChevronDown, Trash2, Zap, Eye, EyeOff,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -14,12 +14,14 @@ import { scorePlayPacks, type PropensityInput, type ScoredPlay } from '@/partner
 import { addSelectedPack, getSelectedPacks, addContentRequest, getActivePlay } from '@/partner/data/dealPlanning/selectedPackStore';
 import { getByFocusId as getInitiatives } from '@/data/partner/publicInitiativesStore';
 import { getByFocusId as getTrends } from '@/data/partner/industryAuthorityTrendsStore';
+import { Progress } from '@/components/ui/progress';
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { ReadinessAssessmentPanel } from './ReadinessAssessmentPanel';
 
 // ============= Signal Type Badge Colors =============
 
@@ -145,6 +147,7 @@ export function RecommendedPlaysPanel({
   onPlaySelected,
 }: RecommendedPlaysPanelProps) {
   const [driversOpen, setDriversOpen] = useState(false);
+  const [readinessPlay, setReadinessPlay] = useState<ScoredPlay | null>(null);
 
   // Read canonical stores
   const initiativesTitles = useMemo(() => {
@@ -187,16 +190,7 @@ export function RecommendedPlaysPanel({
     onRefresh?.();
   };
 
-  const handleWhatWeNeed = (packId: string, packName: string) => {
-    addContentRequest(accountId, packId, packName);
-    toast.success(`"What we need" checklist created for "${packName}"`);
-    onRefresh?.();
-  };
-
-  const confidenceColor = (c: 'High' | 'Medium' | 'Low') =>
-    c === 'High' ? 'text-green-600 bg-green-500/10 border-green-500/20'
-    : c === 'Medium' ? 'text-primary bg-primary/10 border-primary/20'
-    : 'text-muted-foreground bg-muted/40 border-border/40';
+  const confidenceLabel = (c: 'High' | 'Medium' | 'Low') => c;
 
   return (
     <div className="rounded-xl border border-primary/15 bg-primary/[0.02] p-4 space-y-3">
@@ -207,7 +201,6 @@ export function RecommendedPlaysPanel({
             <Sparkles className="w-4 h-4 text-primary" />
             <p className="text-xs font-semibold text-foreground">Recommended Plays</p>
           </div>
-          {/* Based-on transparency strip */}
           <p className="text-[11px] text-muted-foreground mt-0.5">
             {promotedSignals.length === 0
               ? 'Based on: Type/Motion · Account context (initiatives and industry trends). Add signals to refine.'
@@ -216,7 +209,7 @@ export function RecommendedPlaysPanel({
         </div>
         <button
           onClick={onOpenPicker}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium border border-border/60 text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-primary/[0.02] transition-all flex-shrink-0"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] font-medium border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors flex-shrink-0"
         >
           <Plus className="w-3.5 h-3.5" />
           Add signals
@@ -256,7 +249,7 @@ export function RecommendedPlaysPanel({
 
       {/* ===== Empty State ===== */}
       {hasNoContext ? (
-        <div className="rounded-lg border border-border/40 bg-muted/20 p-6 text-center">
+        <div className="rounded border border-border/40 bg-muted/20 p-6 text-center">
           <p className="text-xs text-muted-foreground">
             No account context available yet. Recommendations will appear once intelligence is added.
           </p>
@@ -267,31 +260,29 @@ export function RecommendedPlaysPanel({
           {scoredPlays.map((play) => {
             const isAdded = selectedPacks.includes(play.packId);
             const isActivePlan = activePlay?.playId === play.packId;
+            const gapCount = play.gaps.length;
             return (
               <div
                 key={play.packId}
-                className="rounded-lg border border-border/60 bg-card p-3.5 space-y-2.5 flex flex-col"
+                className="rounded border border-border/60 bg-card p-3.5 space-y-3 flex flex-col"
               >
-                <div>
-                  <p className="text-xs font-semibold text-foreground leading-snug">{play.packName}</p>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="text-[10px] font-bold text-primary inline-flex items-center gap-0.5 cursor-help">
-                            Engagement Fit: {play.engagementFitPct}%
-                            <Info className="w-2.5 h-2.5 text-muted-foreground" />
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-[200px] text-[10px]">
-                          Score based on promoted signals, public initiatives, and industry trends.
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded-full border', confidenceColor(play.confidence))}>
-                      {play.confidence}
+                {/* Title */}
+                <p className="text-xs font-semibold text-foreground leading-snug">{play.packName}</p>
+
+                {/* Fit Score Block */}
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Fit Score</p>
+                  <Progress value={play.engagementFitPct} className="h-1 bg-secondary" />
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-medium text-foreground">
+                      {play.engagementFitPct}% · {confidenceLabel(play.confidence)}
                     </span>
                   </div>
+                  {gapCount > 0 && (
+                    <p className="text-[10px] text-muted-foreground">
+                      {gapCount} readiness gap{gapCount !== 1 ? 's' : ''} identified
+                    </p>
+                  )}
                 </div>
 
                 {/* Drivers */}
@@ -303,26 +294,22 @@ export function RecommendedPlaysPanel({
                     <div className="space-y-0.5">
                       {play.drivers.map((d, i) => (
                         <p key={i} className="text-[10px] text-muted-foreground flex items-start gap-1">
-                          <span className="text-green-500 mt-px">•</span> {d}
+                          <span className="text-primary/60 mt-px">•</span> {d}
                         </p>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* Gaps */}
+                {/* Readiness Gaps — inline, dot-separated */}
                 {play.gaps.length > 0 && (
                   <div>
-                    <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1 mb-1">
-                      <AlertTriangle className="w-2.5 h-2.5" /> What's missing
+                    <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                      Readiness Gaps
                     </p>
-                    <div className="space-y-0.5">
-                      {play.gaps.map((g, i) => (
-                        <p key={i} className="text-[10px] text-muted-foreground flex items-start gap-1">
-                          <span className="text-destructive/60 mt-px">•</span> {g}
-                        </p>
-                      ))}
-                    </div>
+                    <p className="text-[10px] text-muted-foreground leading-snug">
+                      {play.gaps.join(' · ')}
+                    </p>
                   </div>
                 )}
 
@@ -334,25 +321,25 @@ export function RecommendedPlaysPanel({
                   trendsTitles={trendsTitles}
                 />
 
-                {/* Actions */}
-                <div className="flex items-center gap-1.5 mt-auto pt-1">
+                {/* Actions — enterprise minimal, no icons */}
+                <div className="flex items-center gap-2 mt-auto pt-1">
                   <button
                     onClick={() => handleAddToPlan(play)}
                     disabled={isAdded || isActivePlan}
                     className={cn(
-                      'flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-[10px] font-medium transition-colors',
+                      'flex-1 px-2 py-1.5 rounded text-[10px] font-medium transition-colors',
                       (isAdded || isActivePlan)
-                        ? 'bg-green-500/10 text-green-600 cursor-default'
+                        ? 'bg-secondary text-secondary-foreground cursor-default'
                         : 'bg-primary text-primary-foreground hover:bg-primary/90'
                     )}
                   >
-                    {isActivePlan ? <><Check className="w-3 h-3" /> In Plan</> : isAdded ? <><Check className="w-3 h-3" /> Added</> : <><Plus className="w-3 h-3" /> Add to Plan</>}
+                    {isActivePlan ? 'In Plan' : isAdded ? 'Added' : 'Add to Plan'}
                   </button>
                   <button
-                    onClick={() => handleWhatWeNeed(play.packId, play.packName)}
-                    className="flex items-center gap-1 px-2 py-1.5 rounded-md text-[10px] font-medium border border-border/60 text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
+                    onClick={() => setReadinessPlay(play)}
+                    className="flex-1 px-2 py-1.5 rounded text-[10px] font-medium border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
                   >
-                    <FileSearch className="w-3 h-3" /> What we need
+                    Review Readiness
                   </button>
                 </div>
               </div>
@@ -375,7 +362,7 @@ export function RecommendedPlaysPanel({
               return (
                 <div
                   key={d.signalId}
-                  className="flex items-center gap-2.5 p-2 rounded-lg border border-border/40 bg-background"
+                  className="flex items-center gap-2.5 p-2 rounded border border-border/40 bg-background"
                 >
                   <span className={cn('text-[9px] font-medium px-1.5 py-0.5 rounded-full border flex-shrink-0', typeColor)}>
                     {d.snapshot.type}
@@ -385,7 +372,7 @@ export function RecommendedPlaysPanel({
                   </p>
                   <button
                     onClick={() => onRemoveSignal(d.signalId)}
-                    className="p-1 rounded-md text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors flex-shrink-0"
+                    className="p-1 rounded text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors flex-shrink-0"
                   >
                     <Trash2 className="w-3 h-3" />
                   </button>
@@ -394,6 +381,18 @@ export function RecommendedPlaysPanel({
             })}
           </CollapsibleContent>
         </Collapsible>
+      )}
+
+      {/* ===== Readiness Assessment Panel ===== */}
+      {readinessPlay && (
+        <ReadinessAssessmentPanel
+          play={readinessPlay}
+          promotedSignals={promotedSignals}
+          initiativeCount={initiativesTitles.length}
+          trendCount={trendsTitles.length}
+          onClose={() => setReadinessPlay(null)}
+          onAddToPlan={handleAddToPlan}
+        />
       )}
     </div>
   );
