@@ -256,7 +256,7 @@ export function RecommendedPlaysPanel({
         </div>
       ) : (
         /* ===== Play Cards ===== */
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-stretch">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 auto-rows-[1fr]">
           {scoredPlays.map((play) => {
             const isAdded = selectedPacks.includes(play.packId);
             const isActivePlan = activePlay?.playId === play.packId;
@@ -264,7 +264,7 @@ export function RecommendedPlaysPanel({
             return (
               <div
                 key={play.packId}
-                className="rounded border border-border/60 bg-card p-3.5 flex flex-col h-full"
+                className="rounded border border-border/60 bg-card p-3.5 flex flex-col"
               >
                 {/* Content area — grows to fill */}
                 <div className="flex-1 space-y-3">
