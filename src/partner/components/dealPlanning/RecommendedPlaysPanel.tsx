@@ -256,7 +256,7 @@ export function RecommendedPlaysPanel({
         </div>
       ) : (
         /* ===== Play Cards ===== */
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-stretch">
           {scoredPlays.map((play) => {
             const isAdded = selectedPacks.includes(play.packId);
             const isActivePlan = activePlay?.playId === play.packId;
