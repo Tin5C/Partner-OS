@@ -1,6 +1,7 @@
-// Deal Plan Drivers View — comprehensive 6-section workspace
-// 1) Strategic Framing  2) Political Map  3) Execution Motion
-// 4) CRM + Account Signals  5) Risks & Blockers  6) Asset Packs
+// Deal Plan Drivers View — comprehensive workspace
+// Sections expand dynamically when a play is added to plan (up to 8 sections)
+// 1) Strategic Framing  2) Political Map  3) Execution Motion  4) CRM + Account Signals
+// 5) What we need  6) Risks & Blockers  7) Execution Bundle  8) Asset Packs
 
 import { useState, useMemo, useCallback, useRef } from 'react';
 import {
@@ -42,6 +43,7 @@ import {
   FolderOpen,
   Inbox as InboxIcon,
   X,
+  ClipboardCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -73,6 +75,11 @@ import { TechnicalRecommendationsSection } from '@/partner/components/dealPlanni
 import { PLAY_SERVICE_PACKS } from '@/partner/data/dealPlanning/servicePacks';
 import { scorePlayPacks } from '@/partner/lib/dealPlanning/propensity';
 import { setActivePlay, getActivePlay } from '@/partner/data/dealPlanning/selectedPackStore';
+import { hydratePlan, getHydratedPlan } from '@/partner/data/dealPlanning/planHydrationStore';
+import { WhatWeNeedSection } from '@/partner/components/dealPlanning/WhatWeNeedSection';
+import { ExecutionBundleSection } from '@/partner/components/dealPlanning/ExecutionBundleSection';
+import { DealHypothesisBlock } from '@/partner/components/dealPlanning/DealHypothesisBlock';
+import { RisksBlockersSection } from '@/partner/components/dealPlanning/RisksBlockersSection';
 
 const WEEK_OF = '2026-02-10';
 
@@ -577,17 +584,33 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
     const whyText = whyDrivers
       ? `${whyDrivers}. Act now to capture the engagement window.`
       : 'Strategic alignment with current account priorities creates a natural engagement window.';
-    setActivePlay(selectedAccount, {
+    const activePlay = {
       playId: play.packId,
       playTitle: play.packName,
       framing: { what: whatText, how: howText, why: whyText },
-    });
+    };
+    setActivePlay(selectedAccount, activePlay);
+    // Hydrate all plan sections
+    const hp = hydratePlan(
+      selectedAccount,
+      activePlay,
+      engagementType as 'new_logo' | 'existing_customer' | null,
+      motion,
+      play.gaps,
+    );
+    // Update political map from hydration
+    if (hp.politicalMap.length === 4) {
+      setSponsor({ name: hp.politicalMap[0].title, notes: hp.politicalMap[0].notes });
+      setChampion({ name: hp.politicalMap[1].title, notes: hp.politicalMap[1].notes });
+      setBlocker({ name: hp.politicalMap[2].title, notes: hp.politicalMap[2].notes });
+      setProcurement({ name: hp.politicalMap[3].title, notes: hp.politicalMap[3].notes });
+    }
     refresh();
     // Scroll to Strategic Framing
     setTimeout(() => {
       strategicFramingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
-  }, [selectedAccount, refresh]);
+  }, [selectedAccount, refresh, engagementType, motion]);
 
   // ============= HEADER =============
   const header = (
@@ -877,9 +900,31 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
             </div>
           </Section>
 
+          {/* ===== Deal Hypothesis (shown when plan is hydrated) ===== */}
+          {selectedAccount && getHydratedPlan(selectedAccount) && (
+            <DealHypothesisBlock hypothesis={getHydratedPlan(selectedAccount)!.dealHypothesis} />
+          )}
+
+          {/* ===== What we need (evidence checklist) ===== */}
+          {selectedAccount && getHydratedPlan(selectedAccount) && (
+            <Section number={5} title="What we need" icon={<ClipboardCheck className="w-3.5 h-3.5" />}>
+              <WhatWeNeedSection
+                items={getHydratedPlan(selectedAccount)!.checklist}
+                focusId={selectedAccount}
+                onRefresh={refresh}
+              />
+            </Section>
+          )}
+
           {/* ===== 5) Risks & Blockers ===== */}
-          <Section number={5} title="Risks & Blockers" icon={<AlertTriangle className="w-3.5 h-3.5" />}>
-            {aggregatedRisks.length > 0 ? (
+          <Section number={selectedAccount && getHydratedPlan(selectedAccount) ? 6 : 5} title="Risks & Blockers" icon={<AlertTriangle className="w-3.5 h-3.5" />}>
+            {selectedAccount && getHydratedPlan(selectedAccount) ? (
+              <RisksBlockersSection
+                risks={getHydratedPlan(selectedAccount)!.risks}
+                focusId={selectedAccount}
+                onRefresh={refresh}
+              />
+            ) : aggregatedRisks.length > 0 ? (
               <div className="space-y-1.5">
                 {aggregatedRisks.map((item, i) => (
                   <div key={i} className="flex items-start gap-2 text-xs">
@@ -893,8 +938,15 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
             )}
           </Section>
 
+          {/* ===== Execution Bundle ===== */}
+          {selectedAccount && getHydratedPlan(selectedAccount) && (
+            <Section number={7} title="Execution Bundle" icon={<Package className="w-3.5 h-3.5" />}>
+              <ExecutionBundleSection assets={getHydratedPlan(selectedAccount)!.executionBundle} />
+            </Section>
+          )}
+
           {/* ===== 6) Asset Packs ===== */}
-          <Section number={6} title="Asset Packs" icon={<Package className="w-3.5 h-3.5" />}>
+          <Section number={selectedAccount && getHydratedPlan(selectedAccount) ? 8 : 6} title="Asset Packs" icon={<Package className="w-3.5 h-3.5" />}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <AssetPackCard
                 label="Assessment Pack"
