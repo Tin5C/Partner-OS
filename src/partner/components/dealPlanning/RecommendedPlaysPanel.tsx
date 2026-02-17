@@ -2,13 +2,21 @@
 // Partner-only, does NOT modify existing Deal Planning data shape
 
 import { useMemo } from 'react';
-import { Sparkles, Plus, FileSearch, TrendingUp, AlertTriangle, Check } from 'lucide-react';
+import { Sparkles, Plus, FileSearch, TrendingUp, AlertTriangle, Check, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { PromotedSignal } from '@/data/partner/dealPlanStore';
 import { PLAY_SERVICE_PACKS } from '@/partner/data/dealPlanning/servicePacks';
 import { scorePlayPacks, type PropensityInput } from '@/partner/lib/dealPlanning/propensity';
 import { addSelectedPack, getSelectedPacks, addContentRequest } from '@/partner/data/dealPlanning/selectedPackStore';
+import { getByFocusId as getInitiatives } from '@/data/partner/publicInitiativesStore';
+import { getByFocusId as getTrends } from '@/data/partner/industryAuthorityTrendsStore';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface RecommendedPlaysPanelProps {
   accountId: string;
@@ -27,15 +35,28 @@ export function RecommendedPlaysPanel({
   readinessScore,
   onRefresh,
 }: RecommendedPlaysPanelProps) {
+  // Read canonical stores for alignment context
+  const initiativesTitles = useMemo(() => {
+    const rec = getInitiatives(accountId);
+    return rec?.public_it_initiatives?.map((i) => i.title) ?? [];
+  }, [accountId]);
+
+  const trendsTitles = useMemo(() => {
+    const pack = getTrends(accountId);
+    return pack?.trends?.map((t) => t.trend_title) ?? [];
+  }, [accountId]);
+
   const scoredPlays = useMemo(() => {
     const input: PropensityInput = {
       promotedSignals,
       engagementType,
       motion,
       readinessScore,
+      initiatives: initiativesTitles,
+      trends: trendsTitles,
     };
     return scorePlayPacks(PLAY_SERVICE_PACKS, input);
-  }, [promotedSignals, engagementType, motion, readinessScore]);
+  }, [promotedSignals, engagementType, motion, readinessScore, initiativesTitles, trendsTitles]);
 
   const selectedPacks = useMemo(() => getSelectedPacks(accountId), [accountId, scoredPlays]);
 
@@ -65,7 +86,7 @@ export function RecommendedPlaysPanel({
           <p className="text-xs font-semibold text-foreground">Recommended Plays</p>
         </div>
         <p className="text-xs text-muted-foreground">
-          Promote signals to generate recommendations.
+          Promote signals to generate recommendations tailored to this motion.
         </p>
       </div>
     );
@@ -79,7 +100,7 @@ export function RecommendedPlaysPanel({
           <p className="text-xs font-semibold text-foreground">Recommended Plays</p>
         </div>
         <p className="text-[11px] text-muted-foreground mt-0.5">
-          Based on promoted signals, strategy pillars, and motion.
+          Based on promoted signals, public initiatives, and industry trends.
         </p>
       </div>
 
@@ -94,9 +115,19 @@ export function RecommendedPlaysPanel({
               <div>
                 <p className="text-xs font-semibold text-foreground leading-snug">{play.packName}</p>
                 <div className="flex items-center gap-2 mt-1.5">
-                  <span className="text-[10px] font-bold text-primary">
-                    Engagement Fit: {play.engagementFitPct}%
-                  </span>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="text-[10px] font-bold text-primary inline-flex items-center gap-0.5 cursor-help">
+                          Engagement Fit: {play.engagementFitPct}%
+                          <Info className="w-2.5 h-2.5 text-muted-foreground" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-[200px] text-[10px]">
+                        Score based on promoted signals, public initiatives, and industry trends.
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                   <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded-full border', confidenceColor(play.confidence))}>
                     {play.confidence}
                   </span>
@@ -160,6 +191,13 @@ export function RecommendedPlaysPanel({
           );
         })}
       </div>
+
+      {/* Dev debug — only visible in development */}
+      {import.meta.env.DEV && (
+        <p className="text-[9px] text-muted-foreground/50 mt-1">
+          Using: Promoted Signals {promotedSignals.length} · Initiatives {initiativesTitles.length} · Trends {trendsTitles.length}
+        </p>
+      )}
     </div>
   );
 }

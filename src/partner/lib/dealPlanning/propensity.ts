@@ -104,7 +104,10 @@ export function scorePlayPacks<T extends PackLike>(
       ? Math.round((Math.min(pillarOverlap, 2) / 2) * 25)
       : 12; // neutral if no pillars
     score += pillarScore;
-    if (pillarOverlap > 0) drivers.push('Strategy pillar alignment');
+    if (pillarOverlap > 0) {
+      const matchedPillar = pillars.find((p) => pack.tags.some((t) => p.toLowerCase().includes(t.replace(/_/g, ' '))));
+      drivers.push(matchedPillar ? `Pillar: "${matchedPillar.slice(0, 50)}"` : 'Strategy pillar alignment');
+    }
     if (pillars.length > 0 && pillarOverlap === 0) gaps.push('No strategy pillar match');
 
     // C) Initiative alignment (20%)
@@ -115,7 +118,20 @@ export function scorePlayPacks<T extends PackLike>(
       ? Math.round((Math.min(initOverlap, 2) / 2) * 20)
       : 10; // neutral
     score += initScore;
-    if (initOverlap > 0) drivers.push('Initiative alignment');
+    if (initOverlap > 0) {
+      const matchedInit = initiatives.find((i) => pack.tags.some((t) => i.toLowerCase().includes(t.replace(/_/g, ' '))));
+      drivers.push(matchedInit ? `Initiative: "${matchedInit.slice(0, 50)}"` : 'Initiative alignment');
+    }
+
+    // C2) Trend alignment (bonus within the 20% bucket — additive context)
+    const trendOverlap = pack.tags.filter((t) =>
+      trends.some((tr) => tr.toLowerCase().includes(t.replace(/_/g, ' ')))
+    ).length;
+    if (trendOverlap > 0) {
+      score += Math.min(trendOverlap * 3, 10); // small boost, capped
+      const matchedTrend = trends.find((tr) => pack.tags.some((t) => tr.toLowerCase().includes(t.replace(/_/g, ' '))));
+      drivers.push(matchedTrend ? `Trend: "${matchedTrend.slice(0, 50)}"` : 'Industry trend alignment');
+    }
 
     // D) Readiness feasibility (15%)
     if (input.readinessScore != null) {
