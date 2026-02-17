@@ -1,7 +1,7 @@
 // Strategic Framing — WHAT / HOW / WHY section for Business View
 // Partner-only, replaces "Strategic Positioning" header text only within Deal Planning
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Crosshair, Pencil, Check, Lightbulb, Route, Target } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import type { PromotedSignal } from '@/data/partner/dealPlanStore';
@@ -10,6 +10,7 @@ interface StrategicFramingSectionProps {
   promotedSignals: PromotedSignal[];
   topPackName: string | null;
   businessDrivers?: string;
+  activePlayFraming?: { what: string; how: string; why: string } | null;
   /** Existing fields to preserve in collapsible Details */
   existingFields?: {
     whyNow: string;
@@ -74,19 +75,29 @@ export function StrategicFramingSection({
   promotedSignals,
   topPackName,
   businessDrivers,
+  activePlayFraming,
 }: StrategicFramingSectionProps) {
-  // Derive defaults from promoted signals
-  const defaultWhat = promotedSignals.length > 0
+  // Derive defaults from active play framing first, then promoted signals
+  const defaultWhat = activePlayFraming?.what ?? (promotedSignals.length > 0
     ? promotedSignals.slice(0, 2).map((s) => s.snapshot.title).join('; ')
-    : '';
-  const defaultHow = topPackName ?? '';
-  const defaultWhy = businessDrivers ?? (promotedSignals.length > 0
+    : '');
+  const defaultHow = activePlayFraming?.how ?? topPackName ?? '';
+  const defaultWhy = activePlayFraming?.why ?? businessDrivers ?? (promotedSignals.length > 0
     ? promotedSignals[0]?.snapshot.soWhat ?? ''
     : '');
 
   const [whatText, setWhatText] = useState(defaultWhat);
   const [howText, setHowText] = useState(defaultHow);
   const [whyText, setWhyText] = useState(defaultWhy);
+
+  // Update when an active play is selected
+  useEffect(() => {
+    if (activePlayFraming) {
+      setWhatText(activePlayFraming.what);
+      setHowText(activePlayFraming.how);
+      setWhyText(activePlayFraming.why);
+    }
+  }, [activePlayFraming]);
 
   return (
     <div className="space-y-2.5">

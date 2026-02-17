@@ -2,7 +2,7 @@
 // 1) Strategic Framing  2) Political Map  3) Execution Motion
 // 4) CRM + Account Signals  5) Risks & Blockers  6) Asset Packs
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import {
   Brain,
   Zap,
@@ -72,6 +72,7 @@ import { StrategicFramingSection } from '@/partner/components/dealPlanning/Strat
 import { TechnicalRecommendationsSection } from '@/partner/components/dealPlanning/TechnicalRecommendationsSection';
 import { PLAY_SERVICE_PACKS } from '@/partner/data/dealPlanning/servicePacks';
 import { scorePlayPacks } from '@/partner/lib/dealPlanning/propensity';
+import { setActivePlay, getActivePlay } from '@/partner/data/dealPlanning/selectedPackStore';
 
 const WEEK_OF = '2026-02-10';
 
@@ -427,6 +428,7 @@ function AccountSelector({
 export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewProps) {
   const [, forceUpdate] = useState(0);
   const refresh = useCallback(() => forceUpdate((n) => n + 1), []);
+  const strategicFramingRef = useRef<HTMLDivElement>(null);
 
   // Account selection — null = no account chosen yet
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
@@ -565,6 +567,27 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
     refresh();
     toast.success(`Added ${signals.length} signal${signals.length > 1 ? 's' : ''} to Deal Plan`);
   }, [refresh, selectedAccount]);
+
+  // Handle play selected from Recommended Plays
+  const handlePlaySelected = useCallback((play: { packId: string; packName: string; drivers: string[]; gaps: string[] }) => {
+    if (!selectedAccount) return;
+    const whatText = `Launch ${play.packName} to validate priority use cases and define a delivery scope.`;
+    const howText = `Entry via ${play.packName} — phased engagement with clear pilot milestones.`;
+    const whyDrivers = play.drivers.slice(0, 2).join('; ');
+    const whyText = whyDrivers
+      ? `${whyDrivers}. Act now to capture the engagement window.`
+      : 'Strategic alignment with current account priorities creates a natural engagement window.';
+    setActivePlay(selectedAccount, {
+      playId: play.packId,
+      playTitle: play.packName,
+      framing: { what: whatText, how: howText, why: whyText },
+    });
+    refresh();
+    // Scroll to Strategic Framing
+    setTimeout(() => {
+      strategicFramingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }, [selectedAccount, refresh]);
 
   // ============= HEADER =============
   const header = (
@@ -732,6 +755,7 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
             onRemoveSignal={handleRemove}
             onOpenPicker={() => setShowPicker(true)}
             showPicker={showPicker}
+            onPlaySelected={handlePlaySelected}
             pickerNode={
               <SignalPicker
                 existingIds={existingIds}
@@ -752,7 +776,9 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
           )}
 
           {/* ===== 1) Strategic Framing (was Strategic Positioning) ===== */}
+          <div ref={strategicFramingRef}>
           <Section
+
             number={1}
             title="Strategic Framing"
             icon={<Crosshair className="w-3.5 h-3.5" />}
@@ -763,6 +789,7 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
                 <StrategicFramingSection
                   promotedSignals={drivers}
                   topPackName={topPlayPackName}
+                  activePlayFraming={selectedAccount ? getActivePlay(selectedAccount)?.framing ?? null : null}
                 />
                 {/* Collapsible Details — preserves old fields */}
                 <button
@@ -790,6 +817,7 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
               </div>
             )}
           </Section>
+          </div>
 
           {/* ===== 2) Political Map ===== */}
           <Section

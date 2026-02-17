@@ -8,8 +8,19 @@ export interface ContentRequest {
   createdAt: string;
 }
 
+export interface ActivePlay {
+  playId: string;
+  playTitle: string;
+  framing: {
+    what: string;
+    how: string;
+    why: string;
+  };
+}
+
 const selectedPacks: Map<string, string[]> = new Map(); // focusId -> packIds
 const contentRequests: Map<string, ContentRequest[]> = new Map(); // focusId -> requests
+const activePlays: Map<string, ActivePlay> = new Map(); // focusId -> active play
 
 export function getSelectedPacks(focusId: string): string[] {
   return selectedPacks.get(focusId) ?? [];
@@ -42,4 +53,16 @@ export function addContentRequest(focusId: string, packId: string, packName: str
   const existing = contentRequests.get(focusId) ?? [];
   contentRequests.set(focusId, [...existing, req]);
   return req;
+}
+
+export function getActivePlay(focusId: string): ActivePlay | null {
+  return activePlays.get(focusId) ?? null;
+}
+
+export function setActivePlay(focusId: string, play: ActivePlay): void {
+  activePlays.set(focusId, play);
+}
+
+export function clearActivePlay(focusId: string): void {
+  activePlays.delete(focusId);
 }
