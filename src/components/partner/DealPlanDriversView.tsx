@@ -1,6 +1,6 @@
-// Deal Plan Drivers View — comprehensive 7-section workspace
-// 1) Promoted Drivers  2) Strategic Framing  3) Political Map
-// 4) Execution Motion  5) CRM + Account Signals  6) Risks & Blockers  7) Asset Packs
+// Deal Plan Drivers View — comprehensive 6-section workspace
+// 1) Strategic Framing  2) Political Map  3) Execution Motion
+// 4) CRM + Account Signals  5) Risks & Blockers  6) Asset Packs
 
 import { useState, useMemo, useCallback } from 'react';
 import {
@@ -722,13 +722,24 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
             </div>
           )}
 
-          {/* ===== Recommended Plays Panel (additive, top of page) ===== */}
+          {/* ===== Recommended Plays (unified: plays + promoted drivers) ===== */}
           <RecommendedPlaysPanel
             accountId={selectedAccount}
             promotedSignals={drivers}
             engagementType={engagementType as 'new_logo' | 'existing_customer' | null}
             motion={motion}
             onRefresh={refresh}
+            onRemoveSignal={handleRemove}
+            onOpenPicker={() => setShowPicker(true)}
+            showPicker={showPicker}
+            pickerNode={
+              <SignalPicker
+                existingIds={existingIds}
+                onSelect={handleAddSignals}
+                onClose={() => setShowPicker(false)}
+                accountId={selectedAccount}
+              />
+            }
           />
 
           {/* ===== Technology Recommendations (engineer view only, additive) ===== */}
@@ -740,135 +751,9 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
             />
           )}
 
-          {/* ===== 1) Promoted Drivers ===== */}
-          <Section number={1} title="Promoted Drivers" icon={<Zap className="w-3.5 h-3.5" />}>
-            {drivers.length > 0 ? (
-              <div className="space-y-2">
-                {drivers.map((d) => {
-                  const s = d.snapshot;
-                  const isExpanded = expandedIds.has(d.signalId);
-                  const typeColor = TYPE_COLORS[s.type] ?? 'bg-muted text-muted-foreground border-border';
-
-                  return (
-                    <div key={d.signalId} className="rounded-lg border border-border/50 bg-background overflow-hidden">
-                      <div
-                        className="flex items-start gap-3 p-3 cursor-pointer hover:bg-muted/20 transition-colors"
-                        onClick={() => toggleExpand(d.signalId)}
-                      >
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full border', typeColor)}>
-                              {s.type}
-                            </span>
-                            <span className={cn('text-[10px] font-bold', confidenceColor(s.confidence))}>
-                              {s.confidence}%
-                            </span>
-                          </div>
-                          <p className="text-sm font-medium text-foreground leading-snug">{s.title}</p>
-                          {!isExpanded && (
-                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{s.soWhat}</p>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1 flex-shrink-0 mt-1">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleRemove(d.signalId); }}
-                            className="p-1 rounded-md text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                          {isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
-                        </div>
-                      </div>
-
-                      {isExpanded && (
-                        <div className="px-3 pb-3 space-y-3 border-t border-border/40 pt-3">
-                          <div className="p-2.5 rounded-lg bg-primary/5 border border-primary/10">
-                            <p className="text-[10px] font-semibold text-primary uppercase tracking-wide mb-1">So what</p>
-                            <p className="text-xs text-foreground">{s.soWhat}</p>
-                          </div>
-                          <div className="p-2.5 rounded-lg bg-muted/30 border border-border/40">
-                            <p className="text-[10px] font-semibold text-primary uppercase tracking-wide mb-1">Action</p>
-                            <p className="text-xs text-foreground">{s.recommendedAction}</p>
-                          </div>
-                          <div className={cn("p-2.5 rounded-lg bg-muted/20 border border-border/40", roleView === 'seller' && 'ring-1 ring-primary/20')}>
-                            <div className="flex items-center justify-between mb-1">
-                              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                                <MessageSquare className="w-3 h-3" /> Talk Track
-                                {roleView === 'seller' && <span className="text-primary ml-1">★</span>}
-                              </p>
-                              <button onClick={() => handleCopy(s.talkTrack)} className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-0.5">
-                                <Copy className="w-3 h-3" /> Copy
-                              </button>
-                            </div>
-                            <p className="text-xs text-foreground leading-relaxed">{s.talkTrack}</p>
-                          </div>
-                          {s.whoCares.length > 0 && (
-                            <div>
-                              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Who cares</p>
-                              <div className="flex flex-wrap gap-1.5">
-                                {s.whoCares.map((r, i) => (
-                                  <span key={i} className="px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground border border-border/50 text-[10px] font-medium">
-                                    {r}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          {s.proofToRequest.length > 0 && (
-                            <div>
-                              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Proof to request</p>
-                              <div className="space-y-1">
-                                {s.proofToRequest.map((item, i) => (
-                                  <div key={i} className="flex items-start gap-1.5 text-xs">
-                                    <Link2 className="w-3 h-3 text-primary/50 mt-0.5 flex-shrink-0" />
-                                    <span className="text-muted-foreground">{item}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          {s.sources.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 pt-1 border-t border-border/30">
-                              {s.sources.map((src, i) => (
-                                <span key={i} className="px-2 py-0.5 rounded-full bg-muted/40 border border-border/40 text-[10px] text-muted-foreground">{src}</span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground italic">No promoted signals yet — use Add Signals to attach intelligence.</p>
-            )}
-
-            {/* Add Signals button */}
-            <button
-              onClick={() => setShowPicker(true)}
-              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-primary/[0.02] transition-all"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Add Signals
-            </button>
-
-            {/* Inline signal picker */}
-            {showPicker && (
-              <div className="mt-3">
-                <SignalPicker
-                  existingIds={existingIds}
-                  onSelect={handleAddSignals}
-                  onClose={() => setShowPicker(false)}
-                  accountId={selectedAccount}
-                />
-              </div>
-            )}
-          </Section>
-
-          {/* ===== 2) Strategic Framing (was Strategic Positioning) ===== */}
+          {/* ===== 1) Strategic Framing (was Strategic Positioning) ===== */}
           <Section
-            number={2}
+            number={1}
             title="Strategic Framing"
             icon={<Crosshair className="w-3.5 h-3.5" />}
             roleHighlight={roleView === 'seller'}
@@ -906,9 +791,9 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
             )}
           </Section>
 
-          {/* ===== 3) Political Map ===== */}
+          {/* ===== 2) Political Map ===== */}
           <Section
-            number={3}
+            number={2}
             title="Political Map"
             icon={<Users className="w-3.5 h-3.5" />}
             roleHighlight={roleView === 'seller'}
@@ -921,9 +806,9 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
             </div>
           </Section>
 
-          {/* ===== 4) Execution Motion ===== */}
+          {/* ===== 3) Execution Motion ===== */}
           <Section
-            number={4}
+            number={3}
             title="Execution Motion"
             icon={<Rocket className="w-3.5 h-3.5" />}
             roleHighlight={roleView === 'engineer'}
@@ -935,8 +820,8 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
             </div>
           </Section>
 
-          {/* ===== 5) CRM + Account Signals ===== */}
-          <Section number={5} title="CRM + Account Signals" icon={<Activity className="w-3.5 h-3.5" />}>
+          {/* ===== 4) CRM + Account Signals ===== */}
+          <Section number={4} title="CRM + Account Signals" icon={<Activity className="w-3.5 h-3.5" />}>
             <div className="space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <div className="p-2.5 rounded-lg bg-muted/20 border border-border/40">
@@ -964,8 +849,8 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
             </div>
           </Section>
 
-          {/* ===== 6) Risks & Blockers ===== */}
-          <Section number={6} title="Risks & Blockers" icon={<AlertTriangle className="w-3.5 h-3.5" />}>
+          {/* ===== 5) Risks & Blockers ===== */}
+          <Section number={5} title="Risks & Blockers" icon={<AlertTriangle className="w-3.5 h-3.5" />}>
             {aggregatedRisks.length > 0 ? (
               <div className="space-y-1.5">
                 {aggregatedRisks.map((item, i) => (
@@ -980,8 +865,8 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
             )}
           </Section>
 
-          {/* ===== 7) Asset Packs ===== */}
-          <Section number={7} title="Asset Packs" icon={<Package className="w-3.5 h-3.5" />}>
+          {/* ===== 6) Asset Packs ===== */}
+          <Section number={6} title="Asset Packs" icon={<Package className="w-3.5 h-3.5" />}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <AssetPackCard
                 label="Assessment Pack"
