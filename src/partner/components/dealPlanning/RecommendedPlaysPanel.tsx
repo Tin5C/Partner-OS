@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import type { PromotedSignal } from '@/data/partner/dealPlanStore';
 import { PLAY_SERVICE_PACKS } from '@/partner/data/dealPlanning/servicePacks';
 import { scorePlayPacks, type PropensityInput, type ScoredPlay } from '@/partner/lib/dealPlanning/propensity';
-import { addSelectedPack, getSelectedPacks, addContentRequest } from '@/partner/data/dealPlanning/selectedPackStore';
+import { addSelectedPack, getSelectedPacks, addContentRequest, getActivePlay } from '@/partner/data/dealPlanning/selectedPackStore';
 import { getByFocusId as getInitiatives } from '@/data/partner/publicInitiativesStore';
 import { getByFocusId as getTrends } from '@/data/partner/industryAuthorityTrendsStore';
 import {
@@ -44,6 +44,7 @@ interface RecommendedPlaysPanelProps {
   onOpenPicker: () => void;
   showPicker: boolean;
   pickerNode?: React.ReactNode;
+  onPlaySelected?: (play: { packId: string; packName: string; drivers: string[]; gaps: string[] }) => void;
 }
 
 // ============= Per-Card Basis Expander =============
@@ -141,6 +142,7 @@ export function RecommendedPlaysPanel({
   onOpenPicker,
   showPicker,
   pickerNode,
+  onPlaySelected,
 }: RecommendedPlaysPanelProps) {
   const [driversOpen, setDriversOpen] = useState(false);
 
@@ -170,11 +172,18 @@ export function RecommendedPlaysPanel({
   }, [promotedSignals, engagementType, motion, readinessScore, initiativesTitles, trendsTitles]);
 
   const selectedPacks = useMemo(() => getSelectedPacks(accountId), [accountId, scoredPlays]);
+  const activePlay = useMemo(() => getActivePlay(accountId), [accountId, scoredPlays]);
   const hasNoContext = promotedSignals.length === 0 && initiativesTitles.length === 0 && trendsTitles.length === 0;
 
-  const handleAddToPlan = (packId: string, packName: string) => {
-    addSelectedPack(accountId, packId);
-    toast.success(`"${packName}" added to plan`);
+  const handleAddToPlan = (play: ScoredPlay) => {
+    addSelectedPack(accountId, play.packId);
+    onPlaySelected?.({
+      packId: play.packId,
+      packName: play.packName,
+      drivers: play.drivers,
+      gaps: play.gaps,
+    });
+    toast.success(`"${play.packName}" added to plan`);
     onRefresh?.();
   };
 
@@ -257,6 +266,7 @@ export function RecommendedPlaysPanel({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {scoredPlays.map((play) => {
             const isAdded = selectedPacks.includes(play.packId);
+            const isActivePlan = activePlay?.playId === play.packId;
             return (
               <div
                 key={play.packId}
@@ -327,16 +337,16 @@ export function RecommendedPlaysPanel({
                 {/* Actions */}
                 <div className="flex items-center gap-1.5 mt-auto pt-1">
                   <button
-                    onClick={() => handleAddToPlan(play.packId, play.packName)}
-                    disabled={isAdded}
+                    onClick={() => handleAddToPlan(play)}
+                    disabled={isAdded || isActivePlan}
                     className={cn(
                       'flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-[10px] font-medium transition-colors',
-                      isAdded
+                      (isAdded || isActivePlan)
                         ? 'bg-green-500/10 text-green-600 cursor-default'
                         : 'bg-primary text-primary-foreground hover:bg-primary/90'
                     )}
                   >
-                    {isAdded ? <><Check className="w-3 h-3" /> Added</> : <><Plus className="w-3 h-3" /> Add to Plan</>}
+                    {isActivePlan ? <><Check className="w-3 h-3" /> In Plan</> : isAdded ? <><Check className="w-3 h-3" /> Added</> : <><Plus className="w-3 h-3" /> Add to Plan</>}
                   </button>
                   <button
                     onClick={() => handleRequestProof(play.packId, play.packName)}
