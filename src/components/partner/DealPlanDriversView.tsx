@@ -1,5 +1,5 @@
 // Deal Plan Drivers View — comprehensive 7-section workspace
-// 1) Promoted Drivers  2) Strategic Positioning  3) Political Map
+// 1) Promoted Drivers  2) Strategic Framing  3) Political Map
 // 4) Execution Motion  5) CRM + Account Signals  6) Risks & Blockers  7) Asset Packs
 
 import { useState, useMemo, useCallback } from 'react';
@@ -67,6 +67,11 @@ import {
   type DealPlanningInboxItem,
 } from '@/data/partner/dealPlanningInboxStore';
 import { addTags } from '@/data/partner/dealPlanningSignalTagsStore';
+import { RecommendedPlaysPanel } from '@/partner/components/dealPlanning/RecommendedPlaysPanel';
+import { StrategicFramingSection } from '@/partner/components/dealPlanning/StrategicFramingSection';
+import { TechnicalRecommendationsSection } from '@/partner/components/dealPlanning/TechnicalRecommendationsSection';
+import { PLAY_SERVICE_PACKS } from '@/partner/data/dealPlanning/servicePacks';
+import { scorePlayPacks } from '@/partner/lib/dealPlanning/propensity';
 
 const WEEK_OF = '2026-02-10';
 
@@ -441,7 +446,8 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
   const [engagementType, setEngagementType] = useState<EngagementType | null>(null);
   const [motion, setMotion] = useState<Motion | null>(null);
 
-  // Section 2: Strategic Positioning
+   // Section 2: Strategic Positioning (kept for Details collapsible)
+   const [showStrategicDetails, setShowStrategicDetails] = useState(false);
   const [whyNow, setWhyNow] = useState('Azure OpenAI available in Swiss North + EU Machinery Regulation deadline 2027 = dual urgency window.');
   const [wedge, setWedge] = useState('Data residency objection removed — first-mover advantage for AI predictive maintenance.');
   const [competitivePressure, setCompetitivePressure] = useState('Google Cloud and AWS lack Swiss-hosted AI services with equivalent compliance posture.');
@@ -541,6 +547,17 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
       partnerCapabilities: partner_service_configuration.partner_capabilities,
     });
   }, [selectedAccount, engagementType, motion, planGenerated, inboxVersion]);
+
+  // Top play pack name for Strategic Framing defaults
+  const topPlayPackName = useMemo(() => {
+    if (drivers.length === 0) return null;
+    const plays = scorePlayPacks(PLAY_SERVICE_PACKS, {
+      promotedSignals: drivers,
+      engagementType: engagementType as 'new_logo' | 'existing_customer' | null,
+      motion,
+    });
+    return plays.length > 0 ? plays[0].packName : null;
+  }, [drivers, engagementType, motion]);
 
   const handleAddSignals = useCallback((signals: Signal[]) => {
     if (!selectedAccount) return;
@@ -705,6 +722,24 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
             </div>
           )}
 
+          {/* ===== Recommended Plays Panel (additive, top of page) ===== */}
+          <RecommendedPlaysPanel
+            accountId={selectedAccount}
+            promotedSignals={drivers}
+            engagementType={engagementType as 'new_logo' | 'existing_customer' | null}
+            motion={motion}
+            onRefresh={refresh}
+          />
+
+          {/* ===== Technology Recommendations (engineer view only, additive) ===== */}
+          {roleView === 'engineer' && (
+            <TechnicalRecommendationsSection
+              promotedSignals={drivers}
+              engagementType={engagementType as 'new_logo' | 'existing_customer' | null}
+              motion={motion}
+            />
+          )}
+
           {/* ===== 1) Promoted Drivers ===== */}
           <Section number={1} title="Promoted Drivers" icon={<Zap className="w-3.5 h-3.5" />}>
             {drivers.length > 0 ? (
@@ -831,19 +866,44 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
             )}
           </Section>
 
-          {/* ===== 2) Strategic Positioning ===== */}
+          {/* ===== 2) Strategic Framing (was Strategic Positioning) ===== */}
           <Section
             number={2}
-            title="Strategic Positioning"
+            title="Strategic Framing"
             icon={<Crosshair className="w-3.5 h-3.5" />}
             roleHighlight={roleView === 'seller'}
           >
-            <div className="space-y-3">
-              <EditableBlock label="Why Now" icon={<Clock className="w-3 h-3" />} value={whyNow} onChange={setWhyNow} placeholder="What creates urgency for this deal right now?" compact />
-              <EditableBlock label="Wedge" icon={<Target className="w-3 h-3" />} value={wedge} onChange={setWedge} placeholder="What's our differentiated entry point?" compact />
-              <EditableBlock label="Competitive Pressure" icon={<Swords className="w-3 h-3" />} value={competitivePressure} onChange={setCompetitivePressure} placeholder="Key competitive dynamics to navigate." compact />
-              <EditableBlock label="Executive Framing" icon={<Crown className="w-3 h-3" />} value={execFraming} onChange={setExecFraming} placeholder="How should we frame this to the C-suite?" compact />
-            </div>
+            {roleView === 'seller' ? (
+              <div className="space-y-3">
+                <StrategicFramingSection
+                  promotedSignals={drivers}
+                  topPackName={topPlayPackName}
+                />
+                {/* Collapsible Details — preserves old fields */}
+                <button
+                  onClick={() => setShowStrategicDetails(!showStrategicDetails)}
+                  className="flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showStrategicDetails ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                  Details
+                </button>
+                {showStrategicDetails && (
+                  <div className="space-y-3 pt-1 border-t border-border/30">
+                    <EditableBlock label="Why Now" icon={<Clock className="w-3 h-3" />} value={whyNow} onChange={setWhyNow} placeholder="What creates urgency for this deal right now?" compact />
+                    <EditableBlock label="Wedge" icon={<Target className="w-3 h-3" />} value={wedge} onChange={setWedge} placeholder="What's our differentiated entry point?" compact />
+                    <EditableBlock label="Competitive Pressure" icon={<Swords className="w-3 h-3" />} value={competitivePressure} onChange={setCompetitivePressure} placeholder="Key competitive dynamics to navigate." compact />
+                    <EditableBlock label="Executive Framing" icon={<Crown className="w-3 h-3" />} value={execFraming} onChange={setExecFraming} placeholder="How should we frame this to the C-suite?" compact />
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <EditableBlock label="Why Now" icon={<Clock className="w-3 h-3" />} value={whyNow} onChange={setWhyNow} placeholder="What creates urgency for this deal right now?" compact />
+                <EditableBlock label="Wedge" icon={<Target className="w-3 h-3" />} value={wedge} onChange={setWedge} placeholder="What's our differentiated entry point?" compact />
+                <EditableBlock label="Competitive Pressure" icon={<Swords className="w-3 h-3" />} value={competitivePressure} onChange={setCompetitivePressure} placeholder="Key competitive dynamics to navigate." compact />
+                <EditableBlock label="Executive Framing" icon={<Crown className="w-3 h-3" />} value={execFraming} onChange={setExecFraming} placeholder="How should we frame this to the C-suite?" compact />
+              </div>
+            )}
           </Section>
 
           {/* ===== 3) Political Map ===== */}
