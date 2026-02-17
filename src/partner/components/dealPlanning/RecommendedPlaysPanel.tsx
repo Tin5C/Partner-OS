@@ -4,27 +4,21 @@
 import { useState, useMemo } from 'react';
 import {
   Sparkles, Plus, FileSearch, TrendingUp, AlertTriangle, Check, Info,
-  ChevronRight, ChevronDown, Trash2, Zap, Search,
+  ChevronRight, ChevronDown, Trash2, Zap, Eye, EyeOff,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { PromotedSignal } from '@/data/partner/dealPlanStore';
-import type { Signal } from '@/data/partner/signalStore';
 import { PLAY_SERVICE_PACKS } from '@/partner/data/dealPlanning/servicePacks';
-import { scorePlayPacks, type PropensityInput } from '@/partner/lib/dealPlanning/propensity';
+import { scorePlayPacks, type PropensityInput, type ScoredPlay } from '@/partner/lib/dealPlanning/propensity';
 import { addSelectedPack, getSelectedPacks, addContentRequest } from '@/partner/data/dealPlanning/selectedPackStore';
 import { getByFocusId as getInitiatives } from '@/data/partner/publicInitiativesStore';
 import { getByFocusId as getTrends } from '@/data/partner/industryAuthorityTrendsStore';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
+  Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 
 // ============= Signal Type Badge Colors =============
@@ -51,6 +45,90 @@ interface RecommendedPlaysPanelProps {
   showPicker: boolean;
   pickerNode?: React.ReactNode;
 }
+
+// ============= Per-Card Basis Expander =============
+
+function PlayBasis({
+  play,
+  promotedSignals,
+  initiativesTitles,
+  trendsTitles,
+}: {
+  play: ScoredPlay;
+  promotedSignals: PromotedSignal[];
+  initiativesTitles: string[];
+  trendsTitles: string[];
+}) {
+  const [open, setOpen] = useState(false);
+
+  // Find signals referenced in drivers
+  const matchedSignals = promotedSignals.slice(0, 3);
+  const matchedInitiatives = initiativesTitles.slice(0, 2);
+  const matchedTrends = trendsTitles.slice(0, 2);
+
+  const improvementBullets: string[] = [];
+  if (promotedSignals.length < 2) improvementBullets.push('Promote additional signals.');
+  if (improvementBullets.length < 2) improvementBullets.push('Add proof artifacts or meeting notes.');
+
+  return (
+    <div className="pt-1">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+      >
+        {open ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+        {open ? 'Hide basis' : 'Show basis'}
+      </button>
+      {open && (
+        <div className="mt-2 p-2.5 rounded-md border border-border/40 bg-muted/20 space-y-2 text-[10px]">
+          <p className="font-semibold text-muted-foreground uppercase tracking-wider text-[9px]">
+            Basis for this recommendation
+          </p>
+
+          {matchedSignals.length > 0 && (
+            <div>
+              <p className="font-semibold text-foreground mb-0.5">Signals used</p>
+              {matchedSignals.map((s) => (
+                <p key={s.signalId} className="text-muted-foreground leading-snug ml-2">
+                  • {s.snapshot.title}
+                </p>
+              ))}
+            </div>
+          )}
+
+          {matchedInitiatives.length > 0 && (
+            <div>
+              <p className="font-semibold text-foreground mb-0.5">Initiatives referenced</p>
+              {matchedInitiatives.map((t, i) => (
+                <p key={i} className="text-muted-foreground leading-snug ml-2">• {t}</p>
+              ))}
+            </div>
+          )}
+
+          {matchedTrends.length > 0 && (
+            <div>
+              <p className="font-semibold text-foreground mb-0.5">Trends referenced</p>
+              {matchedTrends.map((t, i) => (
+                <p key={i} className="text-muted-foreground leading-snug ml-2">• {t}</p>
+              ))}
+            </div>
+          )}
+
+          {improvementBullets.length > 0 && (
+            <div>
+              <p className="font-semibold text-foreground mb-0.5">What would increase confidence</p>
+              {improvementBullets.map((b, i) => (
+                <p key={i} className="text-muted-foreground leading-snug ml-2">• {b}</p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============= Main Component =============
 
 export function RecommendedPlaysPanel({
   accountId,
@@ -88,12 +166,11 @@ export function RecommendedPlaysPanel({
       trends: trendsTitles,
     };
     const all = scorePlayPacks(PLAY_SERVICE_PACKS, input);
-    // Draft mode: show 1-2; normal: top 3
     return promotedSignals.length === 0 ? all.slice(0, 2) : all.slice(0, 3);
   }, [promotedSignals, engagementType, motion, readinessScore, initiativesTitles, trendsTitles]);
 
   const selectedPacks = useMemo(() => getSelectedPacks(accountId), [accountId, scoredPlays]);
-  const isDraft = promotedSignals.length === 0;
+  const hasNoContext = promotedSignals.length === 0 && initiativesTitles.length === 0 && trendsTitles.length === 0;
 
   const handleAddToPlan = (packId: string, packName: string) => {
     addSelectedPack(accountId, packId);
@@ -121,10 +198,11 @@ export function RecommendedPlaysPanel({
             <Sparkles className="w-4 h-4 text-primary" />
             <p className="text-xs font-semibold text-foreground">Recommended Plays</p>
           </div>
+          {/* Based-on transparency strip */}
           <p className="text-[11px] text-muted-foreground mt-0.5">
-            {isDraft
-              ? 'Draft suggestions based on Type/Motion and account context. Add signals to refine.'
-              : 'Based on selected drivers + account context.'}
+            {promotedSignals.length === 0
+              ? 'Based on: Type/Motion · Account context (initiatives and industry trends). Add signals to refine.'
+              : 'Based on: Selected signals · Account context.'}
           </p>
         </div>
         <button
@@ -167,101 +245,111 @@ export function RecommendedPlaysPanel({
         <div>{pickerNode}</div>
       )}
 
-      {/* ===== Play Cards ===== */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {scoredPlays.map((play) => {
-          const isAdded = selectedPacks.includes(play.packId);
-          return (
-            <div
-              key={play.packId}
-              className="rounded-lg border border-border/60 bg-card p-3.5 space-y-2.5 flex flex-col"
-            >
-              <div>
-                <div className="flex items-center gap-2">
+      {/* ===== Empty State ===== */}
+      {hasNoContext ? (
+        <div className="rounded-lg border border-border/40 bg-muted/20 p-6 text-center">
+          <p className="text-xs text-muted-foreground">
+            No account context available yet. Recommendations will appear once intelligence is added.
+          </p>
+        </div>
+      ) : (
+        /* ===== Play Cards ===== */
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {scoredPlays.map((play) => {
+            const isAdded = selectedPacks.includes(play.packId);
+            return (
+              <div
+                key={play.packId}
+                className="rounded-lg border border-border/60 bg-card p-3.5 space-y-2.5 flex flex-col"
+              >
+                <div>
                   <p className="text-xs font-semibold text-foreground leading-snug">{play.packName}</p>
-                  {isDraft && (
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/40">
-                      DRAFT
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="text-[10px] font-bold text-primary inline-flex items-center gap-0.5 cursor-help">
+                            Engagement Fit: {play.engagementFitPct}%
+                            <Info className="w-2.5 h-2.5 text-muted-foreground" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-[200px] text-[10px]">
+                          Score based on promoted signals, public initiatives, and industry trends.
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded-full border', confidenceColor(play.confidence))}>
+                      {play.confidence}
                     </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 mt-1.5">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="text-[10px] font-bold text-primary inline-flex items-center gap-0.5 cursor-help">
-                          Engagement Fit: {play.engagementFitPct}%
-                          <Info className="w-2.5 h-2.5 text-muted-foreground" />
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-[200px] text-[10px]">
-                        Score based on promoted signals, public initiatives, and industry trends.
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded-full border', confidenceColor(play.confidence))}>
-                    {play.confidence}
-                  </span>
-                </div>
-              </div>
-
-              {/* Drivers */}
-              {play.drivers.length > 0 && (
-                <div>
-                  <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1 mb-1">
-                    <TrendingUp className="w-2.5 h-2.5" /> Why this play
-                  </p>
-                  <div className="space-y-0.5">
-                    {play.drivers.map((d, i) => (
-                      <p key={i} className="text-[10px] text-muted-foreground flex items-start gap-1">
-                        <span className="text-green-500 mt-px">•</span> {d}
-                      </p>
-                    ))}
                   </div>
                 </div>
-              )}
 
-              {/* Gaps */}
-              {play.gaps.length > 0 && (
-                <div>
-                  <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1 mb-1">
-                    <AlertTriangle className="w-2.5 h-2.5" /> What's missing
-                  </p>
-                  <div className="space-y-0.5">
-                    {play.gaps.map((g, i) => (
-                      <p key={i} className="text-[10px] text-muted-foreground flex items-start gap-1">
-                        <span className="text-destructive/60 mt-px">•</span> {g}
-                      </p>
-                    ))}
+                {/* Drivers */}
+                {play.drivers.length > 0 && (
+                  <div>
+                    <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1 mb-1">
+                      <TrendingUp className="w-2.5 h-2.5" /> Why this play
+                    </p>
+                    <div className="space-y-0.5">
+                      {play.drivers.map((d, i) => (
+                        <p key={i} className="text-[10px] text-muted-foreground flex items-start gap-1">
+                          <span className="text-green-500 mt-px">•</span> {d}
+                        </p>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Actions */}
-              <div className="flex items-center gap-1.5 mt-auto pt-1">
-                <button
-                  onClick={() => handleAddToPlan(play.packId, play.packName)}
-                  disabled={isAdded}
-                  className={cn(
-                    'flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-[10px] font-medium transition-colors',
-                    isAdded
-                      ? 'bg-green-500/10 text-green-600 cursor-default'
-                      : 'bg-primary text-primary-foreground hover:bg-primary/90'
-                  )}
-                >
-                  {isAdded ? <><Check className="w-3 h-3" /> Added</> : <><Plus className="w-3 h-3" /> Add to Plan</>}
-                </button>
-                <button
-                  onClick={() => handleRequestProof(play.packId, play.packName)}
-                  className="flex items-center gap-1 px-2 py-1.5 rounded-md text-[10px] font-medium border border-border/60 text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
-                >
-                  <FileSearch className="w-3 h-3" /> Request Proof
-                </button>
+                {/* Gaps */}
+                {play.gaps.length > 0 && (
+                  <div>
+                    <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1 mb-1">
+                      <AlertTriangle className="w-2.5 h-2.5" /> What's missing
+                    </p>
+                    <div className="space-y-0.5">
+                      {play.gaps.map((g, i) => (
+                        <p key={i} className="text-[10px] text-muted-foreground flex items-start gap-1">
+                          <span className="text-destructive/60 mt-px">•</span> {g}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Per-card basis expander */}
+                <PlayBasis
+                  play={play}
+                  promotedSignals={promotedSignals}
+                  initiativesTitles={initiativesTitles}
+                  trendsTitles={trendsTitles}
+                />
+
+                {/* Actions */}
+                <div className="flex items-center gap-1.5 mt-auto pt-1">
+                  <button
+                    onClick={() => handleAddToPlan(play.packId, play.packName)}
+                    disabled={isAdded}
+                    className={cn(
+                      'flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-[10px] font-medium transition-colors',
+                      isAdded
+                        ? 'bg-green-500/10 text-green-600 cursor-default'
+                        : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                    )}
+                  >
+                    {isAdded ? <><Check className="w-3 h-3" /> Added</> : <><Plus className="w-3 h-3" /> Add to Plan</>}
+                  </button>
+                  <button
+                    onClick={() => handleRequestProof(play.packId, play.packName)}
+                    className="flex items-center gap-1 px-2 py-1.5 rounded-md text-[10px] font-medium border border-border/60 text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
+                  >
+                    <FileSearch className="w-3 h-3" /> Request Proof
+                  </button>
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* ===== Collapsible Selected Drivers ===== */}
       {promotedSignals.length > 0 && (
