@@ -1,11 +1,15 @@
-// RecommendedPlaysPanel — top-of-page panel showing top 3 recommended plays
-// Partner-only, does NOT modify existing Deal Planning data shape
+// RecommendedPlaysPanel — unified Recommended Plays + Promoted Drivers section
+// Partner-only, non-breaking
 
-import { useMemo } from 'react';
-import { Sparkles, Plus, FileSearch, TrendingUp, AlertTriangle, Check, Info } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import {
+  Sparkles, Plus, FileSearch, TrendingUp, AlertTriangle, Check, Info,
+  ChevronRight, ChevronDown, Trash2, Zap, Search,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { PromotedSignal } from '@/data/partner/dealPlanStore';
+import type { Signal } from '@/data/partner/signalStore';
 import { PLAY_SERVICE_PACKS } from '@/partner/data/dealPlanning/servicePacks';
 import { scorePlayPacks, type PropensityInput } from '@/partner/lib/dealPlanning/propensity';
 import { addSelectedPack, getSelectedPacks, addContentRequest } from '@/partner/data/dealPlanning/selectedPackStore';
@@ -17,6 +21,23 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+
+// ============= Signal Type Badge Colors =============
+
+const TYPE_COLORS: Record<string, string> = {
+  vendor: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+  regulatory: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+  internalActivity: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
+  competitive: 'bg-red-500/10 text-red-600 border-red-500/20',
+  localMarket: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+};
+
+// ============= Props =============
 
 interface RecommendedPlaysPanelProps {
   accountId: string;
@@ -25,6 +46,10 @@ interface RecommendedPlaysPanelProps {
   motion: string | null;
   readinessScore?: number | null;
   onRefresh?: () => void;
+  onRemoveSignal: (signalId: string) => void;
+  onOpenPicker: () => void;
+  showPicker: boolean;
+  pickerNode?: React.ReactNode;
 }
 
 export function RecommendedPlaysPanel({
@@ -34,8 +59,14 @@ export function RecommendedPlaysPanel({
   motion,
   readinessScore,
   onRefresh,
+  onRemoveSignal,
+  onOpenPicker,
+  showPicker,
+  pickerNode,
 }: RecommendedPlaysPanelProps) {
-  // Read canonical stores for alignment context
+  const [driversOpen, setDriversOpen] = useState(false);
+
+  // Read canonical stores
   const initiativesTitles = useMemo(() => {
     const rec = getInitiatives(accountId);
     return rec?.public_it_initiatives?.map((i) => i.title) ?? [];
@@ -46,6 +77,7 @@ export function RecommendedPlaysPanel({
     return pack?.trends?.map((t) => t.trend_title) ?? [];
   }, [accountId]);
 
+  // Score plays
   const scoredPlays = useMemo(() => {
     const input: PropensityInput = {
       promotedSignals,
@@ -55,10 +87,13 @@ export function RecommendedPlaysPanel({
       initiatives: initiativesTitles,
       trends: trendsTitles,
     };
-    return scorePlayPacks(PLAY_SERVICE_PACKS, input);
+    const all = scorePlayPacks(PLAY_SERVICE_PACKS, input);
+    // Draft mode: show 1-2; normal: top 3
+    return promotedSignals.length === 0 ? all.slice(0, 2) : all.slice(0, 3);
   }, [promotedSignals, engagementType, motion, readinessScore, initiativesTitles, trendsTitles]);
 
   const selectedPacks = useMemo(() => getSelectedPacks(accountId), [accountId, scoredPlays]);
+  const isDraft = promotedSignals.length === 0;
 
   const handleAddToPlan = (packId: string, packName: string) => {
     addSelectedPack(accountId, packId);
@@ -77,33 +112,62 @@ export function RecommendedPlaysPanel({
     : c === 'Medium' ? 'text-primary bg-primary/10 border-primary/20'
     : 'text-muted-foreground bg-muted/40 border-border/40';
 
-  // Empty state
-  if (promotedSignals.length === 0) {
-    return (
-      <div className="rounded-xl border border-dashed border-border bg-muted/10 p-5">
-        <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="w-4 h-4 text-muted-foreground" />
-          <p className="text-xs font-semibold text-foreground">Recommended Plays</p>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Promote signals to generate recommendations tailored to this motion.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div className="rounded-xl border border-primary/15 bg-primary/[0.02] p-4 space-y-3">
-      <div>
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-primary" />
-          <p className="text-xs font-semibold text-foreground">Recommended Plays</p>
+      {/* ===== Header Row ===== */}
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-primary" />
+            <p className="text-xs font-semibold text-foreground">Recommended Plays</p>
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            {isDraft
+              ? 'Draft suggestions based on Type/Motion and account context. Add signals to refine.'
+              : 'Based on selected drivers + account context.'}
+          </p>
         </div>
-        <p className="text-[11px] text-muted-foreground mt-0.5">
-          Based on promoted signals, public initiatives, and industry trends.
-        </p>
+        <button
+          onClick={onOpenPicker}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium border border-border/60 text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-primary/[0.02] transition-all flex-shrink-0"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          Add signals
+        </button>
       </div>
 
+      {/* ===== Drivers Used Strip ===== */}
+      <div className="flex items-center gap-3 text-[10px]">
+        <span className="text-muted-foreground font-semibold uppercase tracking-wider">Drivers used:</span>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className={cn(
+                'font-medium inline-flex items-center gap-0.5',
+                promotedSignals.length > 0 ? 'text-foreground' : 'text-muted-foreground/50 cursor-help'
+              )}>
+                <Zap className="w-3 h-3" />
+                Signals: {promotedSignals.length}
+                {promotedSignals.length === 0 && <Info className="w-2.5 h-2.5 ml-0.5" />}
+              </span>
+            </TooltipTrigger>
+            {promotedSignals.length === 0 && (
+              <TooltipContent side="top" className="text-[10px]">
+                Add signals to increase precision.
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
+        <span className="text-muted-foreground font-medium">Initiatives: {initiativesTitles.length}</span>
+        <span className="text-muted-foreground font-medium">Trends: {trendsTitles.length}</span>
+      </div>
+
+      {/* ===== Inline Signal Picker ===== */}
+      {showPicker && pickerNode && (
+        <div>{pickerNode}</div>
+      )}
+
+      {/* ===== Play Cards ===== */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {scoredPlays.map((play) => {
           const isAdded = selectedPacks.includes(play.packId);
@@ -113,7 +177,14 @@ export function RecommendedPlaysPanel({
               className="rounded-lg border border-border/60 bg-card p-3.5 space-y-2.5 flex flex-col"
             >
               <div>
-                <p className="text-xs font-semibold text-foreground leading-snug">{play.packName}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs font-semibold text-foreground leading-snug">{play.packName}</p>
+                  {isDraft && (
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/40">
+                      DRAFT
+                    </span>
+                  )}
+                </div>
                 <div className="flex items-center gap-2 mt-1.5">
                   <TooltipProvider>
                     <Tooltip>
@@ -138,7 +209,7 @@ export function RecommendedPlaysPanel({
               {play.drivers.length > 0 && (
                 <div>
                   <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1 mb-1">
-                    <TrendingUp className="w-2.5 h-2.5" /> Drivers
+                    <TrendingUp className="w-2.5 h-2.5" /> Why this play
                   </p>
                   <div className="space-y-0.5">
                     {play.drivers.map((d, i) => (
@@ -154,7 +225,7 @@ export function RecommendedPlaysPanel({
               {play.gaps.length > 0 && (
                 <div>
                   <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1 mb-1">
-                    <AlertTriangle className="w-2.5 h-2.5" /> Gaps
+                    <AlertTriangle className="w-2.5 h-2.5" /> What's missing
                   </p>
                   <div className="space-y-0.5">
                     {play.gaps.map((g, i) => (
@@ -192,11 +263,39 @@ export function RecommendedPlaysPanel({
         })}
       </div>
 
-      {/* Dev debug — only visible in development */}
-      {import.meta.env.DEV && (
-        <p className="text-[9px] text-muted-foreground/50 mt-1">
-          Using: Promoted Signals {promotedSignals.length} · Initiatives {initiativesTitles.length} · Trends {trendsTitles.length}
-        </p>
+      {/* ===== Collapsible Selected Drivers ===== */}
+      {promotedSignals.length > 0 && (
+        <Collapsible open={driversOpen} onOpenChange={setDriversOpen}>
+          <CollapsibleTrigger className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors w-full">
+            {driversOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+            <Zap className="w-3 h-3" />
+            Selected drivers ({promotedSignals.length})
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-2 space-y-1.5">
+            {promotedSignals.map((d) => {
+              const typeColor = TYPE_COLORS[d.snapshot.type] ?? 'bg-muted text-muted-foreground border-border';
+              return (
+                <div
+                  key={d.signalId}
+                  className="flex items-center gap-2.5 p-2 rounded-lg border border-border/40 bg-background"
+                >
+                  <span className={cn('text-[9px] font-medium px-1.5 py-0.5 rounded-full border flex-shrink-0', typeColor)}>
+                    {d.snapshot.type}
+                  </span>
+                  <p className="text-[11px] text-foreground leading-snug flex-1 min-w-0 truncate">
+                    {d.snapshot.title}
+                  </p>
+                  <button
+                    onClick={() => onRemoveSignal(d.signalId)}
+                    className="p-1 rounded-md text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors flex-shrink-0"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
+              );
+            })}
+          </CollapsibleContent>
+        </Collapsible>
       )}
     </div>
   );
