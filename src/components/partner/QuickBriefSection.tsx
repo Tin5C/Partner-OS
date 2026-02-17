@@ -13,6 +13,7 @@ import {
   MessageSquare,
   Info,
   ArrowRightLeft,
+  ArrowUpRight,
   Search,
   ChevronDown,
   Plus,
@@ -29,6 +30,11 @@ import { toast } from 'sonner';
 import { consumeQuickBriefTrigger, QUICK_BRIEF_TRIGGER_EVENT } from '@/data/partner/quickBriefTrigger';
 import { resolveCanonicalMeta } from '@/services/ids';
 import { toIsoWeekKey } from '@/lib/partnerIds';
+import {
+  addItem,
+  makeInboxItemId,
+  deriveImpactArea,
+} from '@/data/partner/dealPlanningInboxStore';
 
 const ACCOUNTS = [
   { id: 'schindler', label: 'Schindler' },
@@ -388,6 +394,26 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
                           {signal.soWhat}
                         </p>
                       </div>
+                      <button
+                        onClick={() => {
+                          addItem(focusId, {
+                            id: makeInboxItemId(focusId, 'signal', signal.id),
+                            focusId,
+                            source_type: 'signal',
+                            source_id: signal.id,
+                            title: signal.title,
+                            why_now: signal.soWhat.slice(0, 160),
+                            impact_area: deriveImpactArea(signal.type),
+                            tags: [signal.type],
+                            created_at: new Date().toISOString(),
+                          });
+                          toast.success('Added to Deal Planning Inbox');
+                        }}
+                        className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 border border-border/40 hover:border-primary/20 transition-colors flex-shrink-0 self-start mt-1"
+                      >
+                        <ArrowUpRight className="w-3 h-3" />
+                        Deal Plan
+                      </button>
                     </div>
                   );
                 })}

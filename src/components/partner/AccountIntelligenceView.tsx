@@ -1,7 +1,7 @@
 // Account Intelligence View — read-only tab in Partner execution section
 // Renders structured sections from AccountIntelligenceVM
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import {
   Building2,
   DollarSign,
@@ -18,14 +18,21 @@ import {
   TrendingUp,
   ChevronDown,
   Newspaper,
+  ArrowUpRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import { ReadinessPanel } from '@/components/partner/accountIntelligence/ReadinessPanel';
 import { resolveAccountIntelligence } from '@/services/accountIntelligence';
 import type { AccountIntelligenceVM } from '@/services/accountIntelligence';
 import type { PartnerInvolvement } from '@/data/partner/partnerInvolvementStore';
 import type { IndustryAuthorityTrendsPack } from '@/data/partner/industryAuthorityTrendsStore';
 import type { IndustryNewsPack } from '@/data/partner/industryNewsStore';
+import {
+  addItem,
+  makeInboxItemId,
+  deriveImpactArea,
+} from '@/data/partner/dealPlanningInboxStore';
 
 interface AccountIntelligenceViewProps {
   focusId: string | null;
@@ -531,6 +538,27 @@ export function AccountIntelligenceView({ focusId }: AccountIntelligenceViewProp
                     <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">{sig.implication}</p>
                   )}
                 </div>
+                <button
+                  onClick={() => {
+                    if (!focusId) return;
+                    addItem(focusId, {
+                      id: makeInboxItemId(focusId, 'signal', sig.id),
+                      focusId,
+                      source_type: 'signal',
+                      source_id: sig.id,
+                      title: sig.description,
+                      why_now: (sig.implication ?? sig.description).slice(0, 160),
+                      impact_area: deriveImpactArea(sig.category),
+                      tags: [sig.category],
+                      created_at: new Date().toISOString(),
+                    });
+                    toast.success('Added to Deal Planning Inbox');
+                  }}
+                  className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 border border-border/40 hover:border-primary/20 transition-colors flex-shrink-0 mt-0.5"
+                >
+                  <ArrowUpRight className="w-3 h-3" />
+                  Use in Deal Plan
+                </button>
               </div>
             ))}
           </div>

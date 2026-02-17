@@ -5,6 +5,7 @@ import type { DealPlan } from '@/data/partner/dealPlanStore';
 import type { ScoredPack } from '@/data/partner/servicePackStore';
 import type { AccountIntelligenceVM } from '../accountIntelligence/contract';
 import type { PartnerProfileVM } from '../partnerProfile/contract';
+import type { DealPlanningInboxItem } from '@/data/partner/dealPlanningInboxStore';
 
 export interface DealPlanningVM {
   account_id: string;
@@ -26,4 +27,10 @@ export interface DealPlanningVM {
 
   /** Account intelligence context (read-only) */
   accountIntelligence: AccountIntelligenceVM;
+
+  /** Deal Planning Inbox items pushed from signals/trends */
+  inboxItems: DealPlanningInboxItem[];
+
+  /** Signal tags currently active for scoring (from promoted inbox items) */
+  signalTags: string[];
 }

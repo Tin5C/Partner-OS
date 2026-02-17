@@ -40,6 +40,8 @@ import {
   Plus,
   Search,
   FolderOpen,
+  Inbox as InboxIcon,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -59,6 +61,12 @@ import {
 } from './DealPlanMetadata';
 import { scoreServicePacks, type ScoredPack } from '@/data/partner/servicePackStore';
 import { partner_service_configuration } from '@/data/partner/partnerServiceConfiguration';
+import {
+  listByFocusId,
+  removeItem as removeInboxItem,
+  type DealPlanningInboxItem,
+} from '@/data/partner/dealPlanningInboxStore';
+import { addTags } from '@/data/partner/dealPlanningSignalTagsStore';
 
 const WEEK_OF = '2026-02-10';
 
@@ -502,6 +510,27 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
   const [planGenerated, setPlanGenerated] = useState(false);
   const canGenerate = selectedAccount !== null && engagementType !== null && motion !== null;
 
+  // Deal Planning Inbox items
+  const [inboxVersion, setInboxVersion] = useState(0);
+  const inboxItems = useMemo(
+    () => (selectedAccount ? listByFocusId(selectedAccount) : []),
+    [selectedAccount, inboxVersion],
+  );
+
+  const handlePromoteInboxItem = useCallback((item: DealPlanningInboxItem) => {
+    addTags(item.focusId, item.tags);
+    removeInboxItem(item.focusId, item.id);
+    setInboxVersion((v) => v + 1);
+    refresh();
+    toast.success('Promoted — tags applied to scoring');
+  }, [refresh]);
+
+  const handleDismissInboxItem = useCallback((item: DealPlanningInboxItem) => {
+    removeInboxItem(item.focusId, item.id);
+    setInboxVersion((v) => v + 1);
+    toast('Dismissed from inbox');
+  }, []);
+
   // Service pack recommendations (computed after plan generated)
   const recommendedPacks = useMemo<ScoredPack[]>(() => {
     if (!selectedAccount || !planGenerated) return [];
@@ -511,7 +540,7 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
       vendorPosture: partner_service_configuration.vendor_posture,
       partnerCapabilities: partner_service_configuration.partner_capabilities,
     });
-  }, [selectedAccount, engagementType, motion, planGenerated]);
+  }, [selectedAccount, engagementType, motion, planGenerated, inboxVersion]);
 
   const handleAddSignals = useCallback((signals: Signal[]) => {
     if (!selectedAccount) return;
@@ -626,6 +655,56 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
       <div className="flex gap-4">
         {/* Left: Main workspace */}
         <div className="flex-1 min-w-0 space-y-4">
+          {/* ===== Deal Planning Inbox ===== */}
+          {inboxItems.length > 0 && (
+            <div className="rounded-xl border border-primary/20 bg-primary/[0.02] p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <InboxIcon className="w-4 h-4 text-primary" />
+                <p className="text-xs font-semibold text-foreground">
+                  Deal Planning Inbox
+                </p>
+                <span className="px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
+                  {inboxItems.length}
+                </span>
+              </div>
+              <div className="space-y-2">
+                {inboxItems.map((item) => (
+                  <div key={item.id} className="flex items-start gap-3 p-2.5 rounded-lg border border-border/40 bg-card">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-foreground leading-snug">{item.title}</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">{item.why_now}</p>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-muted/40 text-muted-foreground border border-border/40">
+                          {item.impact_area}
+                        </span>
+                        {item.tags.map((t) => (
+                          <span key={t} className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-primary/5 text-primary border border-primary/10">
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <button
+                        onClick={() => handlePromoteInboxItem(item)}
+                        className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                      >
+                        <Check className="w-3 h-3" />
+                        Promote
+                      </button>
+                      <button
+                        onClick={() => handleDismissInboxItem(item)}
+                        className="p-1 rounded-md text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* ===== 1) Promoted Drivers ===== */}
           <Section number={1} title="Promoted Drivers" icon={<Zap className="w-3.5 h-3.5" />}>
             {drivers.length > 0 ? (
