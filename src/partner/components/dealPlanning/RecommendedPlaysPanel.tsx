@@ -187,9 +187,9 @@ export function RecommendedPlaysPanel({
     onRefresh?.();
   };
 
-  const handleRequestProof = (packId: string, packName: string) => {
+  const handleWhatWeNeed = (packId: string, packName: string) => {
     addContentRequest(accountId, packId, packName);
-    toast.success(`Proof request created for "${packName}"`);
+    toast.success(`"What we need" checklist created for "${packName}"`);
     onRefresh?.();
   };
 
@@ -349,10 +349,10 @@ export function RecommendedPlaysPanel({
                     {isActivePlan ? <><Check className="w-3 h-3" /> In Plan</> : isAdded ? <><Check className="w-3 h-3" /> Added</> : <><Plus className="w-3 h-3" /> Add to Plan</>}
                   </button>
                   <button
-                    onClick={() => handleRequestProof(play.packId, play.packName)}
+                    onClick={() => handleWhatWeNeed(play.packId, play.packName)}
                     className="flex items-center gap-1 px-2 py-1.5 rounded-md text-[10px] font-medium border border-border/60 text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
                   >
-                    <FileSearch className="w-3 h-3" /> Request Proof
+                    <FileSearch className="w-3 h-3" /> What we need
                   </button>
                 </div>
               </div>
