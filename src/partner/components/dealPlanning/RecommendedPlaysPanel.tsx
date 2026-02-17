@@ -264,70 +264,73 @@ export function RecommendedPlaysPanel({
             return (
               <div
                 key={play.packId}
-                className="rounded border border-border/60 bg-card p-3.5 space-y-3 flex flex-col"
+                className="rounded border border-border/60 bg-card p-3.5 flex flex-col h-full"
               >
-                {/* Title */}
-                <p className="text-xs font-semibold text-foreground leading-snug">{play.packName}</p>
+                {/* Content area — grows to fill */}
+                <div className="flex-1 space-y-3">
+                  {/* Title */}
+                  <p className="text-xs font-semibold text-foreground leading-snug">{play.packName}</p>
 
-                {/* Fit Score Block */}
-                <div className="space-y-1.5">
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Fit Score</p>
-                  <Progress value={play.engagementFitPct} className="h-1 bg-secondary" />
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-medium text-foreground">
-                      {play.engagementFitPct}% · {confidenceLabel(play.confidence)}
-                    </span>
+                  {/* Fit Score Block */}
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Fit Score</p>
+                    <Progress value={play.engagementFitPct} className="h-1 bg-secondary" />
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-medium text-foreground">
+                        {play.engagementFitPct}% · {confidenceLabel(play.confidence)}
+                      </span>
+                    </div>
+                    {gapCount > 0 && (
+                      <p className="text-[10px] text-muted-foreground">
+                        {gapCount} readiness gap{gapCount !== 1 ? 's' : ''} identified
+                      </p>
+                    )}
                   </div>
-                  {gapCount > 0 && (
-                    <p className="text-[10px] text-muted-foreground">
-                      {gapCount} readiness gap{gapCount !== 1 ? 's' : ''} identified
-                    </p>
+
+                  {/* Drivers */}
+                  {play.drivers.length > 0 && (
+                    <div>
+                      <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1 mb-1">
+                        <TrendingUp className="w-2.5 h-2.5" /> Why this play
+                      </p>
+                      <div className="space-y-0.5">
+                        {play.drivers.map((d, i) => (
+                          <p key={i} className="text-[10px] text-muted-foreground flex items-start gap-1">
+                            <span className="text-primary/60 mt-px">•</span> {d}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
                   )}
+
+                  {/* Readiness Gaps — inline, dot-separated */}
+                  {play.gaps.length > 0 && (
+                    <div>
+                      <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                        Readiness Gaps
+                      </p>
+                      <p className="text-[10px] text-muted-foreground leading-snug">
+                        {play.gaps.join(' · ')}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Per-card basis expander */}
+                  <PlayBasis
+                    play={play}
+                    promotedSignals={promotedSignals}
+                    initiativesTitles={initiativesTitles}
+                    trendsTitles={trendsTitles}
+                  />
                 </div>
 
-                {/* Drivers */}
-                {play.drivers.length > 0 && (
-                  <div>
-                    <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1 mb-1">
-                      <TrendingUp className="w-2.5 h-2.5" /> Why this play
-                    </p>
-                    <div className="space-y-0.5">
-                      {play.drivers.map((d, i) => (
-                        <p key={i} className="text-[10px] text-muted-foreground flex items-start gap-1">
-                          <span className="text-primary/60 mt-px">•</span> {d}
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Readiness Gaps — inline, dot-separated */}
-                {play.gaps.length > 0 && (
-                  <div>
-                    <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                      Readiness Gaps
-                    </p>
-                    <p className="text-[10px] text-muted-foreground leading-snug">
-                      {play.gaps.join(' · ')}
-                    </p>
-                  </div>
-                )}
-
-                {/* Per-card basis expander */}
-                <PlayBasis
-                  play={play}
-                  promotedSignals={promotedSignals}
-                  initiativesTitles={initiativesTitles}
-                  trendsTitles={trendsTitles}
-                />
-
-                {/* Actions — enterprise minimal, no icons */}
-                <div className="flex items-center gap-2 mt-auto pt-1">
+                {/* Fixed footer — always at bottom */}
+                <div className="flex items-center gap-3 pt-3 mt-auto">
                   <button
                     onClick={() => handleAddToPlan(play)}
                     disabled={isAdded || isActivePlan}
                     className={cn(
-                      'flex-1 px-2 py-1.5 rounded text-[10px] font-medium transition-colors',
+                      'h-9 px-3 rounded text-[11px] font-medium whitespace-nowrap transition-colors',
                       (isAdded || isActivePlan)
                         ? 'bg-secondary text-secondary-foreground cursor-default'
                         : 'bg-primary text-primary-foreground hover:bg-primary/90'
@@ -337,7 +340,7 @@ export function RecommendedPlaysPanel({
                   </button>
                   <button
                     onClick={() => setReadinessPlay(play)}
-                    className="flex-1 px-2 py-1.5 rounded text-[10px] font-medium border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
+                    className="h-9 px-3 rounded text-[11px] font-medium whitespace-nowrap border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
                   >
                     Review Readiness
                   </button>
