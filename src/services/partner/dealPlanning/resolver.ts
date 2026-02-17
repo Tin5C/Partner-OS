@@ -7,6 +7,8 @@ import { resolveAccountIntelligence } from '../accountIntelligence/resolver';
 import { resolvePartnerProfile } from '../partnerProfile/resolver';
 import { getDealPlan, listDealPlans } from '@/data/partner/dealPlanStore';
 import { scoreServicePacks } from '@/data/partner/servicePackStore';
+import { listByFocusId } from '@/data/partner/dealPlanningInboxStore';
+import { getTags } from '@/data/partner/dealPlanningSignalTagsStore';
 
 export function resolveDealPlanning(
   account_id: string,
@@ -28,11 +30,15 @@ export function resolveDealPlanning(
 
   const partnerProfile = resolvePartnerProfile(options?.hub_org_id);
 
+  // Merge signal tags from promoted inbox items
+  const signalTags = getTags(account_id);
+
   const recommendedPacks = scoreServicePacks({
     mode,
     trigger,
     vendorPosture: partnerProfile.vendor_posture,
     partnerCapabilities: partnerProfile.partner_capabilities,
+    signalTags,
   });
 
   return {
@@ -45,5 +51,7 @@ export function resolveDealPlanning(
     readiness: accountIntelligence.readiness,
     partnerProfile,
     accountIntelligence,
+    inboxItems: listByFocusId(account_id),
+    signalTags,
   };
 }
