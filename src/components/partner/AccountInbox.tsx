@@ -23,6 +23,8 @@ import {
   ExternalLink,
   Copy,
   Filter,
+  CheckSquare,
+  Square,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -41,6 +43,11 @@ import {
   listContentRequests,
   type RequestType,
 } from '@/data/partner/contentRequestStore';
+import {
+  addItem as addInboxItem,
+  makeInboxItemId,
+  deriveImpactArea,
+} from '@/data/partner/dealPlanningInboxStore';
 
 const ACCEPTED_TYPES = '.pdf,.docx,.pptx,.mp4,.txt,.png,.jpg,.jpeg';
 
@@ -66,6 +73,52 @@ const REQUEST_TYPE_OPTIONS: { value: RequestType; label: string }[] = [
   { value: 'other', label: 'Other' },
 ];
 
+// ============= Deterministic classification suggester =============
+
+interface ClassificationSuggestion {
+  suggestedType: MemoryItemType;
+  confidence: 'high' | 'medium' | 'low';
+}
+
+function suggestClassification(text: string): ClassificationSuggestion {
+  const t = text.toLowerCase();
+
+  const rules: { keywords: string[]; type: MemoryItemType }[] = [
+    { keywords: ['rfp', 'requirements', 'tender'], type: 'rfp_requirements' },
+    { keywords: ['architecture', 'diagram', 'design', 'integration'], type: 'architecture_diagram' },
+    { keywords: ['security', 'compliance', 'dpa', 'iso', 'soc2'], type: 'other' },
+    { keywords: ['pricing', 'offer', 'proposal', 'contract', 'msa', 'sow'], type: 'other' },
+    { keywords: ['notes', 'meeting', 'call', 'summary', 'transcript'], type: 'transcript_notes' },
+    { keywords: ['slides', 'deck', 'presentation', 'pptx', 'ppt'], type: 'slides_deck' },
+    { keywords: ['recording', 'video', 'mp4', 'webinar'], type: 'recording' },
+    { keywords: ['news', 'article', 'press', 'announcement'], type: 'news_article' },
+  ];
+
+  for (const rule of rules) {
+    const matchCount = rule.keywords.filter((k) => t.includes(k)).length;
+    if (matchCount >= 2) return { suggestedType: rule.type, confidence: 'high' };
+    if (matchCount === 1) return { suggestedType: rule.type, confidence: 'medium' };
+  }
+
+  return { suggestedType: 'other', confidence: 'low' };
+}
+
+// ============= Intake confirmation modal state =============
+
+interface IntakePending {
+  mode: 'file' | 'paste' | 'link';
+  title: string;
+  suggestedType: MemoryItemType;
+  confidence: 'high' | 'medium' | 'low';
+  // file fields
+  fileName?: string;
+  fileUrl?: string;
+  // link fields
+  url?: string;
+  // paste fields
+  contentText?: string;
+}
+
 interface AccountInboxProps {
   accountId: string;
   onSignalPicker: () => void;
@@ -83,17 +136,22 @@ export function AccountInbox({ accountId, onSignalPicker }: AccountInboxProps) {
   const [filterType, setFilterType] = useState<MemoryItemType | null>(null);
   const filteredItems = filterType ? items.filter((i) => i.type === filterType) : items;
 
-  // Paste text modal
-  const [showPaste, setShowPaste] = useState(false);
-  const [pasteTitle, setPasteTitle] = useState('');
-  const [pasteContent, setPasteContent] = useState('');
-  const [pasteType, setPasteType] = useState<MemoryItemType>('transcript_notes');
+  // Confirmation modal state
+  const [intakePending, setIntakePending] = useState<IntakePending | null>(null);
+  const [intakeTitle, setIntakeTitle] = useState('');
+  const [intakeType, setIntakeType] = useState<MemoryItemType>('other');
+  const [intakeAddToDealPlan, setIntakeAddToDealPlan] = useState(false);
+  const [intakeTags, setIntakeTags] = useState('');
 
-  // Add link modal
+  // Paste text pre-modal
+  const [showPaste, setShowPaste] = useState(false);
+  const [pasteContent, setPasteContent] = useState('');
+  const [pasteTitle, setPasteTitle] = useState('');
+
+  // Add link pre-modal
   const [showLink, setShowLink] = useState(false);
-  const [linkTitle, setLinkTitle] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
-  const [linkType, setLinkType] = useState<MemoryItemType>('link');
+  const [linkTitle, setLinkTitle] = useState('');
 
   // Ask teammate modal
   const [showAskTeammate, setShowAskTeammate] = useState(false);
@@ -101,30 +159,85 @@ export function AccountInbox({ accountId, onSignalPicker }: AccountInboxProps) {
   const [requestType, setRequestType] = useState<RequestType>('other');
   const [questionText, setQuestionText] = useState('');
 
-  // Classification pending
-  const [classifyId, setClassifyId] = useState<string | null>(null);
-
   // Delete confirm
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   // Drag state
   const [dragOver, setDragOver] = useState(false);
 
-  const handleFiles = (files: FileList | null) => {
-    if (!files) return;
-    for (let i = 0; i < files.length; i++) {
-      const f = files[i];
-      const item = addMemoryItem({
-        account_id: accountId,
-        type: 'other',
-        title: f.name,
-        file_name: f.name,
-        file_url: `local://${f.name}`,
+  // ---- Open intake confirmation modal ----
+  const openIntakeModal = (pending: IntakePending) => {
+    setIntakePending(pending);
+    setIntakeTitle(pending.title);
+    setIntakeType(pending.suggestedType);
+    setIntakeAddToDealPlan(false);
+    setIntakeTags('');
+  };
+
+  const closeIntakeModal = () => {
+    setIntakePending(null);
+    setIntakeTitle('');
+    setIntakeType('other');
+    setIntakeAddToDealPlan(false);
+    setIntakeTags('');
+  };
+
+  // ---- Save from confirmation modal ----
+  const handleIntakeSave = () => {
+    if (!intakePending || !intakeTitle.trim()) return;
+
+    const tags = intakeTags
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean);
+
+    const memItem = addMemoryItem({
+      account_id: accountId,
+      type: intakeType,
+      title: intakeTitle.trim(),
+      content_text: intakePending.contentText,
+      url: intakePending.url,
+      file_url: intakePending.fileUrl,
+      file_name: intakePending.fileName,
+      tags: tags.length > 0 ? tags : undefined,
+    });
+
+    toast.success('Saved to Account Intelligence');
+
+    if (intakeAddToDealPlan) {
+      const inboxId = makeInboxItemId(accountId, 'initiative', memItem.id);
+      addInboxItem(accountId, {
+        id: inboxId,
+        focusId: accountId,
+        source_type: 'initiative',
+        source_id: memItem.id,
+        title: memItem.title,
+        why_now: `Evidence: ${MEMORY_TYPE_OPTIONS.find((o) => o.value === intakeType)?.label ?? intakeType}`,
+        impact_area: deriveImpactArea(intakeType),
+        tags: tags,
+        created_at: new Date().toISOString(),
       });
-      setClassifyId(item.id);
-      toast.success(`Added: ${f.name}`);
+      toast.success('Added shortcut to Deal Plan');
     }
+
+    closeIntakeModal();
     refresh();
+  };
+
+  // ---- File handling → opens confirmation modal ----
+  const handleFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const f = files[0]; // process first file; could extend for multi
+    const fileUrl = URL.createObjectURL(f);
+    const classification = suggestClassification(f.name);
+    openIntakeModal({
+      mode: 'file',
+      title: f.name,
+      suggestedType: classification.suggestedType,
+      confidence: classification.confidence,
+      fileName: f.name,
+      fileUrl,
+    });
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -133,36 +246,38 @@ export function AccountInbox({ accountId, onSignalPicker }: AccountInboxProps) {
     handleFiles(e.dataTransfer.files);
   };
 
+  // ---- Paste text → opens confirmation modal ----
   const handlePasteSubmit = () => {
     if (!pasteContent.trim()) return;
-    addMemoryItem({
-      account_id: accountId,
-      type: pasteType,
-      title: pasteTitle.trim() || 'New note',
-      content_text: pasteContent,
+    const title = pasteTitle.trim() || pasteContent.slice(0, 60).trim() || 'New note';
+    const classification = suggestClassification(title + ' ' + pasteContent);
+    openIntakeModal({
+      mode: 'paste',
+      title,
+      suggestedType: classification.suggestedType,
+      confidence: classification.confidence,
+      contentText: pasteContent,
     });
     setShowPaste(false);
     setPasteTitle('');
     setPasteContent('');
-    setPasteType('transcript_notes');
-    refresh();
-    toast.success('Notes added');
   };
 
+  // ---- Add link → opens confirmation modal ----
   const handleLinkSubmit = () => {
     if (!linkUrl.trim()) return;
-    addMemoryItem({
-      account_id: accountId,
-      type: linkType,
-      title: linkTitle.trim() || linkUrl,
+    const title = linkTitle.trim() || linkUrl;
+    const classification = suggestClassification(title + ' ' + linkUrl);
+    openIntakeModal({
+      mode: 'link',
+      title,
+      suggestedType: classification.suggestedType,
+      confidence: classification.confidence,
       url: linkUrl,
     });
     setShowLink(false);
     setLinkTitle('');
     setLinkUrl('');
-    setLinkType('link');
-    refresh();
-    toast.success('Link added');
   };
 
   const handleAskTeammateSubmit = () => {
@@ -179,12 +294,6 @@ export function AccountInbox({ accountId, onSignalPicker }: AccountInboxProps) {
     setQuestionText('');
     refresh();
     toast.success('Request sent');
-  };
-
-  const handleClassify = (id: string, type: MemoryItemType) => {
-    updateMemoryType(id, type);
-    setClassifyId(null);
-    refresh();
   };
 
   const handleDelete = (id: string) => {
@@ -212,8 +321,6 @@ export function AccountInbox({ accountId, onSignalPicker }: AccountInboxProps) {
   };
 
   const pendingRequests = requests.filter((r) => r.status === 'pending');
-
-  // Active filter types (only show chips for types that have items)
   const activeTypes = Array.from(new Set(items.map((i) => i.type)));
 
   return (
@@ -291,7 +398,108 @@ export function AccountInbox({ accountId, onSignalPicker }: AccountInboxProps) {
         Ask teammate
       </button>
 
-      {/* ===== Paste text modal ===== */}
+      {/* ===== Intake Confirmation Modal ===== */}
+      {intakePending && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={closeIntakeModal}>
+          <div className="bg-card border border-border rounded-xl p-5 w-[340px] space-y-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-foreground">Confirm Evidence</p>
+              <button onClick={closeIntakeModal} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
+            </div>
+
+            {intakePending.confidence === 'low' && (
+              <p className="text-[10px] text-muted-foreground bg-muted/30 rounded-md px-2 py-1.5">
+                We couldn't confidently classify this — please confirm the type below.
+              </p>
+            )}
+
+            {/* Title */}
+            <div>
+              <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Title</label>
+              <Input
+                value={intakeTitle}
+                onChange={(e) => setIntakeTitle(e.target.value)}
+                placeholder="Evidence title"
+                className="h-8 text-xs"
+                autoFocus
+              />
+            </div>
+
+            {/* Type dropdown */}
+            <div>
+              <label className="text-[10px] font-medium text-muted-foreground mb-1 block">
+                What is this?
+                {intakePending.confidence !== 'low' && (
+                  <span className="ml-1.5 text-primary/70">
+                    (suggested: {MEMORY_TYPE_OPTIONS.find((o) => o.value === intakePending.suggestedType)?.label})
+                  </span>
+                )}
+              </label>
+              <select
+                value={intakeType}
+                onChange={(e) => setIntakeType(e.target.value as MemoryItemType)}
+                className="w-full appearance-none text-xs font-medium text-foreground bg-background border border-input rounded-md px-2.5 py-1.5 cursor-pointer"
+              >
+                {MEMORY_TYPE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Store in Account Intelligence — always on */}
+            <div className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-muted/20">
+              <CheckSquare className="w-3.5 h-3.5 text-primary" />
+              <span className="text-[10px] font-medium text-muted-foreground">Store in Account Intelligence</span>
+              <span className="text-[9px] text-muted-foreground/60 ml-auto">Always</span>
+            </div>
+
+            {/* Also add to Deal Plan */}
+            <button
+              type="button"
+              onClick={() => setIntakeAddToDealPlan(!intakeAddToDealPlan)}
+              className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md hover:bg-muted/20 transition-colors"
+            >
+              {intakeAddToDealPlan
+                ? <CheckSquare className="w-3.5 h-3.5 text-primary" />
+                : <Square className="w-3.5 h-3.5 text-muted-foreground" />
+              }
+              <span className="text-[10px] font-medium text-foreground">Also add shortcut to Deal Plan</span>
+            </button>
+
+            {/* Tags */}
+            <div>
+              <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Tags (optional, comma-separated)</label>
+              <Input
+                value={intakeTags}
+                onChange={(e) => setIntakeTags(e.target.value)}
+                placeholder="e.g. security, Q3, priority"
+                className="h-7 text-[10px]"
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={handleIntakeSave}
+                disabled={!intakeTitle.trim()}
+                className={cn(
+                  'flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors',
+                  intakeTitle.trim()
+                    ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                    : 'bg-muted text-muted-foreground cursor-not-allowed'
+                )}
+              >
+                Save
+              </button>
+              <button onClick={closeIntakeModal} className="px-3 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== Paste text pre-modal ===== */}
       {showPaste && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowPaste(false)}>
           <div className="bg-card border border-border rounded-xl p-4 w-80 space-y-3 shadow-xl" onClick={(e) => e.stopPropagation()}>
@@ -301,27 +509,15 @@ export function AccountInbox({ accountId, onSignalPicker }: AccountInboxProps) {
             </div>
             <Input value={pasteTitle} onChange={(e) => setPasteTitle(e.target.value)} placeholder="Title (optional)" className="h-8 text-xs" />
             <Textarea value={pasteContent} onChange={(e) => setPasteContent(e.target.value)} placeholder="Paste meeting notes, transcript, or context…" className="text-xs min-h-[80px]" autoFocus />
-            <div className="relative">
-              <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Type</label>
-              <select
-                value={pasteType}
-                onChange={(e) => setPasteType(e.target.value as MemoryItemType)}
-                className="w-full appearance-none text-xs font-medium text-foreground bg-background border border-input rounded-md px-2.5 py-1.5 cursor-pointer"
-              >
-                {MEMORY_TYPE_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            </div>
             <div className="flex gap-2">
-              <button onClick={handlePasteSubmit} disabled={!pasteContent.trim()} className={cn('flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors', pasteContent.trim() ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-muted text-muted-foreground cursor-not-allowed')}>Add</button>
+              <button onClick={handlePasteSubmit} disabled={!pasteContent.trim()} className={cn('flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors', pasteContent.trim() ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-muted text-muted-foreground cursor-not-allowed')}>Next</button>
               <button onClick={() => { setShowPaste(false); setPasteTitle(''); setPasteContent(''); }} className="px-3 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground">Cancel</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ===== Add link modal ===== */}
+      {/* ===== Add link pre-modal ===== */}
       {showLink && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowLink(false)}>
           <div className="bg-card border border-border rounded-xl p-4 w-80 space-y-3 shadow-xl" onClick={(e) => e.stopPropagation()}>
@@ -331,20 +527,8 @@ export function AccountInbox({ accountId, onSignalPicker }: AccountInboxProps) {
             </div>
             <Input value={linkTitle} onChange={(e) => setLinkTitle(e.target.value)} placeholder="Title (optional)" className="h-8 text-xs" />
             <Input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://…" className="h-8 text-xs" autoFocus />
-            <div className="relative">
-              <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Type</label>
-              <select
-                value={linkType}
-                onChange={(e) => setLinkType(e.target.value as MemoryItemType)}
-                className="w-full appearance-none text-xs font-medium text-foreground bg-background border border-input rounded-md px-2.5 py-1.5 cursor-pointer"
-              >
-                {MEMORY_TYPE_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            </div>
             <div className="flex gap-2">
-              <button onClick={handleLinkSubmit} disabled={!linkUrl.trim()} className={cn('flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors', linkUrl.trim() ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-muted text-muted-foreground cursor-not-allowed')}>Add</button>
+              <button onClick={handleLinkSubmit} disabled={!linkUrl.trim()} className={cn('flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors', linkUrl.trim() ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-muted text-muted-foreground cursor-not-allowed')}>Next</button>
               <button onClick={() => { setShowLink(false); setLinkTitle(''); setLinkUrl(''); }} className="px-3 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground">Cancel</button>
             </div>
           </div>
@@ -382,24 +566,6 @@ export function AccountInbox({ accountId, onSignalPicker }: AccountInboxProps) {
               </button>
               <button onClick={() => setShowAskTeammate(false)} className="px-3 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground">Cancel</button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Classification prompt */}
-      {classifyId && (
-        <div className="rounded-lg border border-primary/20 bg-primary/[0.03] p-2.5 space-y-2">
-          <p className="text-[10px] font-medium text-foreground">What is this?</p>
-          <div className="flex flex-wrap gap-1">
-            {MEMORY_TYPE_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => handleClassify(classifyId, opt.value)}
-                className="px-2 py-0.5 rounded-full text-[9px] font-medium border border-border/60 bg-background hover:border-primary/30 hover:bg-primary/5 transition-colors"
-              >
-                {opt.label}
-              </button>
-            ))}
           </div>
         </div>
       )}
