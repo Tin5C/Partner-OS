@@ -14,6 +14,8 @@ import { addSelectedPack, getSelectedPacks, addContentRequest, getActivePlay } f
 import { getByFocusId as getInitiatives } from '@/data/partner/publicInitiativesStore';
 import { getByFocusId as getTrends } from '@/data/partner/industryAuthorityTrendsStore';
 import { getActiveSignalIds } from '@/partner/data/dealPlanning/activeSignalsStore';
+import { getActiveInitiativeIds } from '@/partner/data/dealPlanning/activeInitiativesStore';
+import { getActiveTrendIds } from '@/partner/data/dealPlanning/activeTrendsStore';
 import { buildSignalPool } from '@/partner/data/dealPlanning/signalPool';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -75,6 +77,10 @@ export function RecommendedPlaysPanel({
   const activeSignalIds = useMemo(() => getActiveSignalIds(accountId), [accountId, promotedSignals, showPicker]);
   const activeSignalCount = activeSignalIds.length;
 
+  // Active initiatives & trends selections
+  const activeInitiativeIds = useMemo(() => getActiveInitiativeIds(accountId), [accountId, showPicker]);
+  const activeTrendIds = useMemo(() => getActiveTrendIds(accountId), [accountId, showPicker]);
+
   // Build promoted signals from active signal IDs by looking up in pool
   const activeAsPromoted = useMemo((): PromotedSignal[] => {
     if (activeSignalCount === 0) return promotedSignals; // fallback to legacy
@@ -105,16 +111,33 @@ export function RecommendedPlaysPanel({
   // Use active signals for scoring if any selected, otherwise fall back to legacy promoted
   const signalsForScoring = activeSignalCount > 0 ? activeAsPromoted : promotedSignals;
 
-  // Read canonical stores
-  const initiativesTitles = useMemo(() => {
+  // Read canonical stores — full lists
+  const allInitiativesTitles = useMemo(() => {
     const rec = getInitiatives(accountId);
-    return rec?.public_it_initiatives?.map((i) => i.title) ?? [];
+    return rec?.public_it_initiatives ?? [];
   }, [accountId]);
 
-  const trendsTitles = useMemo(() => {
+  const allTrendsTitles = useMemo(() => {
     const pack = getTrends(accountId);
-    return pack?.trends?.map((t) => t.trend_title) ?? [];
+    return pack?.trends ?? [];
   }, [accountId]);
+
+  // Narrow initiatives/trends based on user selection (empty = use all)
+  const initiativesTitlesForScoring = useMemo(() => {
+    if (activeInitiativeIds.length > 0) {
+      const selectedSet = new Set(activeInitiativeIds);
+      return allInitiativesTitles.filter((i) => selectedSet.has(i.id)).map((i) => i.title);
+    }
+    return allInitiativesTitles.map((i) => i.title);
+  }, [allInitiativesTitles, activeInitiativeIds]);
+
+  const trendsTitlesForScoring = useMemo(() => {
+    if (activeTrendIds.length > 0) {
+      const selectedSet = new Set(activeTrendIds);
+      return allTrendsTitles.filter((t) => selectedSet.has(t.id)).map((t) => t.trend_title);
+    }
+    return allTrendsTitles.map((t) => t.trend_title);
+  }, [allTrendsTitles, activeTrendIds]);
 
   // Score plays
   const scoredPlays = useMemo(() => {
@@ -123,16 +146,16 @@ export function RecommendedPlaysPanel({
       engagementType,
       motion,
       readinessScore,
-      initiatives: initiativesTitles,
-      trends: trendsTitles,
+      initiatives: initiativesTitlesForScoring,
+      trends: trendsTitlesForScoring,
     };
     const all = scorePlayPacks(PLAY_SERVICE_PACKS, input);
     return signalsForScoring.length === 0 ? all.slice(0, 2) : all.slice(0, 3);
-  }, [signalsForScoring, engagementType, motion, readinessScore, initiativesTitles, trendsTitles]);
+  }, [signalsForScoring, engagementType, motion, readinessScore, initiativesTitlesForScoring, trendsTitlesForScoring]);
 
   const selectedPacks = useMemo(() => getSelectedPacks(accountId), [accountId, scoredPlays]);
   const activePlay = useMemo(() => getActivePlay(accountId), [accountId, scoredPlays]);
-  const hasNoContext = signalsForScoring.length === 0 && initiativesTitles.length === 0 && trendsTitles.length === 0;
+  const hasNoContext = signalsForScoring.length === 0 && allInitiativesTitles.length === 0 && allTrendsTitles.length === 0;
 
   const handleAddToPlan = (play: ScoredPlay) => {
     addSelectedPack(accountId, play.packId);
@@ -151,6 +174,14 @@ export function RecommendedPlaysPanel({
   // Display signal count: active signals if using picker, else legacy promoted
   const displaySignalCount = activeSignalCount > 0 ? activeSignalCount : promotedSignals.length;
 
+  // Drivers summary labels
+  const initiativeSummary = activeInitiativeIds.length > 0
+    ? `${activeInitiativeIds.length}/3`
+    : 'All';
+  const trendSummary = activeTrendIds.length > 0
+    ? `${activeTrendIds.length}/3`
+    : 'All';
+
   return (
     <div className="rounded-xl border border-primary/15 bg-primary/[0.02] p-4 space-y-3">
       {/* ===== Header Row ===== */}
@@ -161,7 +192,7 @@ export function RecommendedPlaysPanel({
             <p className="text-xs font-semibold text-foreground">Recommended Plays</p>
           </div>
           <p className="text-[11px] text-muted-foreground mt-0.5">
-            Account Intelligence–driven recommendations.
+            Account Intelligence-driven recommendations.
           </p>
         </div>
         <button
@@ -172,13 +203,34 @@ export function RecommendedPlaysPanel({
         </button>
       </div>
 
-      {/* ===== Selected Drivers Row ===== */}
-      <div className="space-y-1.5">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-            Selected drivers ({displaySignalCount}/3)
+      {/* ===== Drivers Used Summary ===== */}
+      <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+        <span className="font-semibold uppercase tracking-wider text-muted-foreground">Drivers used</span>
+        <span>Signals: {displaySignalCount}/3</span>
+        <span className="text-border">|</span>
+        <span>Initiatives: {initiativeSummary}</span>
+        <span className="text-border">|</span>
+        <span>Trends: {trendSummary}</span>
+        {onGoToAccountIntelligence && (
+          <>
+            <span className="text-border">|</span>
+            <button
+              onClick={onGoToAccountIntelligence}
+              className="text-[10px] text-muted-foreground hover:text-foreground underline underline-offset-2 decoration-border hover:decoration-foreground transition-colors"
+            >
+              Browse in Account Intelligence
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* ===== Selected Drivers Chips ===== */}
+      {activeSignalIds.length > 0 && (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mr-1">
+            Selected signals
           </span>
-          {activeSignalIds.length > 0 && (() => {
+          {(() => {
             const pool = buildSignalPool(accountId, weekOf);
             return activeSignalIds.map((id) => {
               const found = pool.find((p) => p.id === id);
@@ -194,21 +246,7 @@ export function RecommendedPlaysPanel({
             });
           })()}
         </div>
-        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-          <span>Also used: Initiatives: {initiativesTitles.length} · Trends: {trendsTitles.length}</span>
-          {onGoToAccountIntelligence && (
-            <>
-              <span>·</span>
-              <button
-                onClick={onGoToAccountIntelligence}
-                className="text-[10px] text-muted-foreground hover:text-foreground underline underline-offset-2 decoration-border hover:decoration-foreground transition-colors"
-              >
-                Find more in Account Intelligence
-              </button>
-            </>
-          )}
-        </div>
-      </div>
+      )}
 
       {/* ===== Inline Signal Picker ===== */}
       {showPicker && pickerNode && (
@@ -241,12 +279,10 @@ export function RecommendedPlaysPanel({
                 key={play.packId}
                 className="rounded border border-border/60 bg-card p-3.5 flex flex-col"
               >
-                {/* Content area — grows to fill */}
+                {/* Content area */}
                 <div className="flex-1 space-y-3">
-                  {/* Title */}
                   <p className="text-xs font-semibold text-foreground leading-snug">{play.packName}</p>
 
-                  {/* Fit Score Block */}
                   <div className="space-y-1.5">
                     <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Fit Score</p>
                     <Progress value={play.engagementFitPct} className="h-1 bg-secondary" />
@@ -262,7 +298,6 @@ export function RecommendedPlaysPanel({
                     )}
                   </div>
 
-                  {/* Drivers */}
                   {play.drivers.length > 0 && (
                     <div>
                       <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1 mb-1">
@@ -271,14 +306,13 @@ export function RecommendedPlaysPanel({
                       <div className="space-y-0.5">
                         {play.drivers.map((d, i) => (
                           <p key={i} className="text-[10px] text-muted-foreground flex items-start gap-1">
-                            <span className="text-primary/60 mt-px">•</span> {d}
+                            <span className="text-primary/60 mt-px">·</span> {d}
                           </p>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  {/* Readiness Gaps — inline, dot-separated */}
                   {play.gaps.length > 0 && (
                     <div>
                       <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
@@ -290,7 +324,6 @@ export function RecommendedPlaysPanel({
                     </div>
                   )}
 
-                  {/* Score debug breakdown */}
                   {(() => {
                     const packDef = PLAY_SERVICE_PACKS.find((p) => p.id === play.packId);
                     if (!packDef) return null;
@@ -305,14 +338,17 @@ export function RecommendedPlaysPanel({
                         engagementType={engagementType}
                         motion={motion}
                         readinessScore={readinessScore}
-                        initiatives={initiativesTitles}
-                        trends={trendsTitles}
+                        initiatives={initiativesTitlesForScoring}
+                        trends={trendsTitlesForScoring}
+                        allInitiativeCount={allInitiativesTitles.length}
+                        allTrendCount={allTrendsTitles.length}
+                        selectedInitiativeCount={activeInitiativeIds.length}
+                        selectedTrendCount={activeTrendIds.length}
                       />
                     );
                   })()}
                 </div>
 
-                {/* Fixed footer — always at bottom */}
                 <div className="flex items-center gap-3 pt-3 mt-auto">
                   <button
                     onClick={() => handleAddToPlan(play)}
@@ -346,7 +382,7 @@ export function RecommendedPlaysPanel({
           <CollapsibleTrigger className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors w-full">
             {driversOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
             <Zap className="w-3 h-3" />
-            Selected drivers ({promotedSignals.length})
+            Promoted signals ({promotedSignals.length})
           </CollapsibleTrigger>
           <CollapsibleContent className="mt-2 space-y-1.5">
             {promotedSignals.map((d) => {
@@ -380,8 +416,8 @@ export function RecommendedPlaysPanel({
         <ReadinessAssessmentPanel
           play={readinessPlay}
           promotedSignals={signalsForScoring}
-          initiativeCount={initiativesTitles.length}
-          trendCount={trendsTitles.length}
+          initiativeCount={allInitiativesTitles.length}
+          trendCount={allTrendsTitles.length}
           onClose={() => setReadinessPlay(null)}
           onAddToPlan={handleAddToPlan}
         />
