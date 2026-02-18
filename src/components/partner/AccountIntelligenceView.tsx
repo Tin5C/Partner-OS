@@ -281,7 +281,7 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
     return resolveAccountIntelligence({ focusId, weekOf: '2026-02-10' });
   }, [focusId]);
 
-  const [openSection, setOpenSection] = useState<SectionId>('ai-exec-summary');
+  const [openSection, setOpenSection] = useState<SectionId | ''>('ai-exec-summary');
   const [signalFilter, setSignalFilter] = useState<SignalQuickFilter>('all');
   const [commercialTab, setCommercialTab] = useState<CommercialTab>('licenses');
   const [techTab, setTechTab] = useState<TechTab>('vendors');
@@ -290,12 +290,16 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
   const containerRef = useRef<HTMLDivElement>(null);
 
   const toggleSection = useCallback((id: SectionId) => {
-    setOpenSection((prev) => prev === id ? prev : id);
-    // Auto-scroll
-    setTimeout(() => {
-      const el = document.getElementById(id);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 50);
+    setOpenSection((prev) => {
+      const next = prev === id ? '' : id;
+      if (next) {
+        setTimeout(() => {
+          const el = document.getElementById(id);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 50);
+      }
+      return next;
+    });
   }, []);
 
   // Destructure VM
