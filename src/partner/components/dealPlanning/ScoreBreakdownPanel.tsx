@@ -190,6 +190,10 @@ interface ScoreBreakdownPanelProps {
   readinessScore: number | null | undefined;
   initiatives: string[];
   trends: string[];
+  allInitiativeCount?: number;
+  allTrendCount?: number;
+  selectedInitiativeCount?: number;
+  selectedTrendCount?: number;
 }
 
 export function ScoreBreakdownPanel(props: ScoreBreakdownPanelProps) {
@@ -228,11 +232,19 @@ export function ScoreBreakdownPanel(props: ScoreBreakdownPanelProps) {
               <TitledList items={bd.signalTitles} />
             </div>
             <div className="space-y-0.5">
-              <p className="text-muted-foreground font-medium">Initiatives: {bd.initiativeCount}</p>
+              <p className="text-muted-foreground font-medium">
+                Initiatives: {props.selectedInitiativeCount && props.selectedInitiativeCount > 0
+                  ? `${props.selectedInitiativeCount} selected`
+                  : `Using all (${bd.initiativeCount})`}
+              </p>
               <TitledList items={bd.initiativeTitles} />
             </div>
             <div className="space-y-0.5">
-              <p className="text-muted-foreground font-medium">Trends: {bd.trendCount}</p>
+              <p className="text-muted-foreground font-medium">
+                Trends: {props.selectedTrendCount && props.selectedTrendCount > 0
+                  ? `${props.selectedTrendCount} selected`
+                  : `Using all (${bd.trendCount})`}
+              </p>
               <TitledList items={bd.trendTitles} />
             </div>
           </div>
