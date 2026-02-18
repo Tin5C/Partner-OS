@@ -172,6 +172,7 @@ function DocSection({
   isOpen,
   onToggle,
   children,
+  sectionRef,
 }: {
   id: string;
   title: string;
@@ -181,9 +182,10 @@ function DocSection({
   isOpen: boolean;
   onToggle: () => void;
   children: React.ReactNode;
+  sectionRef?: (el: HTMLDivElement | null) => void;
 }) {
   return (
-    <section id={id}>
+    <section id={id} ref={sectionRef}>
       <button
         onClick={onToggle}
         className="w-full flex items-center gap-2 py-3 px-1 text-left border-b border-border/40 hover:bg-muted/20 transition-colors group"
@@ -329,19 +331,58 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
   const [expandedTrend, setExpandedTrend] = useState<string | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const sectionRefs = useRef<Record<SectionId, HTMLDivElement | null>>({
+    'ai-exec-summary': null,
+    'ai-signals': null,
+    'ai-initiatives': null,
+    'ai-trends': null,
+    'ai-commercial': null,
+    'ai-technical': null,
+    'ai-evidence': null,
+  });
+
+  const HEADER_OFFSET = 88;
+
+  const scrollToSection = useCallback((id: SectionId) => {
+    // Find the nearest scrollable ancestor
+    const el = sectionRefs.current[id];
+    if (!el) return;
+
+    // Walk up to find the actual scrolling container
+    let scrollContainer: HTMLElement | null = el.parentElement;
+    while (scrollContainer && scrollContainer !== document.documentElement) {
+      const { overflowY } = getComputedStyle(scrollContainer);
+      if (overflowY === 'auto' || overflowY === 'scroll') break;
+      scrollContainer = scrollContainer.parentElement;
+    }
+
+    if (scrollContainer && scrollContainer !== document.documentElement) {
+      const containerRect = scrollContainer.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      const delta = elRect.top - containerRect.top;
+      scrollContainer.scrollTo({
+        top: scrollContainer.scrollTop + delta - HEADER_OFFSET,
+        behavior: 'smooth',
+      });
+    } else {
+      // Fallback: window scroll
+      const elRect = el.getBoundingClientRect();
+      window.scrollTo({
+        top: window.scrollY + elRect.top - HEADER_OFFSET,
+        behavior: 'smooth',
+      });
+    }
+  }, []);
 
   const toggleSection = useCallback((id: SectionId) => {
     setOpenSection((prev) => {
       const next = prev === id ? '' : id;
       if (next) {
-        setTimeout(() => {
-          const el = document.getElementById(id);
-          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 50);
+        setTimeout(() => scrollToSection(next), 80);
       }
       return next;
     });
-  }, []);
+  }, [scrollToSection]);
 
   // Destructure VM
   const snapshot = vm?.snapshot ?? null;
@@ -454,6 +495,7 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
           icon={<Target className="w-3.5 h-3.5" />}
           isOpen={openSection === 'ai-exec-summary'}
           onToggle={() => toggleSection('ai-exec-summary')}
+          sectionRef={(el) => { sectionRefs.current['ai-exec-summary'] = el; }}
         >
           {snapshot ? (
             <div className="space-y-4">
@@ -514,6 +556,7 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
           count={signalHistory.length}
           isOpen={openSection === 'ai-signals'}
           onToggle={() => toggleSection('ai-signals')}
+          sectionRef={(el) => { sectionRefs.current['ai-signals'] = el; }}
         >
           {/* Quick filter tabs */}
           <div className="flex items-center gap-1 mb-3">
@@ -615,6 +658,7 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
           count={filteredInitiatives.length}
           isOpen={openSection === 'ai-initiatives'}
           onToggle={() => toggleSection('ai-initiatives')}
+          sectionRef={(el) => { sectionRefs.current['ai-initiatives'] = el; }}
         >
           {/* Strategy pillars summary */}
           {strategyPillars && strategyPillars.strategy_pillars.length > 0 && (
@@ -718,6 +762,7 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
           count={filteredTrends.length}
           badge={<span className="text-[9px] text-muted-foreground/50 mr-1">12-24 mo horizon</span>}
           isOpen={openSection === 'ai-trends'}
+          sectionRef={(el) => { sectionRefs.current['ai-trends'] = el; }}
           onToggle={() => toggleSection('ai-trends')}
         >
           {filteredTrends.length > 0 ? (
@@ -784,6 +829,7 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
           icon={<DollarSign className="w-3.5 h-3.5" />}
           isOpen={openSection === 'ai-commercial'}
           onToggle={() => toggleSection('ai-commercial')}
+          sectionRef={(el) => { sectionRefs.current['ai-commercial'] = el; }}
         >
           {commercial ? (
             <div className="space-y-3">
@@ -853,6 +899,7 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
           icon={<Server className="w-3.5 h-3.5" />}
           isOpen={openSection === 'ai-technical'}
           onToggle={() => toggleSection('ai-technical')}
+          sectionRef={(el) => { sectionRefs.current['ai-technical'] = el; }}
         >
           {technical ? (
             <div className="space-y-3">
@@ -937,6 +984,7 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
           count={evidenceCount}
           isOpen={openSection === 'ai-evidence'}
           onToggle={() => toggleSection('ai-evidence')}
+          sectionRef={(el) => { sectionRefs.current['ai-evidence'] = el; }}
         >
           {/* Evidence categories */}
           <div className="space-y-2">
