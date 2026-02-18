@@ -147,6 +147,78 @@ function ReadinessCompact({ score }: { score: number }) {
   );
 }
 
+/* ─── Readiness Pillar Bars ─── */
+
+const PILLAR_DISPLAY: { key: string; label: string }[] = [
+  { key: 'context', label: 'Strategic Alignment' },
+  { key: 'stakeholders', label: 'Stakeholder Coverage' },
+  { key: 'competitive', label: 'Commercial Viability' },
+  { key: 'technical', label: 'Delivery Feasibility' },
+  { key: 'proof', label: 'Evidence Coverage' },
+];
+
+function getPillarStatus(filled: boolean | undefined): { label: string; className: string } {
+  if (filled === true) return { label: 'Met', className: 'text-primary' };
+  if (filled === false) return { label: 'Missing', className: 'text-muted-foreground/50' };
+  return { label: 'Unknown', className: 'text-muted-foreground/40' };
+}
+
+function ReadinessPillarBars({
+  pillars,
+  onPillarClick,
+}: {
+  pillars: Record<string, boolean>;
+  onPillarClick?: (pillarKey: string) => void;
+}) {
+  const hasPillarData = pillars && Object.keys(pillars).length > 0;
+
+  return (
+    <div className="space-y-1.5">
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-2">
+        Readiness by pillar
+      </p>
+      {PILLAR_DISPLAY.map((p) => {
+        const filled = hasPillarData ? pillars[p.key] : undefined;
+        const status = getPillarStatus(filled);
+        return (
+          <button
+            key={p.key}
+            onClick={() => onPillarClick?.(p.key)}
+            className="w-full flex items-center gap-3 py-1 group hover:bg-muted/10 rounded-md px-1 -mx-1 transition-colors"
+          >
+            <span className="text-[10px] text-muted-foreground min-w-[120px] text-left truncate">
+              {p.label}
+            </span>
+            <div className="flex-1 flex items-center gap-px">
+              {[0, 1, 2, 3, 4].map((seg) => (
+                <div
+                  key={seg}
+                  className={cn(
+                    "h-1.5 flex-1 rounded-[1px] transition-colors",
+                    filled === true
+                      ? "bg-primary/60"
+                      : filled === false
+                        ? "bg-muted/40"
+                        : "bg-muted/20"
+                  )}
+                />
+              ))}
+            </div>
+            <span className={cn("text-[9px] font-medium min-w-[48px] text-right", status.className)}>
+              {status.label}
+            </span>
+          </button>
+        );
+      })}
+      {!hasPillarData && (
+        <p className="text-[9px] text-muted-foreground/40 mt-1">
+          Pillar breakdown not available yet — overall readiness shown above.
+        </p>
+      )}
+    </div>
+  );
+}
+
 /* ─── Section IDs for navigation ─── */
 
 const SECTIONS = [
@@ -452,6 +524,14 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
             )}
           </div>
         </div>
+
+        {/* Readiness Pillar Bars */}
+        <ReadinessPillarBars
+          pillars={readiness.pillars}
+          onPillarClick={() => {
+            toggleSection('ai-evidence');
+          }}
+        />
 
         {/* Quick Navigation */}
         <div className="flex items-center gap-1 overflow-x-auto">
