@@ -221,7 +221,7 @@ export function SignalPickerPanel({ accountId, weekOf, onClose, onChanged }: Sig
           <div>
             <p className="text-sm font-semibold text-foreground">Signals</p>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              Select up to {MAX_ACTIVE_SIGNALS} signals to sharpen recommendations.
+              Select up to {MAX_ACTIVE_SIGNALS} signals to influence recommendations.
             </p>
           </div>
           <button onClick={onClose} className="p-1.5 rounded text-muted-foreground hover:text-foreground transition-colors">

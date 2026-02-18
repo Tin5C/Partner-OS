@@ -105,7 +105,7 @@ export function PartnerModeSection() {
           "p-5 space-y-1"
         )}>
           <p className="text-[11px] text-muted-foreground tracking-wide">Active Deal Workspace</p>
-          <DealPlanDriversView onGoToQuickBrief={() => setMode('quick-brief')} />
+          <DealPlanDriversView onGoToQuickBrief={() => setMode('quick-brief')} onGoToAccountIntelligence={() => setMode('account-intelligence')} />
         </div>
       ) : (
         <AccountIntelligenceView focusId={FOCUS_ID} />
