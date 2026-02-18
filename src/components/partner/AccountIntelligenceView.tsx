@@ -1,36 +1,32 @@
 // Account Intelligence View — Notion-style research document layout
 // Collapsible accordion sections (one open at a time), sticky header, mini-nav, auto-scroll filtering
+// AI Lens toggle filters display only; no store mutations.
 
-import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
+import { useMemo, useState, useCallback, useRef } from 'react';
 import {
   Building2,
   DollarSign,
   Server,
-  Signal,
-  Inbox,
-  MessageSquare,
   FileText,
   Users,
   Target,
-  Lightbulb,
-  Award,
-  ExternalLink,
   TrendingUp,
   ChevronDown,
-  Newspaper,
   ArrowUpRight,
-  Search,
   Zap,
   Brain,
   Shield,
   Layers,
   ShoppingCart,
+  MessageSquare,
+  ChevronRight,
+  Sparkles,
+  BookOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { resolveAccountIntelligence } from '@/services/accountIntelligence';
 import type { AccountIntelligenceVM } from '@/services/accountIntelligence';
-import type { PartnerInvolvement } from '@/data/partner/partnerInvolvementStore';
 import {
   addItem,
   makeInboxItemId,
@@ -86,10 +82,10 @@ function CategoryBadge({ category }: { category: string }) {
   );
 }
 
-function TagsRow({ tags }: { tags: string[] }) {
+function TagsRow({ tags, max = 2 }: { tags: string[]; max?: number }) {
   if (!tags || tags.length === 0) return null;
-  const visible = tags.slice(0, 3);
-  const overflow = tags.length - 3;
+  const visible = tags.slice(0, max);
+  const overflow = tags.length - max;
   return (
     <div className="flex items-center gap-1 flex-wrap">
       {visible.map((t) => (
@@ -114,20 +110,6 @@ function KVRow({ label, value }: { label: string; value?: string | null }) {
   );
 }
 
-function BulletList({ items }: { items?: string[] }) {
-  if (!items || items.length === 0) return <p className="text-xs text-muted-foreground/60">No data yet.</p>;
-  return (
-    <ul className="space-y-0.5">
-      {items.map((item, i) => (
-        <li key={i} className="text-xs text-foreground flex items-start gap-2">
-          <span className="text-muted-foreground/40 mt-1 flex-shrink-0">•</span>
-          {item}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 function UseDealPlanButton({ onClick }: { onClick: () => void }) {
   return (
     <button
@@ -140,7 +122,7 @@ function UseDealPlanButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-/* ─── Readiness compact bar (inline in header) ─── */
+/* ─── Readiness compact bar ─── */
 
 function getStateLabel(pct: number): string {
   if (pct >= 80) return 'Deal-ready';
@@ -169,11 +151,11 @@ function ReadinessCompact({ score }: { score: number }) {
 
 const SECTIONS = [
   { id: 'ai-exec-summary', label: 'Executive' },
-  { id: 'ai-signals', label: 'Signals' },
-  { id: 'ai-strategy', label: 'Strategy' },
+  { id: 'ai-signals', label: 'This Week' },
+  { id: 'ai-initiatives', label: 'Initiatives' },
+  { id: 'ai-trends', label: 'Trends' },
   { id: 'ai-commercial', label: 'Commercial' },
   { id: 'ai-technical', label: 'Technical' },
-  { id: 'ai-partners', label: 'Partners' },
   { id: 'ai-evidence', label: 'Evidence' },
 ] as const;
 
@@ -186,6 +168,7 @@ function DocSection({
   title,
   icon,
   count,
+  badge,
   isOpen,
   onToggle,
   children,
@@ -194,6 +177,7 @@ function DocSection({
   title: string;
   icon: React.ReactNode;
   count?: number;
+  badge?: React.ReactNode;
   isOpen: boolean;
   onToggle: () => void;
   children: React.ReactNode;
@@ -211,6 +195,7 @@ function DocSection({
             <span className="ml-1.5 text-xs font-normal text-muted-foreground/50">({count})</span>
           )}
         </h2>
+        {badge}
         <ChevronDown className={cn(
           "w-4 h-4 text-muted-foreground/50 transition-transform duration-200 flex-shrink-0",
           isOpen && "rotate-180"
@@ -259,6 +244,15 @@ const EVIDENCE_CATEGORIES: { value: EvidenceCategory; label: string; icon: React
   { value: 'procurement', label: 'Procurement', icon: <ShoppingCart className="w-3 h-3" /> },
 ];
 
+/* ─── AI Lens keyword matching ─── */
+
+const AI_KEYWORDS = ['ai', 'copilot', 'machine learning', 'ml', 'llm', 'generative', 'gpt', 'openai', 'azure ai', 'cognitive', 'neural', 'deep learning', 'rag', 'agent'];
+
+function matchesAILens(text: string): boolean {
+  const lower = text.toLowerCase();
+  return AI_KEYWORDS.some((kw) => lower.includes(kw));
+}
+
 /* ─── De-duplication hint ─── */
 
 function dedupeHint(title: string, trendTitles: string[]): string | null {
@@ -267,10 +261,60 @@ function dedupeHint(title: string, trendTitles: string[]): string | null {
   for (const kw of keywords) {
     if (lower.includes(kw.toLowerCase())) {
       const match = trendTitles.find((t) => t.toLowerCase().includes(kw.toLowerCase()));
-      if (match) return 'Related authority trend available in Strategy';
+      if (match) return 'Related authority trend available in Trends';
     }
   }
   return null;
+}
+
+/* ─── Expandable Row (for Initiatives + Trends) ─── */
+
+function ExpandableRow({
+  title,
+  preview,
+  tags,
+  isExpanded,
+  onToggle,
+  children,
+  dealPlanAction,
+}: {
+  title: string;
+  preview?: string;
+  tags: string[];
+  isExpanded: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+  dealPlanAction?: React.ReactNode;
+}) {
+  return (
+    <div className={cn(
+      "rounded-md border border-border/30 transition-colors",
+      isExpanded ? "bg-muted/10" : "hover:bg-muted/5"
+    )}>
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center gap-2 px-3 py-2.5 text-left"
+      >
+        <ChevronRight className={cn(
+          "w-3 h-3 text-muted-foreground/40 transition-transform duration-150 flex-shrink-0",
+          isExpanded && "rotate-90"
+        )} />
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-medium text-foreground truncate">{title}</p>
+          {!isExpanded && preview && (
+            <p className="text-[10px] text-muted-foreground/60 truncate mt-0.5">{preview}</p>
+          )}
+        </div>
+        {!isExpanded && <TagsRow tags={tags} max={2} />}
+        {isExpanded && dealPlanAction}
+      </button>
+      {isExpanded && (
+        <div className="px-3 pb-3 pt-0 space-y-2 border-t border-border/20 mx-3">
+          {children}
+        </div>
+      )}
+    </div>
+  );
 }
 
 /* ─── Main View ─── */
@@ -286,6 +330,9 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
   const [commercialTab, setCommercialTab] = useState<CommercialTab>('licenses');
   const [techTab, setTechTab] = useState<TechTab>('vendors');
   const [expandedEvidence, setExpandedEvidence] = useState<EvidenceCategory | null>(null);
+  const [aiLens, setAiLens] = useState(false);
+  const [expandedInitiative, setExpandedInitiative] = useState<string | null>(null);
+  const [expandedTrend, setExpandedTrend] = useState<string | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -324,16 +371,36 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
 
   // Filter signals by quick filter
   const filteredSignals = useMemo(() => {
-    if (signalFilter === 'all') return signalHistory;
-    return signalHistory.filter((s) => {
-      const cat = (s.category ?? '').toLowerCase();
-      if (signalFilter === 'ai') return cat.includes('technology') || cat.includes('vendor') || cat.includes('ai');
-      if (signalFilter === 'regulatory') return cat.includes('regulat') || cat.includes('cyber');
-      if (signalFilter === 'commercial') return cat.includes('market') || cat.includes('commercial');
-      if (signalFilter === 'technical') return cat.includes('technology') || cat.includes('operations');
-      return true;
-    });
-  }, [signalHistory, signalFilter]);
+    let list = signalHistory;
+    if (signalFilter !== 'all') {
+      list = list.filter((s) => {
+        const cat = (s.category ?? '').toLowerCase();
+        if (signalFilter === 'ai') return cat.includes('technology') || cat.includes('vendor') || cat.includes('ai');
+        if (signalFilter === 'regulatory') return cat.includes('regulat') || cat.includes('cyber');
+        if (signalFilter === 'commercial') return cat.includes('market') || cat.includes('commercial');
+        if (signalFilter === 'technical') return cat.includes('technology') || cat.includes('operations');
+        return true;
+      });
+    }
+    if (aiLens) {
+      list = list.filter((s) => matchesAILens(s.description) || matchesAILens(s.implication ?? '') || matchesAILens(s.category ?? ''));
+    }
+    return list;
+  }, [signalHistory, signalFilter, aiLens]);
+
+  // AI Lens filtered initiatives
+  const filteredInitiatives = useMemo(() => {
+    const all = publicInitiatives?.public_it_initiatives ?? [];
+    if (!aiLens) return all;
+    return all.filter((i) => matchesAILens(i.title) || matchesAILens(i.summary) || i.technology_domain.some((d) => matchesAILens(d)));
+  }, [publicInitiatives, aiLens]);
+
+  // AI Lens filtered trends
+  const filteredTrends = useMemo(() => {
+    const all = industryAuthorityTrends?.trends ?? [];
+    if (!aiLens) return all;
+    return all.filter((t) => matchesAILens(t.trend_title) || matchesAILens(t.thesis_summary) || matchesAILens(t.applied_to_focus?.why_it_matters ?? ''));
+  }, [industryAuthorityTrends, aiLens]);
 
   // Early returns AFTER all hooks
   if (!focusId) {
@@ -348,6 +415,7 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
   if (!vm) return null;
 
   const accountName = focusId.charAt(0).toUpperCase() + focusId.slice(1);
+  const evidenceCount = inbox.length + requests.length;
 
   return (
     <div ref={containerRef} className="space-y-0">
@@ -360,6 +428,19 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
             <ReadinessCompact score={readiness.score} />
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
+            {/* AI Lens toggle */}
+            <button
+              onClick={() => setAiLens((v) => !v)}
+              className={cn(
+                "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-medium border transition-colors",
+                aiLens
+                  ? "bg-primary/10 text-primary border-primary/20"
+                  : "text-muted-foreground/60 border-border/40 hover:border-border/60 hover:text-muted-foreground"
+              )}
+            >
+              <Sparkles className="w-3 h-3" />
+              AI Lens
+            </button>
             {onGoToDealPlanning && (
               <button
                 onClick={onGoToDealPlanning}
@@ -372,7 +453,7 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
           </div>
         </div>
 
-        {/* Mini-navigation */}
+        {/* Quick Navigation */}
         <div className="flex items-center gap-1 overflow-x-auto">
           {SECTIONS.map((s) => (
             <button
@@ -523,11 +604,13 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
               })}
             </div>
           ) : (
-            <p className="text-xs text-muted-foreground/60">No signals match current filter.</p>
+            <p className="text-xs text-muted-foreground/60">
+              {aiLens ? 'No AI-related signals this week.' : 'No signals match current filter.'}
+            </p>
           )}
 
           {/* Industry News compact */}
-          {industryNews && industryNews.signals.length > 0 && (
+          {industryNews && industryNews.signals.length > 0 && !aiLens && (
             <div className="mt-4 pt-3 border-t border-border/30 space-y-2">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                 Industry News ({industryNews.signals.length})
@@ -552,47 +635,41 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
           )}
         </DocSection>
 
-        {/* SECTION 3: Strategy & Priorities */}
+        {/* SECTION 3: Initiatives (compact expandable rows) */}
         <DocSection
-          id="ai-strategy"
-          title="Strategy & Priorities"
-          icon={<Target className="w-3.5 h-3.5" />}
-          count={(strategyPillars?.strategy_pillars.length ?? 0) + (industryAuthorityTrends?.trends.length ?? 0)}
-          isOpen={openSection === 'ai-strategy'}
-          onToggle={() => toggleSection('ai-strategy')}
+          id="ai-initiatives"
+          title="Public IT Initiatives"
+          icon={<BookOpen className="w-3.5 h-3.5" />}
+          count={filteredInitiatives.length}
+          isOpen={openSection === 'ai-initiatives'}
+          onToggle={() => toggleSection('ai-initiatives')}
         >
-          {/* Strategic Themes */}
+          {/* Strategy pillars summary */}
           {strategyPillars && strategyPillars.strategy_pillars.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-1.5 mb-3 pb-3 border-b border-border/30">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Strategic Themes</p>
-              {strategyPillars.strategy_pillars.map((sp) => (
-                <div key={sp.id} className="p-2.5 rounded-lg bg-muted/10 border border-border/30 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <p className="text-xs font-medium text-foreground flex-1">{sp.title}</p>
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-medium bg-primary/5 text-primary border border-primary/10">
-                      {sp.time_horizon}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground line-clamp-2">{sp.summary}</p>
-                  <div className="flex items-center gap-1.5">
-                    <OriginBadge label="Strategy" />
-                    <ConfidenceBadge level={sp.confidence_level} />
-                  </div>
-                </div>
-              ))}
+              <div className="flex flex-wrap gap-1.5">
+                {strategyPillars.strategy_pillars.map((sp) => (
+                  <span key={sp.id} className="px-2 py-1 rounded-md text-[10px] font-medium bg-muted/20 text-foreground border border-border/30">
+                    {sp.title}
+                    <span className="ml-1 text-muted-foreground/50">· {sp.time_horizon}</span>
+                  </span>
+                ))}
+              </div>
             </div>
           )}
 
-          {/* Public IT Initiatives */}
-          {publicInitiatives && publicInitiatives.public_it_initiatives.length > 0 && (
-            <div className="space-y-2 pt-3 border-t border-border/30">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                Public IT Initiatives ({publicInitiatives.public_it_initiatives.length})
-              </p>
-              {publicInitiatives.public_it_initiatives.map((init) => (
-                <div key={init.id} className="p-2.5 rounded-lg bg-muted/10 border border-border/30 space-y-1">
-                  <div className="flex items-start gap-2">
-                    <p className="text-xs font-medium text-foreground flex-1">{init.title}</p>
+          {filteredInitiatives.length > 0 ? (
+            <div className="space-y-1">
+              {filteredInitiatives.map((init) => (
+                <ExpandableRow
+                  key={init.id}
+                  title={init.title}
+                  preview={init.summary.slice(0, 100)}
+                  tags={init.technology_domain.filter((d) => d !== 'other')}
+                  isExpanded={expandedInitiative === init.id}
+                  onToggle={() => setExpandedInitiative((prev) => prev === init.id ? null : init.id)}
+                  dealPlanAction={
                     <UseDealPlanButton onClick={() => {
                       if (!focusId) return;
                       addItem(focusId, {
@@ -608,66 +685,32 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
                       });
                       toast.success('Added to Deal Planning Inbox');
                     }} />
+                  }
+                >
+                  <div className="pt-2 space-y-2">
+                    <p className="text-[10px] text-muted-foreground/70">
+                      {init.announcement_date ?? init.source_published_at ?? 'Unknown'} · {init.initiative_type.replace(/_/g, ' ')}
+                    </p>
+                    <p className="text-[11px] text-foreground leading-relaxed">{init.summary}</p>
+                    <div className="flex items-center gap-1.5">
+                      <OriginBadge label="Public initiative" />
+                      <span className="px-1.5 py-0.5 rounded-full text-[9px] font-medium bg-primary/5 text-primary border border-primary/10">
+                        {init.estimated_magnitude}
+                      </span>
+                      <TagsRow tags={init.technology_domain.filter((d) => d !== 'other')} max={5} />
+                    </div>
                   </div>
-                  <p className="text-[10px] text-muted-foreground/70">
-                    {init.announcement_date ?? init.source_published_at ?? 'Unknown'} · {init.initiative_type.replace(/_/g, ' ')}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground line-clamp-2">{init.summary}</p>
-                  <div className="flex items-center gap-1.5">
-                    <OriginBadge label="Public initiative" />
-                    <span className="px-1.5 py-0.5 rounded-full text-[9px] font-medium bg-primary/5 text-primary border border-primary/10">
-                      {init.estimated_magnitude}
-                    </span>
-                    <TagsRow tags={init.technology_domain.filter((d) => d !== 'other')} />
-                  </div>
-                </div>
+                </ExpandableRow>
               ))}
             </div>
-          )}
-
-          {/* Authority Trends */}
-          {industryAuthorityTrends && industryAuthorityTrends.trends.length > 0 && (
-            <div className="space-y-2 pt-3 border-t border-border/30">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                Authority-Backed Trends ({industryAuthorityTrends.trends.length})
-              </p>
-              <p className="text-[10px] text-muted-foreground/50">12-24 month horizon</p>
-              {industryAuthorityTrends.trends.map((t) => (
-                <div key={t.id} className="p-2.5 rounded-lg bg-muted/10 border border-border/30 space-y-1">
-                  <div className="flex items-start gap-2">
-                    <p className="text-xs font-medium text-foreground flex-1">{t.trend_title}</p>
-                    <UseDealPlanButton onClick={() => {
-                      if (!focusId) return;
-                      addItem(focusId, {
-                        id: makeInboxItemId(focusId, 'trend', t.id),
-                        focusId,
-                        source_type: 'trend',
-                        source_id: t.id,
-                        title: t.trend_title,
-                        why_now: t.thesis_summary.slice(0, 160),
-                        impact_area: deriveImpactArea(t.applied_to_focus?.why_it_matters ?? 'other'),
-                        tags: [t.confidence],
-                        created_at: new Date().toISOString(),
-                      });
-                      toast.success('Added to Deal Planning Inbox');
-                    }} />
-                  </div>
-                  <p className="text-[10px] text-muted-foreground/70">{t.source_org}{t.source_published_at ? ` · ${t.source_published_at}` : ''}</p>
-                  <p className="text-[11px] text-muted-foreground line-clamp-2">{t.thesis_summary}</p>
-                  <div className="flex items-center gap-1.5">
-                    <OriginBadge label="Authority trend" />
-                    <ConfidenceBadge level={t.confidence} />
-                  </div>
-                  {t.applied_to_focus?.why_it_matters && (
-                    <p className="text-[10px] text-muted-foreground/60 italic line-clamp-1">Impact: {t.applied_to_focus.why_it_matters}</p>
-                  )}
-                </div>
-              ))}
-            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground/60">
+              {aiLens ? 'No AI-related initiatives.' : 'No public initiatives data.'}
+            </p>
           )}
 
           {/* Proof / Success Stories */}
-          {proofArtifacts && proofArtifacts.proof_artifacts.length > 0 && (
+          {proofArtifacts && proofArtifacts.proof_artifacts.length > 0 && !aiLens && (
             <div className="space-y-2 pt-3 border-t border-border/30">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                 Proof / Success Stories ({proofArtifacts.proof_artifacts.length})
@@ -695,7 +738,74 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
           )}
         </DocSection>
 
-        {/* SECTION 4: Commercial Footprint */}
+        {/* SECTION 4: Authority Trends (compact expandable rows) */}
+        <DocSection
+          id="ai-trends"
+          title="Authority-Backed Trends"
+          icon={<TrendingUp className="w-3.5 h-3.5" />}
+          count={filteredTrends.length}
+          badge={<span className="text-[9px] text-muted-foreground/50 mr-1">12-24 mo horizon</span>}
+          isOpen={openSection === 'ai-trends'}
+          onToggle={() => toggleSection('ai-trends')}
+        >
+          {filteredTrends.length > 0 ? (
+            <div className="space-y-1">
+              {filteredTrends.map((t) => (
+                <ExpandableRow
+                  key={t.id}
+                  title={t.trend_title}
+                  preview={t.applied_to_focus?.why_it_matters ?? t.thesis_summary.slice(0, 100)}
+                  tags={[t.confidence, t.source_org]}
+                  isExpanded={expandedTrend === t.id}
+                  onToggle={() => setExpandedTrend((prev) => prev === t.id ? null : t.id)}
+                  dealPlanAction={
+                    <UseDealPlanButton onClick={() => {
+                      if (!focusId) return;
+                      addItem(focusId, {
+                        id: makeInboxItemId(focusId, 'trend', t.id),
+                        focusId,
+                        source_type: 'trend',
+                        source_id: t.id,
+                        title: t.trend_title,
+                        why_now: t.thesis_summary.slice(0, 160),
+                        impact_area: deriveImpactArea(t.applied_to_focus?.why_it_matters ?? 'other'),
+                        tags: [t.confidence],
+                        created_at: new Date().toISOString(),
+                      });
+                      toast.success('Added to Deal Planning Inbox');
+                    }} />
+                  }
+                >
+                  <div className="pt-2 space-y-2">
+                    <p className="text-[10px] text-muted-foreground/70">{t.source_org}{t.source_published_at ? ` · ${t.source_published_at}` : ''}</p>
+                    <p className="text-[11px] text-foreground leading-relaxed">{t.thesis_summary}</p>
+                    <div className="flex items-center gap-1.5">
+                      <OriginBadge label="Authority trend" />
+                      <ConfidenceBadge level={t.confidence} />
+                    </div>
+                    {t.applied_to_focus && (
+                      <div className="rounded-md bg-muted/20 border border-border/20 p-2 space-y-1 mt-1">
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Impact on {accountName}</p>
+                        {t.applied_to_focus.why_it_matters && (
+                          <p className="text-[11px] text-foreground">{t.applied_to_focus.why_it_matters}</p>
+                        )}
+                        {t.applied_to_focus.where_it_shows_up && (
+                          <p className="text-[10px] text-muted-foreground">Shows up: {t.applied_to_focus.where_it_shows_up}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </ExpandableRow>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground/60">
+              {aiLens ? 'No AI-related trends.' : 'No authority trends data.'}
+            </p>
+          )}
+        </DocSection>
+
+        {/* SECTION 5: Commercial Footprint */}
         <DocSection
           id="ai-commercial"
           title="Commercial Footprint"
@@ -764,7 +874,7 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
           )}
         </DocSection>
 
-        {/* SECTION 5: Technical Landscape */}
+        {/* SECTION 6: Technical Landscape */}
         <DocSection
           id="ai-technical"
           title="Technical Landscape"
@@ -847,77 +957,12 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
           )}
         </DocSection>
 
-        {/* SECTION 6: Partner & Competitive Context */}
-        <DocSection
-          id="ai-partners"
-          title="Partner & Competitive Context"
-          icon={<Users className="w-3.5 h-3.5" />}
-          isOpen={openSection === 'ai-partners'}
-          onToggle={() => toggleSection('ai-partners')}
-        >
-          {partnerInvolvement ? (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">MS Account Team</p>
-                  <p className="text-xs text-foreground">{partnerInvolvement.microsoft_account_team_known ?? 'Unknown'}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Recent Activity</p>
-                  <p className="text-xs text-foreground">
-                    {partnerInvolvement.recent_partner_activity_count != null
-                      ? `${partnerInvolvement.recent_partner_activity_count} engagements (12 mo)`
-                      : 'No data'}
-                  </p>
-                </div>
-              </div>
-
-              {partnerInvolvement.active_partners && partnerInvolvement.active_partners.length > 0 && (
-                <div className="space-y-1">
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Active Partners</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {partnerInvolvement.active_partners.map((p) => (
-                      <span key={p} className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-primary/5 text-primary border border-primary/10">{p}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {partnerInvolvement.competitor_partners && partnerInvolvement.competitor_partners.length > 0 && (
-                <div className="space-y-1">
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Competitors</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {partnerInvolvement.competitor_partners.map((p) => (
-                      <span key={p} className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-muted/40 text-muted-foreground border border-border/40">{p}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Case Studies</p>
-                  <p className="text-xs text-foreground">{partnerInvolvement.public_case_studies ?? 'Unknown'}</p>
-                </div>
-                {partnerInvolvement.notes && (
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Notes</p>
-                    <p className="text-xs text-muted-foreground">{partnerInvolvement.notes}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground/60">No partner involvement data.</p>
-          )}
-        </DocSection>
-
         {/* SECTION 7: Evidence & Memory */}
         <DocSection
           id="ai-evidence"
           title="Evidence & Memory"
           icon={<FileText className="w-3.5 h-3.5" />}
-          count={inbox.length + requests.length}
+          count={evidenceCount}
           isOpen={openSection === 'ai-evidence'}
           onToggle={() => toggleSection('ai-evidence')}
         >
@@ -925,10 +970,9 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
           <div className="space-y-2">
             {EVIDENCE_CATEGORIES.map((cat) => {
               const isExpanded = expandedEvidence === cat.value;
-              // Filter inbox items by rough category mapping
               const catItems = inbox.filter((item) => {
                 const t = item.type;
-                if (cat.value === 'security') return false; // future
+                if (cat.value === 'security') return false;
                 if (cat.value === 'technical') return t === 'architecture_diagram' || t === 'rfp_requirements';
                 if (cat.value === 'business') return t === 'slides_deck' || t === 'news_article';
                 if (cat.value === 'procurement') return t === 'other' || t === 'link';
