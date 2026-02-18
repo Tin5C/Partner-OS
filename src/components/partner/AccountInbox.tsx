@@ -222,10 +222,10 @@ export function AccountInbox({ accountId, onSignalPicker }: AccountInboxProps) {
       <div>
         <h4 className="text-xs font-semibold text-foreground flex items-center gap-1.5">
           <Database className="w-3.5 h-3.5 text-primary" />
-          Account Memory
+          Customer Evidence
         </h4>
         <p className="text-[10px] text-muted-foreground mt-0.5">
-          Store customer materials here (recordings, RFPs, architectures, notes).
+          Drop notes, emails, RFPs, or links. We'll use evidence to improve readiness and recommendations.
         </p>
       </div>
 

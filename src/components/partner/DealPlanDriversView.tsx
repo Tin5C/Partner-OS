@@ -1,7 +1,7 @@
-// Deal Plan Drivers View — comprehensive workspace
-// Sections expand dynamically when a play is added to plan (up to 8 sections)
-// 1) Strategic Framing  2) Political Map  3) Execution Motion  4) CRM + Account Signals
-// 5) What we need  6) Risks & Blockers  7) Execution Bundle  8) Asset Packs
+// Deal Plan Drivers View — final Commercial + Technical structure
+// Commercial tab: Recommended Plays (hero), Deal Strategy, Stakeholders & Process, Commercial Path, Risks & Blockers
+// Technical tab: Technical Recommendations (hero), Requirements & Constraints, Architecture & Landscape, Delivery Feasibility, Technical Risks & Blockers
+// Plan Inbox shared across tabs, Customer Evidence right rail
 
 import { useState, useMemo, useCallback, useRef } from 'react';
 import {
@@ -44,6 +44,10 @@ import {
   Inbox as InboxIcon,
   X,
   ClipboardCheck,
+  Cpu,
+  FileText,
+  Layers,
+  Server,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -81,6 +85,9 @@ import { WhatWeNeedSection } from '@/partner/components/dealPlanning/WhatWeNeedS
 import { ExecutionBundleSection } from '@/partner/components/dealPlanning/ExecutionBundleSection';
 import { DealHypothesisBlock } from '@/partner/components/dealPlanning/DealHypothesisBlock';
 import { RisksBlockersSection } from '@/partner/components/dealPlanning/RisksBlockersSection';
+import { getReadinessScore } from '@/data/partner/accountMemoryStore';
+import { getByFocusId as getTechLandscape } from '@/data/partner/technicalLandscapeStore';
+import { CollapsibleSection } from '@/components/shared/CollapsibleSection';
 
 const WEEK_OF = '2026-02-10';
 
@@ -91,7 +98,7 @@ const ACCOUNTS = [
   { id: 'ubs', label: 'UBS' },
 ];
 
-type RoleView = 'seller' | 'engineer';
+type ViewTab = 'commercial' | 'technical';
 
 interface DealPlanDriversViewProps {
   onGoToQuickBrief: () => void;
@@ -148,63 +155,6 @@ function EditableBlock({ label, icon, value, onChange, placeholder, compact }: {
   );
 }
 
-// ============= Section Wrapper =============
-
-function Section({ number, title, icon, children, roleHighlight }: {
-  number: number;
-  title: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-  roleHighlight?: boolean;
-}) {
-  return (
-    <div className={cn(
-      "rounded-xl border bg-card p-4 space-y-3",
-      roleHighlight
-        ? "border-primary/30 shadow-[0_0_0_1px_hsl(var(--primary)/0.1)]"
-        : "border-border/60"
-    )}>
-      <div className="flex items-center gap-2">
-        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold flex items-center justify-center flex-shrink-0">
-          {number}
-        </span>
-        <span className="text-primary">{icon}</span>
-        <p className="text-xs font-semibold text-foreground">{title}</p>
-        {roleHighlight && (
-          <span className="text-[10px] text-primary font-medium ml-auto">★ Key for this role</span>
-        )}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-// ============= Asset Pack Card =============
-
-function AssetPackCard({ label, icon, description }: {
-  label: string;
-  icon: React.ReactNode;
-  description: string;
-}) {
-  return (
-    <button
-      onClick={() => toast.info(`${label} — coming soon`)}
-      className="flex items-start gap-3 p-3 rounded-lg border border-border/60 bg-card hover:border-primary/30 hover:bg-primary/[0.02] transition-all text-left group"
-    >
-      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0 group-hover:bg-primary/15 transition-colors">
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold text-foreground flex items-center gap-1">
-          {label}
-          <ExternalLink className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-        </p>
-        <p className="text-[11px] text-muted-foreground mt-0.5">{description}</p>
-      </div>
-    </button>
-  );
-}
-
 // ============= Stakeholder Row =============
 
 function StakeholderRow({ role, icon, name, notes, onChange }: {
@@ -257,123 +207,6 @@ function StakeholderRow({ role, icon, name, notes, onChange }: {
   );
 }
 
-// ============= Signal Type Badge Colors =============
-
-const TYPE_COLORS: Record<string, string> = {
-  vendor: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
-  regulatory: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
-  internalActivity: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
-  competitive: 'bg-red-500/10 text-red-600 border-red-500/20',
-  localMarket: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
-};
-
-// ============= Signal Picker (inline) =============
-
-function SignalPicker({
-  onSelect,
-  onClose,
-  existingIds,
-  accountId,
-}: {
-  onSelect: (signals: Signal[]) => void;
-  onClose: () => void;
-  existingIds: Set<string>;
-  accountId: string;
-}) {
-  const available = useMemo(
-    () => listSignals(accountId, WEEK_OF).filter((s) => !existingIds.has(s.id)),
-    [existingIds, accountId],
-  );
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-
-  const toggle = (id: string) =>
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-
-  const handleAdd = () => {
-    const picks = available.filter((s) => selected.has(s.id));
-    if (picks.length === 0) return;
-    onSelect(picks);
-    onClose();
-  };
-
-  if (available.length === 0) {
-    return (
-      <div className="rounded-xl border border-dashed border-border bg-muted/10 p-5 text-center space-y-2">
-        <p className="text-sm text-muted-foreground">All signals for this week are already promoted.</p>
-        <button onClick={onClose} className="text-xs text-primary hover:text-primary/80">Close</button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="rounded-xl border border-border bg-card p-4 space-y-3 shadow-sm">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-foreground flex items-center gap-2">
-          <Search className="w-4 h-4 text-primary" />
-          Select signals to attach
-        </p>
-        <button onClick={onClose} className="text-xs text-muted-foreground hover:text-foreground">Cancel</button>
-      </div>
-      <p className="text-[11px] text-muted-foreground">Week of {WEEK_OF}</p>
-      <div className="space-y-2 max-h-[300px] overflow-y-auto">
-        {available.map((sig) => {
-          const isSelected = selected.has(sig.id);
-          const typeColor = TYPE_COLORS[sig.type] ?? 'bg-muted text-muted-foreground border-border';
-          return (
-            <button
-              key={sig.id}
-              onClick={() => toggle(sig.id)}
-              className={cn(
-                'w-full text-left p-3 rounded-lg border transition-all',
-                isSelected
-                  ? 'border-primary/40 bg-primary/[0.04] ring-1 ring-primary/20'
-                  : 'border-border/50 bg-background hover:border-primary/20 hover:bg-muted/20'
-              )}
-            >
-              <div className="flex items-start gap-2">
-                <div className={cn(
-                  'w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors',
-                  isSelected ? 'bg-primary border-primary' : 'border-border'
-                )}>
-                  {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full border', typeColor)}>
-                      {sig.type}
-                    </span>
-                    <span className="text-[10px] font-bold text-muted-foreground">{sig.confidence}%</span>
-                  </div>
-                  <p className="text-xs font-medium text-foreground leading-snug">{sig.title}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">{sig.soWhat}</p>
-                </div>
-              </div>
-            </button>
-          );
-        })}
-      </div>
-      <button
-        onClick={handleAdd}
-        disabled={selected.size === 0}
-        className={cn(
-          'w-full py-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1.5',
-          selected.size > 0
-            ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-            : 'bg-muted text-muted-foreground cursor-not-allowed'
-        )}
-      >
-        <Plus className="w-3.5 h-3.5" />
-        Add {selected.size > 0 ? `${selected.size} signal${selected.size > 1 ? 's' : ''}` : 'signals'}
-      </button>
-    </div>
-  );
-}
-
 // ============= Account Selector Dropdown =============
 
 function AccountSelector({
@@ -392,13 +225,11 @@ function AccountSelector({
         className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-border/60 bg-background hover:border-primary/30 transition-colors"
       >
         {selectedId ? (
-          <>
-            <span className="text-foreground">
-              {ACCOUNTS.find((a) => a.id === selectedId)?.label ?? selectedId}
-            </span>
-          </>
+          <span className="text-foreground">
+            {ACCOUNTS.find((a) => a.id === selectedId)?.label ?? selectedId}
+          </span>
         ) : (
-          <span className="text-muted-foreground">Select account…</span>
+          <span className="text-muted-foreground">Select account...</span>
         )}
         <ChevronDown className="w-3 h-3 text-muted-foreground" />
       </button>
@@ -431,6 +262,22 @@ function AccountSelector({
   );
 }
 
+// ============= Enterprise Empty State =============
+
+function EmptyPlaceholder({ icon, title, description }: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="rounded-lg border border-dashed border-border/50 bg-muted/10 p-4 text-center space-y-1.5">
+      <div className="flex justify-center text-muted-foreground">{icon}</div>
+      <p className="text-[11px] font-medium text-foreground">{title}</p>
+      <p className="text-[10px] text-muted-foreground leading-relaxed">{description}</p>
+    </div>
+  );
+}
+
 // ============= Main Component =============
 
 export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewProps) {
@@ -438,7 +285,7 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
   const refresh = useCallback(() => forceUpdate((n) => n + 1), []);
   const strategicFramingRef = useRef<HTMLDivElement>(null);
 
-  // Account selection — null = no account chosen yet
+  // Account selection
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
 
   const plan = useMemo(
@@ -448,45 +295,34 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
   const drivers = plan?.promotedSignals ?? [];
 
   const [showPicker, setShowPicker] = useState(false);
-
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const [roleView, setRoleView] = useState<RoleView>('seller');
+  const [viewTab, setViewTab] = useState<ViewTab>('commercial');
 
   // Metadata state
   const [engagementType, setEngagementType] = useState<EngagementType | null>(null);
   const [motion, setMotion] = useState<Motion | null>(null);
 
-   // Section 2: Strategic Positioning (kept for Details collapsible)
-   const [showStrategicDetails, setShowStrategicDetails] = useState(false);
+  // Strategic Framing details
+  const [showStrategicDetails, setShowStrategicDetails] = useState(false);
   const [whyNow, setWhyNow] = useState('Azure OpenAI available in Swiss North + EU Machinery Regulation deadline 2027 = dual urgency window.');
   const [wedge, setWedge] = useState('Data residency objection removed — first-mover advantage for AI predictive maintenance.');
   const [competitivePressure, setCompetitivePressure] = useState('Google Cloud and AWS lack Swiss-hosted AI services with equivalent compliance posture.');
   const [execFraming, setExecFraming] = useState('Position as compliance-driven digital transformation partner, not generic cloud reseller.');
 
-  // Section 3: Political Map
+  // Political Map
   const [sponsor, setSponsor] = useState({ name: 'VP Engineering', notes: 'Champion of digital twin initiative' });
   const [champion, setChampion] = useState({ name: 'Head of Digital Transformation', notes: 'Pushing Copilot pilot internally' });
   const [blocker, setBlocker] = useState({ name: 'CISO', notes: 'Gates all AI via RACI — align proposals to governance framework' });
   const [procurement, setProcurement] = useState({ name: 'Head of Procurement', notes: 'Requires FinOps review for AI spend > CHF 50K' });
 
-  // Section 4: Execution Motion
+  // Execution Motion
   const [entryPack, setEntryPack] = useState('AI Readiness Assessment + Azure Swiss Architecture Workshop');
   const [pilotScope, setPilotScope] = useState('50-technician Copilot for Field Service pilot — work-order triage + parts prediction');
   const [timeline, setTimeline] = useState('Week 1-2: Architecture workshop\nWeek 3-4: Pilot design\nWeek 5-8: 50-user pilot\nWeek 9-10: ROI review + expansion proposal');
 
-  // Section 5: CRM Signals
+  // CRM Signals
   const [lastMeeting] = useState('2026-01-28 — Discovery call with VP Engineering (data residency concerns discussed)');
   const [engagementScore] = useState('72 / 100 — Active engagement, multiple stakeholders involved');
   const [vendorInvolvement] = useState('Microsoft CSA assigned. Azure Swiss North GA confirmed. Copilot preview access pending.');
-
-  const toggleExpand = useCallback((id: string) => {
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }, []);
 
   const handleRemove = useCallback(
     (signalId: string) => {
@@ -498,19 +334,14 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
     [refresh, selectedAccount],
   );
 
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success('Copied to clipboard');
-  };
-
-  const confidenceColor = (score: number) =>
-    score >= 60 ? 'text-green-600' : score >= 40 ? 'text-primary' : 'text-red-500';
-
   const avgConfidence = useMemo(() => {
     if (drivers.length === 0) return null;
     const avg = Math.round(drivers.reduce((a, d) => a + d.snapshot.confidence, 0) / drivers.length);
     return { score: avg, label: avg >= 60 ? 'High' : avg >= 40 ? 'Medium' : 'Low' };
   }, [drivers]);
+
+  const confidenceColor = (score: number) =>
+    score >= 60 ? 'text-green-600' : score >= 40 ? 'text-primary' : 'text-red-500';
 
   // Aggregated risks
   const aggregatedRisks = useMemo(() => {
@@ -520,13 +351,11 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
     return Array.from(items);
   }, [drivers]);
 
-  const existingIds = useMemo(() => new Set(drivers.map((d) => d.signalId)), [drivers]);
-
   // Plan generation state
   const [planGenerated, setPlanGenerated] = useState(false);
   const canGenerate = selectedAccount !== null && engagementType !== null && motion !== null;
 
-  // Deal Planning Inbox items
+  // Plan Inbox items
   const [inboxVersion, setInboxVersion] = useState(0);
   const inboxItems = useMemo(
     () => (selectedAccount ? listByFocusId(selectedAccount) : []),
@@ -547,7 +376,7 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
     toast('Dismissed from inbox');
   }, []);
 
-  // Service pack recommendations (computed after plan generated)
+  // Service pack recommendations
   const recommendedPacks = useMemo<ScoredPack[]>(() => {
     if (!selectedAccount || !planGenerated) return [];
     return scoreServicePacks({
@@ -558,7 +387,7 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
     });
   }, [selectedAccount, engagementType, motion, planGenerated, inboxVersion]);
 
-  // Top play pack name for Strategic Framing defaults
+  // Top play pack name
   const topPlayPackName = useMemo(() => {
     if (drivers.length === 0) return null;
     const plays = scorePlayPacks(PLAY_SERVICE_PACKS, {
@@ -591,7 +420,6 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
       framing: { what: whatText, how: howText, why: whyText },
     };
     setActivePlay(selectedAccount, activePlay);
-    // Hydrate all plan sections
     const hp = hydratePlan(
       selectedAccount,
       activePlay,
@@ -599,7 +427,6 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
       motion,
       play.gaps,
     );
-    // Update political map from hydration
     if (hp.politicalMap.length === 4) {
       setSponsor({ name: hp.politicalMap[0].title, notes: hp.politicalMap[0].notes });
       setChampion({ name: hp.politicalMap[1].title, notes: hp.politicalMap[1].notes });
@@ -607,11 +434,28 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
       setProcurement({ name: hp.politicalMap[3].title, notes: hp.politicalMap[3].notes });
     }
     refresh();
-    // Scroll to Strategic Framing
     setTimeout(() => {
       strategicFramingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
   }, [selectedAccount, refresh, engagementType, motion]);
+
+  // Readiness score
+  const readinessData = useMemo(() => {
+    if (!selectedAccount) return null;
+    return getReadinessScore(selectedAccount, drivers.length > 0);
+  }, [selectedAccount, drivers.length]);
+
+  // Technical landscape
+  const techLandscape = useMemo(() => {
+    if (!selectedAccount) return null;
+    return getTechLandscape(selectedAccount);
+  }, [selectedAccount]);
+
+  // Hydrated plan
+  const hydratedPlan = useMemo(() => {
+    if (!selectedAccount) return null;
+    return getHydratedPlan(selectedAccount) ?? null;
+  }, [selectedAccount, planGenerated, drivers]);
 
   // ============= HEADER =============
   const header = (
@@ -625,7 +469,6 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
           </span>
         )}
       </div>
-      {/* Single row: Account + Mode + Trigger + Readiness */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-1.5">
           <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Account</span>
@@ -643,49 +486,96 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
     </div>
   );
 
-  // ============= ALWAYS-ON WORKSPACE =============
+  // ============= PLAN INBOX (shared across tabs) =============
+  const planInbox = inboxItems.length > 0 ? (
+    <div className="rounded-lg border border-border/50 bg-muted/10 p-3 space-y-2">
+      <div className="flex items-center gap-2">
+        <InboxIcon className="w-3.5 h-3.5 text-muted-foreground" />
+        <p className="text-[11px] font-semibold text-foreground">
+          Plan Inbox
+        </p>
+        <span className="px-1.5 py-0.5 rounded-full bg-muted/60 text-muted-foreground text-[10px] font-bold">
+          {inboxItems.length}
+        </span>
+      </div>
+      <div className="space-y-1.5">
+        {inboxItems.map((item) => (
+          <div key={item.id} className="flex items-start gap-2.5 p-2 rounded-md border border-border/40 bg-card">
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-medium text-foreground leading-snug">{item.title}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">{item.why_now}</p>
+              <div className="flex items-center gap-1.5 mt-1">
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-muted/40 text-muted-foreground border border-border/40">
+                  {item.impact_area}
+                </span>
+                {item.tags.map((t) => (
+                  <span key={t} className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-primary/5 text-primary border border-primary/10">
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <button
+                onClick={() => handlePromoteInboxItem(item)}
+                className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                <Check className="w-3 h-3" />
+                Promote
+              </button>
+              <button
+                onClick={() => handleDismissInboxItem(item)}
+                className="p-1 rounded-md text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  ) : null;
+
+  // ============= RETURN =============
   return (
     <div className="space-y-4">
       {header}
 
-      {/* Inline hint when no account */}
       {!selectedAccount && (
         <p className="text-xs text-muted-foreground -mt-2">
           Select or create an account to ground this plan.
         </p>
       )}
 
-      {/* Role toggle — always visible */}
+      {/* Tab toggle */}
       <div className="flex items-center justify-between">
         <div className="inline-flex rounded-lg bg-muted/50 p-0.5 border border-border/60">
           <button
-            onClick={() => setRoleView('seller')}
+            onClick={() => setViewTab('commercial')}
             className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all',
-              roleView === 'seller'
+              viewTab === 'commercial'
                 ? 'bg-primary text-primary-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
             )}
           >
             <Briefcase className="w-3 h-3" />
-            Business view
+            Commercial
           </button>
           <button
-            onClick={() => setRoleView('engineer')}
+            onClick={() => setViewTab('technical')}
             className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all',
-              roleView === 'engineer'
+              viewTab === 'technical'
                 ? 'bg-primary text-primary-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
             )}
           >
             <Wrench className="w-3 h-3" />
-            Technology view
+            Technical
           </button>
         </div>
       </div>
-
-      {/* DealPlanMetadata now rendered inline in header row above */}
 
       {/* Generate Plan CTA */}
       {!planGenerated && (
@@ -713,338 +603,301 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
         </div>
       )}
 
-      {/* Plan workspace — only shown after generation */}
+      {/* Plan workspace */}
       {planGenerated && (<>
-
       <div className="flex gap-4">
         {/* Left: Main workspace */}
         <div className="flex-1 min-w-0 space-y-4">
-          {/* ===== Deal Planning Inbox ===== */}
-          {inboxItems.length > 0 && (
-            <div className="rounded-xl border border-primary/20 bg-primary/[0.02] p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <InboxIcon className="w-4 h-4 text-primary" />
-                <p className="text-xs font-semibold text-foreground">
-                  Deal Planning Inbox
-                </p>
-                <span className="px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
-                  {inboxItems.length}
-                </span>
+
+          {/* ===== Plan Inbox (shared, subdued) ===== */}
+          {planInbox}
+
+          {/* ===== COMMERCIAL TAB ===== */}
+          {viewTab === 'commercial' && (
+            <div className="space-y-3">
+              {/* 1) HERO: Recommended Plays */}
+              <RecommendedPlaysPanel
+                accountId={selectedAccount}
+                promotedSignals={drivers}
+                engagementType={engagementType as 'new_logo' | 'existing_customer' | null}
+                motion={motion}
+                readinessScore={readinessData?.score}
+                weekOf={WEEK_OF}
+                onRefresh={refresh}
+                onRemoveSignal={handleRemove}
+                onOpenPicker={() => setShowPicker(true)}
+                showPicker={showPicker}
+                onPlaySelected={handlePlaySelected}
+                pickerNode={
+                  showPicker ? (
+                    <SignalPickerPanel
+                      accountId={selectedAccount}
+                      weekOf={WEEK_OF}
+                      onClose={() => setShowPicker(false)}
+                      onChanged={refresh}
+                    />
+                  ) : null
+                }
+              />
+
+              {/* 2) Deal Strategy */}
+              <div ref={strategicFramingRef}>
+                <CollapsibleSection title="Deal Strategy" subtitle="Strategic framing and positioning" defaultOpen={true}>
+                  <div className="space-y-3">
+                    <StrategicFramingSection
+                      promotedSignals={drivers}
+                      topPackName={topPlayPackName}
+                      activePlayFraming={selectedAccount ? getActivePlay(selectedAccount)?.framing ?? null : null}
+                    />
+                    <button
+                      onClick={() => setShowStrategicDetails(!showStrategicDetails)}
+                      className="flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showStrategicDetails ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                      Details
+                    </button>
+                    {showStrategicDetails && (
+                      <div className="space-y-3 pt-1 border-t border-border/30">
+                        <EditableBlock label="Why Now" icon={<Clock className="w-3 h-3" />} value={whyNow} onChange={setWhyNow} placeholder="What creates urgency for this deal right now?" compact />
+                        <EditableBlock label="Wedge" icon={<Target className="w-3 h-3" />} value={wedge} onChange={setWedge} placeholder="What's our differentiated entry point?" compact />
+                        <EditableBlock label="Competitive Pressure" icon={<Swords className="w-3 h-3" />} value={competitivePressure} onChange={setCompetitivePressure} placeholder="Key competitive dynamics to navigate." compact />
+                        <EditableBlock label="Executive Framing" icon={<Crown className="w-3 h-3" />} value={execFraming} onChange={setExecFraming} placeholder="How should we frame this to the C-suite?" compact />
+                      </div>
+                    )}
+                  </div>
+                </CollapsibleSection>
               </div>
-              <div className="space-y-2">
-                {inboxItems.map((item) => (
-                  <div key={item.id} className="flex items-start gap-3 p-2.5 rounded-lg border border-border/40 bg-card">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-foreground leading-snug">{item.title}</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">{item.why_now}</p>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-muted/40 text-muted-foreground border border-border/40">
-                          {item.impact_area}
-                        </span>
-                        {item.tags.map((t) => (
-                          <span key={t} className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-primary/5 text-primary border border-primary/10">
-                            {t}
+
+              {/* 3) Stakeholders & Process */}
+              <CollapsibleSection title="Stakeholders & Process" subtitle="Political map and procurement pathway" defaultOpen={true}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <StakeholderRow role="Sponsor" icon={<Crown className="w-3 h-3" />} name={sponsor.name} notes={sponsor.notes} onChange={(n, no) => setSponsor({ name: n, notes: no })} />
+                  <StakeholderRow role="Champion" icon={<UserCheck className="w-3 h-3" />} name={champion.name} notes={champion.notes} onChange={(n, no) => setChampion({ name: n, notes: no })} />
+                  <StakeholderRow role="Blocker" icon={<UserX className="w-3 h-3" />} name={blocker.name} notes={blocker.notes} onChange={(n, no) => setBlocker({ name: n, notes: no })} />
+                  <StakeholderRow role="Procurement" icon={<ShoppingCart className="w-3 h-3" />} name={procurement.name} notes={procurement.notes} onChange={(n, no) => setProcurement({ name: n, notes: no })} />
+                </div>
+              </CollapsibleSection>
+
+              {/* 4) Commercial Path */}
+              <CollapsibleSection title="Commercial Path" subtitle="Execution motion, timeline, and CRM context" defaultOpen={false}>
+                <div className="space-y-4">
+                  <div className="space-y-3">
+                    <EditableBlock label="Recommended Entry Pack" icon={<Package className="w-3 h-3" />} value={entryPack} onChange={setEntryPack} placeholder="Which package or engagement model opens the door?" compact />
+                    <EditableBlock label="Pilot Scope" icon={<Target className="w-3 h-3" />} value={pilotScope} onChange={setPilotScope} placeholder="Define the initial pilot: users, scope, success criteria." compact />
+                    <EditableBlock label="Timeline Hypothesis" icon={<CalendarDays className="w-3 h-3" />} value={timeline} onChange={setTimeline} placeholder="Week-by-week execution plan." compact />
+                  </div>
+                  {/* CRM context */}
+                  <div className="border-t border-border/30 pt-3">
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">CRM Context</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <div className="p-2.5 rounded-lg bg-muted/20 border border-border/40">
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <CalendarDays className="w-3 h-3" /> Last Meeting
+                        </p>
+                        <p className="text-xs text-foreground">{lastMeeting.split('—')[0]}</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">{lastMeeting.split('—')[1]}</p>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-muted/20 border border-border/40">
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <BarChart3 className="w-3 h-3" /> Engagement Score
+                        </p>
+                        <p className="text-xs font-bold text-foreground">72 / 100</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">Active, multi-stakeholder</p>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-muted/20 border border-border/40">
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <Building2 className="w-3 h-3" /> Vendor Involvement
+                        </p>
+                        <p className="text-xs text-foreground">Microsoft CSA assigned</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">Azure Swiss GA — Copilot preview pending</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Deal Hypothesis if hydrated */}
+                  {hydratedPlan && (
+                    <DealHypothesisBlock hypothesis={hydratedPlan.dealHypothesis} />
+                  )}
+
+                  {/* What we need if hydrated */}
+                  {hydratedPlan && (
+                    <div className="border-t border-border/30 pt-3">
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Evidence Checklist</p>
+                      <WhatWeNeedSection
+                        items={hydratedPlan.checklist}
+                        focusId={selectedAccount}
+                        onRefresh={refresh}
+                      />
+                    </div>
+                  )}
+
+                  {/* Execution Bundle if hydrated */}
+                  {hydratedPlan && (
+                    <div className="border-t border-border/30 pt-3">
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Execution Bundle</p>
+                      <ExecutionBundleSection assets={hydratedPlan.executionBundle} />
+                    </div>
+                  )}
+                </div>
+              </CollapsibleSection>
+
+              {/* 5) Risks & Blockers (Commercial) */}
+              <CollapsibleSection title="Risks & Blockers" subtitle="Commercial risks and deal blockers" defaultOpen={false}>
+                {hydratedPlan ? (
+                  <RisksBlockersSection
+                    risks={hydratedPlan.risks}
+                    focusId={selectedAccount}
+                    onRefresh={refresh}
+                  />
+                ) : aggregatedRisks.length > 0 ? (
+                  <div className="space-y-1.5">
+                    {aggregatedRisks.map((item, i) => (
+                      <div key={i} className="flex items-start gap-2 text-xs">
+                        <AlertTriangle className="w-3 h-3 text-destructive/60 mt-0.5 flex-shrink-0" />
+                        <p className="text-muted-foreground">{item}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground italic">No risks identified yet — add signals to surface gaps.</p>
+                )}
+              </CollapsibleSection>
+            </div>
+          )}
+
+          {/* ===== TECHNICAL TAB ===== */}
+          {viewTab === 'technical' && (
+            <div className="space-y-3">
+              {/* 1) HERO: Technical Recommendations */}
+              <TechnicalRecommendationsSection
+                promotedSignals={drivers}
+                engagementType={engagementType as 'new_logo' | 'existing_customer' | null}
+                motion={motion}
+                readinessScore={readinessData?.score}
+              />
+
+              {/* 2) Requirements & Constraints */}
+              <CollapsibleSection title="Requirements & Constraints" subtitle="Customer requirements and technical constraints" defaultOpen={true}>
+                <EmptyPlaceholder
+                  icon={<FileText className="w-5 h-5" />}
+                  title="No requirements captured yet"
+                  description="Add customer evidence to extract constraints. Upload RFPs, architecture documents, or meeting notes in Customer Evidence to surface requirements."
+                />
+              </CollapsibleSection>
+
+              {/* 3) Architecture & Landscape */}
+              <CollapsibleSection title="Architecture & Landscape" subtitle="Known vendor stack and architecture patterns" defaultOpen={true}>
+                {techLandscape ? (
+                  <div className="space-y-3">
+                    {techLandscape.cloud_strategy && (
+                      <div className="p-2.5 rounded-lg bg-muted/20 border border-border/40">
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Cloud Strategy</p>
+                        <p className="text-xs text-foreground">{techLandscape.cloud_strategy}</p>
+                      </div>
+                    )}
+                    {techLandscape.known_vendors && techLandscape.known_vendors.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Known Vendors</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {techLandscape.known_vendors.map((v, i) => (
+                            <span key={i} className="px-2 py-0.5 rounded text-[10px] font-medium bg-muted/40 text-foreground border border-border/30">{v}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {techLandscape.known_applications && techLandscape.known_applications.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Applications</p>
+                        <div className="space-y-0.5">
+                          {techLandscape.known_applications.map((a, i) => (
+                            <p key={i} className="text-[10px] text-muted-foreground flex items-start gap-1.5">
+                              <span className="text-primary/40 mt-0.5">-</span> {a}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {techLandscape.architecture_patterns && techLandscape.architecture_patterns.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Architecture Patterns</p>
+                        <div className="space-y-0.5">
+                          {techLandscape.architecture_patterns.map((p, i) => (
+                            <p key={i} className="text-[10px] text-muted-foreground flex items-start gap-1.5">
+                              <span className="text-primary/40 mt-0.5">-</span> {p}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <EmptyPlaceholder
+                    icon={<Server className="w-5 h-5" />}
+                    title="No landscape data available"
+                    description="Technical landscape information will appear once account intelligence is populated."
+                  />
+                )}
+              </CollapsibleSection>
+
+              {/* 4) Delivery Feasibility */}
+              <CollapsibleSection title="Delivery Feasibility" subtitle="Readiness assessment for delivery" defaultOpen={false}>
+                {readinessData ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-2.5 rounded-lg bg-muted/20 border border-border/40">
+                      <div>
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Evidence Readiness</p>
+                        <p className="text-xs font-medium text-foreground mt-0.5">{readinessData.score}%</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {Object.entries(readinessData.pillars).map(([pillar, covered]) => (
+                          <span
+                            key={pillar}
+                            className={cn(
+                              'px-1.5 py-0.5 rounded text-[9px] font-medium border',
+                              covered
+                                ? 'bg-muted/40 text-foreground border-border/30'
+                                : 'bg-muted/20 text-muted-foreground/60 border-border/20'
+                            )}
+                          >
+                            {pillar}
                           </span>
                         ))}
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <button
-                        onClick={() => handlePromoteInboxItem(item)}
-                        className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                      >
-                        <Check className="w-3 h-3" />
-                        Promote
-                      </button>
-                      <button
-                        onClick={() => handleDismissInboxItem(item)}
-                        className="p-1 rounded-md text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      Delivery feasibility is derived from evidence coverage across five pillars. Add customer evidence to improve coverage and unlock detailed feasibility assessment.
+                    </p>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ===== Next Best Action Strip ===== */}
-          <div className="border-t border-b border-border/40 bg-muted/20 px-4 py-3">
-            <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-widest mb-1">Next Recommended Action</p>
-            <p className="text-xs text-foreground leading-relaxed">
-              {(avgConfidence?.score ?? 0) < 50
-                ? 'Engage missing executive sponsor before progressing proposal.'
-                : 'Formalize scope and confirm commercial pathway.'}
-            </p>
-          </div>
-
-          {/* ===== Recommended Plays (unified: plays + promoted drivers) ===== */}
-          <RecommendedPlaysPanel
-            accountId={selectedAccount}
-            promotedSignals={drivers}
-            engagementType={engagementType as 'new_logo' | 'existing_customer' | null}
-            motion={motion}
-            weekOf={WEEK_OF}
-            onRefresh={refresh}
-            onRemoveSignal={handleRemove}
-            onOpenPicker={() => setShowPicker(true)}
-            showPicker={showPicker}
-            onPlaySelected={handlePlaySelected}
-            pickerNode={
-              showPicker ? (
-                <SignalPickerPanel
-                  accountId={selectedAccount}
-                  weekOf={WEEK_OF}
-                  onClose={() => setShowPicker(false)}
-                  onChanged={refresh}
-                />
-              ) : null
-            }
-          />
-
-          {/* ===== Technology Recommendations (engineer view only, additive) ===== */}
-          {roleView === 'engineer' && (
-            <TechnicalRecommendationsSection
-              promotedSignals={drivers}
-              engagementType={engagementType as 'new_logo' | 'existing_customer' | null}
-              motion={motion}
-            />
-          )}
-
-          {/* ===== 1) Strategic Framing (was Strategic Positioning) ===== */}
-          <div ref={strategicFramingRef}>
-          <Section
-
-            number={1}
-            title="Strategic Framing"
-            icon={<Crosshair className="w-3.5 h-3.5" />}
-            roleHighlight={roleView === 'seller'}
-          >
-            {roleView === 'seller' ? (
-              <div className="space-y-3">
-                <StrategicFramingSection
-                  promotedSignals={drivers}
-                  topPackName={topPlayPackName}
-                  activePlayFraming={selectedAccount ? getActivePlay(selectedAccount)?.framing ?? null : null}
-                />
-                {/* Collapsible Details — preserves old fields */}
-                <button
-                  onClick={() => setShowStrategicDetails(!showStrategicDetails)}
-                  className="flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {showStrategicDetails ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                  Details
-                </button>
-                {showStrategicDetails && (
-                  <div className="space-y-3 pt-1 border-t border-border/30">
-                    <EditableBlock label="Why Now" icon={<Clock className="w-3 h-3" />} value={whyNow} onChange={setWhyNow} placeholder="What creates urgency for this deal right now?" compact />
-                    <EditableBlock label="Wedge" icon={<Target className="w-3 h-3" />} value={wedge} onChange={setWedge} placeholder="What's our differentiated entry point?" compact />
-                    <EditableBlock label="Competitive Pressure" icon={<Swords className="w-3 h-3" />} value={competitivePressure} onChange={setCompetitivePressure} placeholder="Key competitive dynamics to navigate." compact />
-                    <EditableBlock label="Executive Framing" icon={<Crown className="w-3 h-3" />} value={execFraming} onChange={setExecFraming} placeholder="How should we frame this to the C-suite?" compact />
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <EditableBlock label="Why Now" icon={<Clock className="w-3 h-3" />} value={whyNow} onChange={setWhyNow} placeholder="What creates urgency for this deal right now?" compact />
-                <EditableBlock label="Wedge" icon={<Target className="w-3 h-3" />} value={wedge} onChange={setWedge} placeholder="What's our differentiated entry point?" compact />
-                <EditableBlock label="Competitive Pressure" icon={<Swords className="w-3 h-3" />} value={competitivePressure} onChange={setCompetitivePressure} placeholder="Key competitive dynamics to navigate." compact />
-                <EditableBlock label="Executive Framing" icon={<Crown className="w-3 h-3" />} value={execFraming} onChange={setExecFraming} placeholder="How should we frame this to the C-suite?" compact />
-              </div>
-            )}
-          </Section>
-          </div>
-
-          {/* ===== 2) Political Map ===== */}
-          <Section
-            number={2}
-            title="Political Map"
-            icon={<Users className="w-3.5 h-3.5" />}
-            roleHighlight={roleView === 'seller'}
-          >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <StakeholderRow role="Sponsor" icon={<Crown className="w-3 h-3" />} name={sponsor.name} notes={sponsor.notes} onChange={(n, no) => setSponsor({ name: n, notes: no })} />
-              <StakeholderRow role="Champion" icon={<UserCheck className="w-3 h-3" />} name={champion.name} notes={champion.notes} onChange={(n, no) => setChampion({ name: n, notes: no })} />
-              <StakeholderRow role="Blocker" icon={<UserX className="w-3 h-3" />} name={blocker.name} notes={blocker.notes} onChange={(n, no) => setBlocker({ name: n, notes: no })} />
-              <StakeholderRow role="Procurement" icon={<ShoppingCart className="w-3 h-3" />} name={procurement.name} notes={procurement.notes} onChange={(n, no) => setProcurement({ name: n, notes: no })} />
-            </div>
-          </Section>
-
-          {/* ===== 3) Execution Motion ===== */}
-          <Section
-            number={3}
-            title="Execution Motion"
-            icon={<Rocket className="w-3.5 h-3.5" />}
-            roleHighlight={roleView === 'engineer'}
-          >
-            <div className="space-y-3">
-              <EditableBlock label="Recommended Entry Pack" icon={<Package className="w-3 h-3" />} value={entryPack} onChange={setEntryPack} placeholder="Which package or engagement model opens the door?" compact />
-              <EditableBlock label="Pilot Scope" icon={<Target className="w-3 h-3" />} value={pilotScope} onChange={setPilotScope} placeholder="Define the initial pilot: users, scope, success criteria." compact />
-              <EditableBlock label="Timeline Hypothesis" icon={<CalendarDays className="w-3 h-3" />} value={timeline} onChange={setTimeline} placeholder="Week-by-week execution plan." compact />
-            </div>
-          </Section>
-
-          {/* ===== 4) CRM + Account Signals ===== */}
-          <Section number={4} title="CRM + Account Signals" icon={<Activity className="w-3.5 h-3.5" />}>
-            <div className="space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <div className="p-2.5 rounded-lg bg-muted/20 border border-border/40">
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
-                    <CalendarDays className="w-3 h-3" /> Last Meeting
-                  </p>
-                  <p className="text-xs text-foreground">{lastMeeting.split('—')[0]}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">{lastMeeting.split('—')[1]}</p>
-                </div>
-                <div className="p-2.5 rounded-lg bg-muted/20 border border-border/40">
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
-                    <BarChart3 className="w-3 h-3" /> Engagement Score
-                  </p>
-                  <p className="text-xs font-bold text-green-600">72 / 100</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">Active, multi-stakeholder</p>
-                </div>
-                <div className="p-2.5 rounded-lg bg-muted/20 border border-border/40">
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
-                    <Building2 className="w-3 h-3" /> Vendor Involvement
-                  </p>
-                  <p className="text-xs text-foreground">Microsoft CSA assigned</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">Azure Swiss GA ✓ · Copilot preview pending</p>
-                </div>
-              </div>
-            </div>
-          </Section>
-
-          {/* ===== Deal Hypothesis (shown when plan is hydrated) ===== */}
-          {selectedAccount && getHydratedPlan(selectedAccount) && (
-            <DealHypothesisBlock hypothesis={getHydratedPlan(selectedAccount)!.dealHypothesis} />
-          )}
-
-          {/* ===== What we need (evidence checklist) ===== */}
-          {selectedAccount && getHydratedPlan(selectedAccount) && (
-            <Section number={5} title="What we need" icon={<ClipboardCheck className="w-3.5 h-3.5" />}>
-              <WhatWeNeedSection
-                items={getHydratedPlan(selectedAccount)!.checklist}
-                focusId={selectedAccount}
-                onRefresh={refresh}
-              />
-            </Section>
-          )}
-
-          {/* ===== 5) Risks & Blockers ===== */}
-          <Section number={selectedAccount && getHydratedPlan(selectedAccount) ? 6 : 5} title="Risks & Blockers" icon={<AlertTriangle className="w-3.5 h-3.5" />}>
-            {selectedAccount && getHydratedPlan(selectedAccount) ? (
-              <RisksBlockersSection
-                risks={getHydratedPlan(selectedAccount)!.risks}
-                focusId={selectedAccount}
-                onRefresh={refresh}
-              />
-            ) : aggregatedRisks.length > 0 ? (
-              <div className="space-y-1.5">
-                {aggregatedRisks.map((item, i) => (
-                  <div key={i} className="flex items-start gap-2 text-xs">
-                    <AlertTriangle className="w-3 h-3 text-destructive/60 mt-0.5 flex-shrink-0" />
-                    <p className="text-muted-foreground">{item}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground italic">No risks identified yet — add signals to surface gaps.</p>
-            )}
-          </Section>
-
-          {/* ===== Execution Bundle ===== */}
-          {selectedAccount && getHydratedPlan(selectedAccount) && (
-            <Section number={7} title="Execution Bundle" icon={<Package className="w-3.5 h-3.5" />}>
-              <ExecutionBundleSection assets={getHydratedPlan(selectedAccount)!.executionBundle} />
-            </Section>
-          )}
-
-          {/* ===== 6) Asset Packs ===== */}
-          <Section number={selectedAccount && getHydratedPlan(selectedAccount) ? 8 : 6} title="Asset Packs" icon={<Package className="w-3.5 h-3.5" />}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <AssetPackCard
-                label="Assessment Pack"
-                icon={<FileCheck className="w-4 h-4" />}
-                description="AI readiness assessment framework + scoring template."
-              />
-              <AssetPackCard
-                label="Governance Pack"
-                icon={<Shield className="w-4 h-4" />}
-                description="RACI, data classification, approval gate templates."
-              />
-              <AssetPackCard
-                label="Competitive Pack"
-                icon={<Swords className="w-4 h-4" />}
-                description="Positioning guides against Google Cloud, AWS, SAP."
-              />
-              <AssetPackCard
-                label="ROI Pack"
-                icon={<TrendingUp className="w-4 h-4" />}
-                description="TCO models, business case templates, FinOps framework."
-              />
-            </div>
-
-            {/* Recommended Service Packs */}
-            {planGenerated && (
-              <div className="mt-4 space-y-2">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                  <Scale className="w-3 h-3" />
-                  Recommended Service Packs
-                </p>
-                {recommendedPacks.length > 0 ? (
-                  recommendedPacks.map(({ pack, rationale, why_recommended }) => (
-                    <div key={pack.id} className="rounded-lg border border-primary/15 bg-primary/[0.02] p-3 space-y-1.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="text-xs font-semibold text-foreground">{pack.name}</p>
-                          <p className="text-[11px] text-muted-foreground mt-0.5">{rationale}</p>
-                        </div>
-                        <span className="text-[10px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full flex-shrink-0">
-                          {pack.delivery_model}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-3 text-[10px] text-muted-foreground">
-                        <span>⏱ {pack.duration_band}</span>
-                        <span>💰 {pack.pricing_band}</span>
-                      </div>
-                      {why_recommended.length > 0 && (
-                        <div className="space-y-0.5 pt-1">
-                          {why_recommended.slice(0, 3).map((r, i) => (
-                            <p key={i} className="text-[10px] text-muted-foreground flex items-start gap-1">
-                              <span className="text-primary/60 mt-px">•</span>
-                              {r}
-                            </p>
-                          ))}
-                        </div>
-                      )}
-                      {pack.proof_assets.length > 0 && (
-                        <div className="flex flex-wrap gap-1 pt-1">
-                          {pack.proof_assets.map((a, i) => (
-                            <a
-                              key={i}
-                              href={a.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-1.5 py-0.5 rounded text-[9px] bg-muted/40 text-muted-foreground border border-border/30 hover:text-primary hover:border-primary/30 transition-colors"
-                            >
-                              {a.title}
-                            </a>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))
                 ) : (
-                  <p className="text-[11px] text-muted-foreground italic py-2">
-                    No strong match yet — add context or adjust Engagement Type / Motion.
-                  </p>
+                  <EmptyPlaceholder
+                    icon={<Layers className="w-5 h-5" />}
+                    title="No readiness data"
+                    description="Select an account and add customer evidence to generate delivery feasibility insights."
+                  />
                 )}
-              </div>
-            )}
-          </Section>
+              </CollapsibleSection>
+
+              {/* 5) Technical Risks & Blockers */}
+              <CollapsibleSection title="Technical Risks & Blockers" subtitle="Technical risks and delivery blockers" defaultOpen={false}>
+                {hydratedPlan ? (
+                  <RisksBlockersSection
+                    risks={hydratedPlan.risks}
+                    focusId={selectedAccount}
+                    onRefresh={refresh}
+                  />
+                ) : (
+                  <EmptyPlaceholder
+                    icon={<AlertTriangle className="w-5 h-5" />}
+                    title="No technical risks identified"
+                    description="Technical risks will surface once a plan is generated and delivery context is added."
+                  />
+                )}
+              </CollapsibleSection>
+            </div>
+          )}
         </div>
 
-        {/* Right: Account Intelligence */}
+        {/* Right: Customer Evidence */}
         <div className="w-72 flex-shrink-0 hidden lg:block">
           <div className="sticky top-4">
             <AccountInbox
