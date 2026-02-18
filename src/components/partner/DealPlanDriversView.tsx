@@ -102,6 +102,7 @@ type ViewTab = 'commercial' | 'technical';
 
 interface DealPlanDriversViewProps {
   onGoToQuickBrief: () => void;
+  onGoToAccountIntelligence?: () => void;
 }
 
 // ============= Editable Text Block =============
@@ -280,7 +281,7 @@ function EmptyPlaceholder({ icon, title, description }: {
 
 // ============= Main Component =============
 
-export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewProps) {
+export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligence }: DealPlanDriversViewProps) {
   const [, forceUpdate] = useState(0);
   const refresh = useCallback(() => forceUpdate((n) => n + 1), []);
   const strategicFramingRef = useRef<HTMLDivElement>(null);
@@ -628,6 +629,7 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
                 onOpenPicker={() => setShowPicker(true)}
                 showPicker={showPicker}
                 onPlaySelected={handlePlaySelected}
+                onGoToAccountIntelligence={onGoToAccountIntelligence}
                 pickerNode={
                   showPicker ? (
                     <SignalPickerPanel

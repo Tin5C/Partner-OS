@@ -48,6 +48,7 @@ interface RecommendedPlaysPanelProps {
   pickerNode?: React.ReactNode;
   onPlaySelected?: (play: { packId: string; packName: string; drivers: string[]; gaps: string[] }) => void;
   weekOf?: string;
+  onGoToAccountIntelligence?: () => void;
 }
 
 // ============= Main Component =============
@@ -65,6 +66,7 @@ export function RecommendedPlaysPanel({
   pickerNode,
   onPlaySelected,
   weekOf = '2026-02-10',
+  onGoToAccountIntelligence,
 }: RecommendedPlaysPanelProps) {
   const [driversOpen, setDriversOpen] = useState(false);
   const [readinessPlay, setReadinessPlay] = useState<ScoredPlay | null>(null);
@@ -166,18 +168,46 @@ export function RecommendedPlaysPanel({
           onClick={onOpenPicker}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] font-medium border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors flex-shrink-0"
         >
-          Edit signals
+          Select drivers
         </button>
       </div>
 
-      {/* ===== Drivers Used Strip ===== */}
-      <div className="flex items-center gap-3 text-[10px]">
-        <span className="text-muted-foreground font-semibold uppercase tracking-wider">Drivers used:</span>
-        <span className="text-muted-foreground font-medium">Signals: {displaySignalCount}</span>
-        <span className="text-muted-foreground font-medium">·</span>
-        <span className="text-muted-foreground font-medium">Initiatives: {initiativesTitles.length}</span>
-        <span className="text-muted-foreground font-medium">·</span>
-        <span className="text-muted-foreground font-medium">Trends: {trendsTitles.length}</span>
+      {/* ===== Selected Drivers Row ===== */}
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+            Selected drivers ({displaySignalCount}/3)
+          </span>
+          {activeSignalIds.length > 0 && (() => {
+            const pool = buildSignalPool(accountId, weekOf);
+            return activeSignalIds.map((id) => {
+              const found = pool.find((p) => p.id === id);
+              return (
+                <span
+                  key={id}
+                  className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border border-border/60 bg-muted/30 text-foreground truncate max-w-[180px]"
+                  title={found?.title ?? id}
+                >
+                  {found?.title ?? id}
+                </span>
+              );
+            });
+          })()}
+        </div>
+        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+          <span>Also used: Initiatives: {initiativesTitles.length} · Trends: {trendsTitles.length}</span>
+          {onGoToAccountIntelligence && (
+            <>
+              <span>·</span>
+              <button
+                onClick={onGoToAccountIntelligence}
+                className="text-[10px] text-muted-foreground hover:text-foreground underline underline-offset-2 decoration-border hover:decoration-foreground transition-colors"
+              >
+                Find more in Account Intelligence
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* ===== Inline Signal Picker ===== */}
