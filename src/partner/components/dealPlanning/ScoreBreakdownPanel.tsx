@@ -1,5 +1,5 @@
-// ScoreBreakdownPanel — developer debug breakdown for a Recommended Play
-// Shows how Fit Score was computed step-by-step
+// ScoreBreakdownPanel — consolidated explainability panel for a Recommended Play
+// Shows Drivers Referenced, Context, Rule Hits, Final Score, and Confidence guidance
 
 import { useState } from 'react';
 import type { PromotedSignal } from '@/data/partner/dealPlanStore';
@@ -16,7 +16,7 @@ interface BreakdownStep {
 interface ScoreBreakdown {
   context: { type: string | null; motion: string | null };
   signalCount: number;
-  signalIds: string[];
+  signalTitles: string[];
   initiativeCount: number;
   initiativeTitles: string[];
   trendCount: number;
@@ -27,7 +27,6 @@ interface ScoreBreakdown {
   penalties: number;
   final: number;
   confidence: string;
-  evidencePreview: { source: string; title: string }[];
 }
 
 // ============= Breakdown Builder =============
@@ -70,26 +69,22 @@ export function buildBreakdown(
   const signalTags = extractSignalTags(promotedSignals);
   const steps: BreakdownStep[] = [];
 
-  // A) Signal tag alignment (40%)
   const tagOverlap = pack.tags.filter((t) => signalTags.includes(t)).length;
   const tagScore = pack.tags.length > 0 ? Math.round((tagOverlap / pack.tags.length) * 40) : 0;
-  steps.push({ label: 'Signal tag alignment (40% weight)', value: tagScore, detail: `${tagOverlap}/${pack.tags.length} tags matched` });
+  steps.push({ label: 'Signal tag alignment (40%)', value: tagScore, detail: `${tagOverlap}/${pack.tags.length} tags matched` });
 
-  // B) Initiative alignment (25% — labeled as pillar in engine but uses initiatives)
   const pillarOverlap = pack.tags.filter((t) =>
     initiatives.some((p) => p.toLowerCase().includes(t.replace(/_/g, ' ')))
   ).length;
   const pillarScore = initiatives.length > 0 ? Math.round((Math.min(pillarOverlap, 2) / 2) * 25) : 12;
-  steps.push({ label: 'Initiative/pillar alignment (25% weight)', value: pillarScore, detail: initiatives.length > 0 ? `${pillarOverlap} overlap` : 'Neutral (no data)' });
+  steps.push({ label: 'Initiative/pillar alignment (25%)', value: pillarScore, detail: initiatives.length > 0 ? `${pillarOverlap} overlap` : 'Neutral (no data)' });
 
-  // C) Initiative detail alignment (20%)
   const initOverlap = pack.tags.filter((t) =>
     initiatives.some((i) => i.toLowerCase().includes(t.replace(/_/g, ' ')))
   ).length;
   const initScore = initiatives.length > 0 ? Math.round((Math.min(initOverlap, 2) / 2) * 20) : 10;
-  steps.push({ label: 'Initiative detail alignment (20% weight)', value: initScore, detail: initiatives.length > 0 ? `${initOverlap} overlap` : 'Neutral (no data)' });
+  steps.push({ label: 'Initiative detail alignment (20%)', value: initScore, detail: initiatives.length > 0 ? `${initOverlap} overlap` : 'Neutral (no data)' });
 
-  // C2) Trend boost
   const trendOverlap = pack.tags.filter((t) =>
     trends.some((tr) => tr.toLowerCase().includes(t.replace(/_/g, ' ')))
   ).length;
@@ -98,14 +93,12 @@ export function buildBreakdown(
     steps.push({ label: 'Trend alignment boost', value: trendBoost, detail: `${trendOverlap} trend(s) matched` });
   }
 
-  // D) Readiness feasibility (15%)
   let readinessVal = 8;
   if (readinessScore != null) {
     readinessVal = Math.round((Math.min(readinessScore, 100) / 100) * 15);
   }
-  steps.push({ label: 'Readiness feasibility (15% weight)', value: readinessVal, detail: readinessScore != null ? `Score: ${readinessScore}` : 'Neutral (no data)' });
+  steps.push({ label: 'Readiness feasibility (15%)', value: readinessVal, detail: readinessScore != null ? `Score: ${readinessScore}` : 'Neutral (no data)' });
 
-  // E) Engagement type modifier
   let typeModifier = 0;
   let typeDetail = '';
   if (engagementType === 'new_logo') {
@@ -121,7 +114,6 @@ export function buildBreakdown(
     steps.push({ label: 'Type/Motion fit', value: typeModifier, detail: typeDetail });
   }
 
-  // F) Bias alignment
   let biasVal = 0;
   if (pack.bias && pack.bias === engagementType) biasVal = 5;
   else if (pack.bias && pack.bias !== engagementType && engagementType) biasVal = -5;
@@ -129,7 +121,6 @@ export function buildBreakdown(
     steps.push({ label: 'Pack bias alignment', value: biasVal, detail: biasVal > 0 ? 'Matches engagement type' : 'Mismatched engagement type' });
   }
 
-  // G) Motion fit
   let motionVal = 0;
   if (motion && pack.motionFit.includes(motion)) {
     motionVal = 5;
@@ -142,31 +133,47 @@ export function buildBreakdown(
   const boosts = (trendOverlap > 0 ? trendBoost : 0) + Math.max(typeModifier, 0) + Math.max(biasVal, 0) + motionVal;
   const penalties = Math.abs(Math.min(typeModifier, 0)) + Math.abs(Math.min(biasVal, 0));
 
-  // Evidence preview from drivers
-  const evidencePreview: { source: string; title: string }[] = [];
-  for (const d of play.drivers.slice(0, 2)) {
-    if (d.startsWith('Trend:')) evidencePreview.push({ source: 'Trend', title: d.replace('Trend: ', '') });
-    else if (d.startsWith('Initiative:')) evidencePreview.push({ source: 'Initiative', title: d.replace('Initiative: ', '') });
-    else if (d.startsWith('Pillar:')) evidencePreview.push({ source: 'Pillar', title: d.replace('Pillar: ', '') });
-    else evidencePreview.push({ source: 'Rule', title: d });
-  }
-
   return {
     context: { type: engagementType, motion },
     signalCount: promotedSignals.length,
-    signalIds: promotedSignals.map((s) => s.signalId),
+    signalTitles: promotedSignals.map((s) => s.snapshot.title ?? s.signalId),
     initiativeCount: initiatives.length,
-    initiativeTitles: initiatives.slice(0, 3),
+    initiativeTitles: initiatives,
     trendCount: trends.length,
-    trendTitles: trends.slice(0, 3),
+    trendTitles: trends,
     steps,
     base,
     boosts,
     penalties,
     final: play.engagementFitPct,
     confidence: play.confidence,
-    evidencePreview,
   };
+}
+
+// ============= Helper: render titled list with cap =============
+
+function TitledList({ items, max = 4 }: { items: string[]; max?: number }) {
+  if (items.length === 0) return <p className="text-muted-foreground ml-2">None selected</p>;
+  const visible = items.slice(0, max);
+  const remaining = items.length - max;
+  return (
+    <>
+      {visible.map((t, i) => (
+        <p key={i} className="text-muted-foreground leading-snug ml-2">· {t}</p>
+      ))}
+      {remaining > 0 && (
+        <p className="text-muted-foreground ml-2">+{remaining} more</p>
+      )}
+    </>
+  );
+}
+
+// ============= Section heading =============
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-widest">{children}</p>
+  );
 }
 
 // ============= Component =============
@@ -211,35 +218,39 @@ export function ScoreBreakdownPanel(props: ScoreBreakdownPanelProps) {
       </button>
 
       {open && bd && (
-        <div className="mt-2 border-t border-border/40 pt-2 space-y-2 text-[10px]">
-          <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-widest">
-            Scoring breakdown
-          </p>
+        <div className="mt-2 border-t border-border/40 pt-2 space-y-2.5 text-[10px]">
 
-          {/* A) Context */}
+          {/* A) Drivers Referenced */}
+          <div className="space-y-1">
+            <SectionTitle>Drivers Referenced</SectionTitle>
+            <div className="space-y-0.5">
+              <p className="text-muted-foreground font-medium">Signals: {bd.signalCount}</p>
+              <TitledList items={bd.signalTitles} />
+            </div>
+            <div className="space-y-0.5">
+              <p className="text-muted-foreground font-medium">Initiatives: {bd.initiativeCount}</p>
+              <TitledList items={bd.initiativeTitles} />
+            </div>
+            <div className="space-y-0.5">
+              <p className="text-muted-foreground font-medium">Trends: {bd.trendCount}</p>
+              <TitledList items={bd.trendTitles} />
+            </div>
+          </div>
+
+          <div className="border-t border-border/30" />
+
+          {/* B) Context */}
           <div className="space-y-0.5">
-            <p className="font-semibold text-muted-foreground uppercase tracking-wider text-[9px]">Context</p>
+            <SectionTitle>Context</SectionTitle>
             <p className="text-muted-foreground">Type: {bd.context.type ?? 'not set'}</p>
             <p className="text-muted-foreground">Motion: {bd.context.motion ?? 'not set'}</p>
           </div>
 
-          {/* B) Inputs used */}
-          <div className="space-y-0.5">
-            <p className="font-semibold text-muted-foreground uppercase tracking-wider text-[9px]">Inputs used</p>
-            <p className="text-muted-foreground">
-              Signals: {bd.signalCount}{bd.signalIds.length > 0 && ` (${bd.signalIds.join(', ')})`}
-            </p>
-            <p className="text-muted-foreground">
-              Initiatives: {bd.initiativeCount}{bd.initiativeTitles.length > 0 && ` (${bd.initiativeTitles.join(', ')})`}
-            </p>
-            <p className="text-muted-foreground">
-              Trends: {bd.trendCount}{bd.trendTitles.length > 0 && ` (${bd.trendTitles.join(', ')})`}
-            </p>
-          </div>
+          <div className="border-t border-border/30" />
 
-          {/* C) Rule hits */}
+          {/* C) Rule Hits */}
           <div className="space-y-0.5">
-            <p className="font-semibold text-muted-foreground uppercase tracking-wider text-[9px]">Rule hits</p>
+            <SectionTitle>Rule Hits</SectionTitle>
             {bd.steps.map((step, i) => (
               <p key={i} className="text-muted-foreground leading-snug">
                 <span className="font-medium">{step.value >= 0 ? '+' : ''}{step.value}</span>{' '}
@@ -248,24 +259,27 @@ export function ScoreBreakdownPanel(props: ScoreBreakdownPanelProps) {
             ))}
           </div>
 
-          {/* D) Final score math */}
+          <div className="border-t border-border/30" />
+
+          {/* D) Final Score Summary */}
           <div className="space-y-0.5">
-            <p className="font-semibold text-muted-foreground uppercase tracking-wider text-[9px]">Final score</p>
+            <SectionTitle>Final Score</SectionTitle>
             <p className="text-muted-foreground">Base: {bd.base}</p>
             <p className="text-muted-foreground">Boosts: +{bd.boosts}</p>
             <p className="text-muted-foreground">Penalties: -{bd.penalties}</p>
-            <p className="text-foreground font-medium">Fit Score: {bd.final}% ({bd.confidence})</p>
+            <p className="text-foreground font-medium">Fit Score: {bd.final}% · {bd.confidence}</p>
           </div>
 
-          {/* E) Evidence preview */}
-          {bd.evidencePreview.length > 0 && (
-            <div className="space-y-0.5">
-              <p className="font-semibold text-muted-foreground uppercase tracking-wider text-[9px]">Evidence preview</p>
-              {bd.evidencePreview.map((e, i) => (
-                <p key={i} className="text-muted-foreground">{e.source}: {e.title}</p>
-              ))}
-            </div>
-          )}
+          <div className="border-t border-border/30" />
+
+          {/* E) What Increases Confidence */}
+          <div className="space-y-0.5">
+            <SectionTitle>What Increases Confidence</SectionTitle>
+            <p className="text-muted-foreground leading-snug ml-2">· Add relevant account signals</p>
+            <p className="text-muted-foreground leading-snug ml-2">· Confirm executive sponsor</p>
+            <p className="text-muted-foreground leading-snug ml-2">· Validate stakeholder coverage</p>
+            <p className="text-muted-foreground leading-snug ml-2">· Attach proof artifacts</p>
+          </div>
         </div>
       )}
     </div>

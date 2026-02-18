@@ -4,7 +4,7 @@
 import { useState, useMemo } from 'react';
 import {
   Sparkles, Plus, TrendingUp, Check,
-  ChevronRight, ChevronDown, Trash2, Zap, Eye, EyeOff,
+  ChevronRight, ChevronDown, Trash2, Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -48,87 +48,7 @@ interface RecommendedPlaysPanelProps {
   onPlaySelected?: (play: { packId: string; packName: string; drivers: string[]; gaps: string[] }) => void;
 }
 
-// ============= Per-Card Basis Expander =============
-
-function PlayBasis({
-  play,
-  promotedSignals,
-  initiativesTitles,
-  trendsTitles,
-}: {
-  play: ScoredPlay;
-  promotedSignals: PromotedSignal[];
-  initiativesTitles: string[];
-  trendsTitles: string[];
-}) {
-  const [open, setOpen] = useState(false);
-
-  // Find signals referenced in drivers
-  const matchedSignals = promotedSignals.slice(0, 3);
-  const matchedInitiatives = initiativesTitles.slice(0, 2);
-  const matchedTrends = trendsTitles.slice(0, 2);
-
-  const improvementBullets: string[] = [];
-  if (promotedSignals.length < 2) improvementBullets.push('Promote additional signals.');
-  if (improvementBullets.length < 2) improvementBullets.push('Add proof artifacts or meeting notes.');
-
-  return (
-    <div className="pt-1">
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors"
-      >
-        {open ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-        {open ? 'Hide basis' : 'Show basis'}
-      </button>
-      {open && (
-        <div className="mt-2 p-2.5 rounded-md border border-border/40 bg-muted/20 space-y-2 text-[10px]">
-          <p className="font-semibold text-muted-foreground uppercase tracking-wider text-[9px]">
-            Basis for this recommendation
-          </p>
-
-          {matchedSignals.length > 0 && (
-            <div>
-              <p className="font-semibold text-foreground mb-0.5">Signals used</p>
-              {matchedSignals.map((s) => (
-                <p key={s.signalId} className="text-muted-foreground leading-snug ml-2">
-                  • {s.snapshot.title}
-                </p>
-              ))}
-            </div>
-          )}
-
-          {matchedInitiatives.length > 0 && (
-            <div>
-              <p className="font-semibold text-foreground mb-0.5">Initiatives referenced</p>
-              {matchedInitiatives.map((t, i) => (
-                <p key={i} className="text-muted-foreground leading-snug ml-2">• {t}</p>
-              ))}
-            </div>
-          )}
-
-          {matchedTrends.length > 0 && (
-            <div>
-              <p className="font-semibold text-foreground mb-0.5">Trends referenced</p>
-              {matchedTrends.map((t, i) => (
-                <p key={i} className="text-muted-foreground leading-snug ml-2">• {t}</p>
-              ))}
-            </div>
-          )}
-
-          {improvementBullets.length > 0 && (
-            <div>
-              <p className="font-semibold text-foreground mb-0.5">What would increase confidence</p>
-              {improvementBullets.map((b, i) => (
-                <p key={i} className="text-muted-foreground leading-snug ml-2">• {b}</p>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
+// PlayBasis removed — consolidated into ScoreBreakdownPanel
 
 // ============= Main Component =============
 
@@ -303,13 +223,8 @@ export function RecommendedPlaysPanel({
                     </div>
                   )}
 
-                  {/* Per-card basis expander */}
-                  <PlayBasis
-                    play={play}
-                    promotedSignals={promotedSignals}
-                    initiativesTitles={initiativesTitles}
-                    trendsTitles={trendsTitles}
-                  />
+
+
 
                   {/* Score debug breakdown */}
                   {(() => {
