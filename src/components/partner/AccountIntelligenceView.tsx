@@ -20,7 +20,6 @@ import {
   ShoppingCart,
   MessageSquare,
   ChevronRight,
-  Sparkles,
   BookOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -147,77 +146,6 @@ function ReadinessCompact({ score }: { score: number }) {
   );
 }
 
-/* ─── Readiness Pillar Bars ─── */
-
-const PILLAR_DISPLAY: { key: string; label: string }[] = [
-  { key: 'context', label: 'Strategic Alignment' },
-  { key: 'stakeholders', label: 'Stakeholder Coverage' },
-  { key: 'competitive', label: 'Commercial Viability' },
-  { key: 'technical', label: 'Delivery Feasibility' },
-  { key: 'proof', label: 'Evidence Coverage' },
-];
-
-function getPillarStatus(filled: boolean | undefined): { label: string; className: string } {
-  if (filled === true) return { label: 'Met', className: 'text-primary' };
-  if (filled === false) return { label: 'Missing', className: 'text-muted-foreground/50' };
-  return { label: 'Unknown', className: 'text-muted-foreground/40' };
-}
-
-function ReadinessPillarBars({
-  pillars,
-  onPillarClick,
-}: {
-  pillars: Record<string, boolean>;
-  onPillarClick?: (pillarKey: string) => void;
-}) {
-  const hasPillarData = pillars && Object.keys(pillars).length > 0;
-
-  return (
-    <div className="space-y-1.5">
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-2">
-        Readiness by pillar
-      </p>
-      {PILLAR_DISPLAY.map((p) => {
-        const filled = hasPillarData ? pillars[p.key] : undefined;
-        const status = getPillarStatus(filled);
-        return (
-          <button
-            key={p.key}
-            onClick={() => onPillarClick?.(p.key)}
-            className="w-full flex items-center gap-3 py-1 group hover:bg-muted/10 rounded-md px-1 -mx-1 transition-colors"
-          >
-            <span className="text-[10px] text-muted-foreground min-w-[120px] text-left truncate">
-              {p.label}
-            </span>
-            <div className="flex-1 flex items-center gap-px">
-              {[0, 1, 2, 3, 4].map((seg) => (
-                <div
-                  key={seg}
-                  className={cn(
-                    "h-1.5 flex-1 rounded-[1px] transition-colors",
-                    filled === true
-                      ? "bg-primary/60"
-                      : filled === false
-                        ? "bg-muted/40"
-                        : "bg-muted/20"
-                  )}
-                />
-              ))}
-            </div>
-            <span className={cn("text-[9px] font-medium min-w-[48px] text-right", status.className)}>
-              {status.label}
-            </span>
-          </button>
-        );
-      })}
-      {!hasPillarData && (
-        <p className="text-[9px] text-muted-foreground/40 mt-1">
-          Pillar breakdown not available yet — overall readiness shown above.
-        </p>
-      )}
-    </div>
-  );
-}
 
 /* ─── Section IDs for navigation ─── */
 
@@ -318,12 +246,6 @@ const EVIDENCE_CATEGORIES: { value: EvidenceCategory; label: string; icon: React
 
 /* ─── AI Lens keyword matching ─── */
 
-const AI_KEYWORDS = ['ai', 'copilot', 'machine learning', 'ml', 'llm', 'generative', 'gpt', 'openai', 'azure ai', 'cognitive', 'neural', 'deep learning', 'rag', 'agent'];
-
-function matchesAILens(text: string): boolean {
-  const lower = text.toLowerCase();
-  return AI_KEYWORDS.some((kw) => lower.includes(kw));
-}
 
 /* ─── De-duplication hint ─── */
 
@@ -402,7 +324,7 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
   const [commercialTab, setCommercialTab] = useState<CommercialTab>('licenses');
   const [techTab, setTechTab] = useState<TechTab>('vendors');
   const [expandedEvidence, setExpandedEvidence] = useState<EvidenceCategory | null>(null);
-  const [aiLens, setAiLens] = useState(false);
+  
   const [expandedInitiative, setExpandedInitiative] = useState<string | null>(null);
   const [expandedTrend, setExpandedTrend] = useState<string | null>(null);
 
@@ -454,25 +376,16 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
         return true;
       });
     }
-    if (aiLens) {
-      list = list.filter((s) => matchesAILens(s.description) || matchesAILens(s.implication ?? '') || matchesAILens(s.category ?? ''));
-    }
     return list;
-  }, [signalHistory, signalFilter, aiLens]);
+  }, [signalHistory, signalFilter]);
 
-  // AI Lens filtered initiatives
   const filteredInitiatives = useMemo(() => {
-    const all = publicInitiatives?.public_it_initiatives ?? [];
-    if (!aiLens) return all;
-    return all.filter((i) => matchesAILens(i.title) || matchesAILens(i.summary) || i.technology_domain.some((d) => matchesAILens(d)));
-  }, [publicInitiatives, aiLens]);
+    return publicInitiatives?.public_it_initiatives ?? [];
+  }, [publicInitiatives]);
 
-  // AI Lens filtered trends
   const filteredTrends = useMemo(() => {
-    const all = industryAuthorityTrends?.trends ?? [];
-    if (!aiLens) return all;
-    return all.filter((t) => matchesAILens(t.trend_title) || matchesAILens(t.thesis_summary) || matchesAILens(t.applied_to_focus?.why_it_matters ?? ''));
-  }, [industryAuthorityTrends, aiLens]);
+    return industryAuthorityTrends?.trends ?? [];
+  }, [industryAuthorityTrends]);
 
   // Early returns AFTER all hooks
   if (!focusId) {
@@ -500,19 +413,6 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
             <ReadinessCompact score={readiness.score} />
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            {/* AI Lens toggle */}
-            <button
-              onClick={() => setAiLens((v) => !v)}
-              className={cn(
-                "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-medium border transition-colors",
-                aiLens
-                  ? "bg-primary/10 text-primary border-primary/20"
-                  : "text-muted-foreground/60 border-border/40 hover:border-border/60 hover:text-muted-foreground"
-              )}
-            >
-              <Sparkles className="w-3 h-3" />
-              AI Lens
-            </button>
             {onGoToDealPlanning && (
               <button
                 onClick={onGoToDealPlanning}
@@ -524,14 +424,6 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
             )}
           </div>
         </div>
-
-        {/* Readiness Pillar Bars */}
-        <ReadinessPillarBars
-          pillars={readiness.pillars}
-          onPillarClick={() => {
-            toggleSection('ai-evidence');
-          }}
-        />
 
         {/* Quick Navigation */}
         <div className="flex items-center gap-1 overflow-x-auto">
@@ -685,12 +577,12 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
             </div>
           ) : (
             <p className="text-xs text-muted-foreground/60">
-              {aiLens ? 'No AI-related signals this week.' : 'No signals match current filter.'}
+              {'No signals match current filter.'}
             </p>
           )}
 
           {/* Industry News compact */}
-          {industryNews && industryNews.signals.length > 0 && !aiLens && (
+          {industryNews && industryNews.signals.length > 0 && (
             <div className="mt-4 pt-3 border-t border-border/30 space-y-2">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                 Industry News ({industryNews.signals.length})
@@ -785,12 +677,12 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
             </div>
           ) : (
             <p className="text-xs text-muted-foreground/60">
-              {aiLens ? 'No AI-related initiatives.' : 'No public initiatives data.'}
+              {'No public initiatives data.'}
             </p>
           )}
 
           {/* Proof / Success Stories */}
-          {proofArtifacts && proofArtifacts.proof_artifacts.length > 0 && !aiLens && (
+          {proofArtifacts && proofArtifacts.proof_artifacts.length > 0 && (
             <div className="space-y-2 pt-3 border-t border-border/30">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                 Proof / Success Stories ({proofArtifacts.proof_artifacts.length})
@@ -880,7 +772,7 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
             </div>
           ) : (
             <p className="text-xs text-muted-foreground/60">
-              {aiLens ? 'No AI-related trends.' : 'No authority trends data.'}
+              {'No authority trends data.'}
             </p>
           )}
         </DocSection>
