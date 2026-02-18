@@ -1,7 +1,7 @@
-// Account Intelligence View — scannable dashboard with progressive disclosure
-// Collapsible sections, search/filter, consistent card layout, reference badges
+// Account Intelligence View — Notion-style research document layout
+// Collapsible accordion sections (one open at a time), sticky header, mini-nav, auto-scroll filtering
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import {
   Building2,
   DollarSign,
@@ -21,15 +21,16 @@ import {
   ArrowUpRight,
   Search,
   Zap,
+  Brain,
+  Shield,
+  Layers,
+  ShoppingCart,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { ReadinessPanel } from '@/components/partner/accountIntelligence/ReadinessPanel';
 import { resolveAccountIntelligence } from '@/services/accountIntelligence';
 import type { AccountIntelligenceVM } from '@/services/accountIntelligence';
 import type { PartnerInvolvement } from '@/data/partner/partnerInvolvementStore';
-import type { IndustryAuthorityTrendsPack } from '@/data/partner/industryAuthorityTrendsStore';
-import type { IndustryNewsPack } from '@/data/partner/industryNewsStore';
 import {
   addItem,
   makeInboxItemId,
@@ -38,9 +39,11 @@ import {
 
 interface AccountIntelligenceViewProps {
   focusId: string | null;
+  onGoToDealPlanning?: () => void;
 }
 
-/* ─── Confidence badge ─── */
+/* ─── Shared small helpers ─── */
+
 function ConfidenceBadge({ level }: { level: string }) {
   return (
     <span className={cn(
@@ -54,7 +57,6 @@ function ConfidenceBadge({ level }: { level: string }) {
   );
 }
 
-/* ─── Origin module badge ─── */
 function OriginBadge({ label }: { label: string }) {
   return (
     <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-muted/30 text-muted-foreground/70 border border-border/30 flex-shrink-0">
@@ -63,7 +65,6 @@ function OriginBadge({ label }: { label: string }) {
   );
 }
 
-/* ─── Category badge ─── */
 function CategoryBadge({ category }: { category: string }) {
   const colors: Record<string, string> = {
     regulation: 'bg-primary/10 text-primary border-primary/20',
@@ -85,7 +86,6 @@ function CategoryBadge({ category }: { category: string }) {
   );
 }
 
-/* ─── Tags row (max 3 + overflow) ─── */
 function TagsRow({ tags }: { tags: string[] }) {
   if (!tags || tags.length === 0) return null;
   const visible = tags.slice(0, 3);
@@ -104,83 +104,23 @@ function TagsRow({ tags }: { tags: string[] }) {
   );
 }
 
-/* ─── Collapsible Section ─── */
-function CollapsibleSectionCard({
-  title, icon, count, defaultOpen = false, sublabel, children, className,
-}: {
-  title: string;
-  icon: React.ReactNode;
-  count?: number;
-  defaultOpen?: boolean;
-  sublabel?: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
-  return (
-    <div className={cn("rounded-xl border border-border/60 bg-card", className)}>
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-1.5 p-4 text-left"
-      >
-        {icon}
-        <div className="flex-1 min-w-0">
-          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-            {title}
-            {count != null && (
-              <span className="text-[10px] font-bold text-muted-foreground/50">({count})</span>
-            )}
-          </h3>
-          {sublabel && (
-            <p className="text-[10px] text-muted-foreground/50 mt-0.5">{sublabel}</p>
-          )}
-        </div>
-        <ChevronDown className={cn("w-3.5 h-3.5 text-muted-foreground transition-transform flex-shrink-0", open && "rotate-180")} />
-      </button>
-      {open && (
-        <div className="px-4 pb-4 space-y-3">
-          {children}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ─── Static Section (always open) ─── */
-function SectionCard({ title, icon, children, className }: {
-  title: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={cn("rounded-xl border border-border/60 bg-card p-4 space-y-3", className)}>
-      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-        {icon}
-        {title}
-      </h3>
-      {children}
-    </div>
-  );
-}
-
 function KVRow({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null;
   return (
     <div className="flex items-start gap-2 text-sm">
-      <span className="text-muted-foreground min-w-[140px] flex-shrink-0">{label}</span>
-      <span className="text-foreground">{value}</span>
+      <span className="text-muted-foreground min-w-[130px] flex-shrink-0 text-xs">{label}</span>
+      <span className="text-foreground text-xs">{value}</span>
     </div>
   );
 }
 
 function BulletList({ items }: { items?: string[] }) {
-  if (!items || items.length === 0) return <p className="text-sm text-muted-foreground/60">No data yet.</p>;
+  if (!items || items.length === 0) return <p className="text-xs text-muted-foreground/60">No data yet.</p>;
   return (
-    <ul className="space-y-1">
+    <ul className="space-y-0.5">
       {items.map((item, i) => (
-        <li key={i} className="text-sm text-foreground flex items-start gap-2">
-          <span className="text-muted-foreground/40 mt-1.5 flex-shrink-0">•</span>
+        <li key={i} className="text-xs text-foreground flex items-start gap-2">
+          <span className="text-muted-foreground/40 mt-1 flex-shrink-0">•</span>
           {item}
         </li>
       ))}
@@ -188,11 +128,10 @@ function BulletList({ items }: { items?: string[] }) {
   );
 }
 
-/* ─── "Use in Deal Plan" button helper ─── */
 function UseDealPlanButton({ onClick }: { onClick: () => void }) {
   return (
     <button
-      onClick={onClick}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
       className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 border border-border/40 hover:border-primary/20 transition-colors flex-shrink-0"
     >
       <ArrowUpRight className="w-3 h-3" />
@@ -201,113 +140,165 @@ function UseDealPlanButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-/* ─── "View all / Show less" toggle ─── */
-function ViewAllToggle({ expanded, total, limit, onToggle }: {
-  expanded: boolean;
-  total: number;
-  limit: number;
-  onToggle: () => void;
-}) {
-  if (total <= limit) return null;
+/* ─── Readiness compact bar (inline in header) ─── */
+
+function getStateLabel(pct: number): string {
+  if (pct >= 80) return 'Deal-ready';
+  if (pct >= 60) return 'Strong';
+  if (pct >= 40) return 'Developing';
+  if (pct >= 20) return 'Early';
+  return 'Not ready';
+}
+
+function ReadinessCompact({ score }: { score: number }) {
   return (
-    <button
-      onClick={onToggle}
-      className="flex items-center gap-1 text-[11px] font-medium text-primary hover:text-primary/80 pt-1"
-    >
-      {expanded ? 'Show less' : `View all (${total})`}
-      <ChevronDown className={cn("w-3 h-3 transition-transform", expanded && "rotate-180")} />
-    </button>
+    <div className="flex items-center gap-2">
+      <div className="w-20 h-1.5 rounded-full bg-muted/40 overflow-hidden">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-primary/60 to-primary transition-all"
+          style={{ width: `${score}%` }}
+        />
+      </div>
+      <span className="text-xs font-medium text-muted-foreground tabular-nums">{score}%</span>
+      <span className="text-[10px] text-muted-foreground/60">{getStateLabel(score)}</span>
+    </div>
   );
 }
 
+/* ─── Section IDs for navigation ─── */
+
+const SECTIONS = [
+  { id: 'ai-exec-summary', label: 'Executive' },
+  { id: 'ai-signals', label: 'Signals' },
+  { id: 'ai-strategy', label: 'Strategy' },
+  { id: 'ai-commercial', label: 'Commercial' },
+  { id: 'ai-technical', label: 'Technical' },
+  { id: 'ai-partners', label: 'Partners' },
+  { id: 'ai-evidence', label: 'Evidence' },
+] as const;
+
+type SectionId = typeof SECTIONS[number]['id'];
+
+/* ─── Accordion Section (one-open-at-a-time) ─── */
+
+function DocSection({
+  id,
+  title,
+  icon,
+  count,
+  isOpen,
+  onToggle,
+  children,
+}: {
+  id: string;
+  title: string;
+  icon: React.ReactNode;
+  count?: number;
+  isOpen: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <section id={id}>
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center gap-2 py-3 px-1 text-left border-b border-border/40 hover:bg-muted/20 transition-colors group"
+      >
+        <span className="text-muted-foreground/60">{icon}</span>
+        <h2 className="flex-1 text-sm font-semibold text-foreground tracking-tight">
+          {title}
+          {count != null && (
+            <span className="ml-1.5 text-xs font-normal text-muted-foreground/50">({count})</span>
+          )}
+        </h2>
+        <ChevronDown className={cn(
+          "w-4 h-4 text-muted-foreground/50 transition-transform duration-200 flex-shrink-0",
+          isOpen && "rotate-180"
+        )} />
+      </button>
+      <div className={cn(
+        "grid transition-all duration-200 ease-in-out",
+        isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+      )}>
+        <div className="overflow-hidden">
+          <div className="py-4 space-y-3">{children}</div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── Signal quick filter tabs ─── */
+
+type SignalQuickFilter = 'all' | 'ai' | 'regulatory' | 'commercial' | 'technical';
+
+const SIGNAL_FILTERS: { value: SignalQuickFilter; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'ai', label: 'AI' },
+  { value: 'regulatory', label: 'Regulatory' },
+  { value: 'commercial', label: 'Commercial' },
+  { value: 'technical', label: 'Technical' },
+];
+
+/* ─── Commercial sub-tabs ─── */
+
+type CommercialTab = 'licenses' | 'contracts' | 'renewals' | 'spend';
+
+/* ─── Technical sub-tabs ─── */
+
+type TechTab = 'vendors' | 'applications' | 'architecture';
+
+/* ─── Evidence categories ─── */
+
+type EvidenceCategory = 'security' | 'technical' | 'business' | 'procurement';
+
+const EVIDENCE_CATEGORIES: { value: EvidenceCategory; label: string; icon: React.ReactNode }[] = [
+  { value: 'security', label: 'Security & Compliance', icon: <Shield className="w-3 h-3" /> },
+  { value: 'technical', label: 'Technical Readiness', icon: <Server className="w-3 h-3" /> },
+  { value: 'business', label: 'Business Value', icon: <DollarSign className="w-3 h-3" /> },
+  { value: 'procurement', label: 'Procurement', icon: <ShoppingCart className="w-3 h-3" /> },
+];
+
 /* ─── De-duplication hint ─── */
+
 function dedupeHint(title: string, trendTitles: string[]): string | null {
   const keywords = ['AI Act', 'digital twin', 'data residency', 'machinery regulation', 'cyber', 'OT/IIoT', 'FinOps', 'governance'];
   const lower = title.toLowerCase();
   for (const kw of keywords) {
     if (lower.includes(kw.toLowerCase())) {
       const match = trendTitles.find((t) => t.toLowerCase().includes(kw.toLowerCase()));
-      if (match) return 'Related authority trend available above';
+      if (match) return 'Related authority trend available in Strategy';
     }
   }
   return null;
 }
 
-/* ─── Filter types ─── */
-type CategoryFilter = 'all' | 'regulatory' | 'vendor' | 'account' | 'internalActivity' | 'market' | 'technology' | 'cybersecurity';
-type TimeFilter = 'all' | 'this-week' | '12-24mo' | '5yr';
-
-const CATEGORY_CHIPS: { value: CategoryFilter; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'regulatory', label: 'Regulatory' },
-  { value: 'vendor', label: 'Vendor' },
-  { value: 'internalActivity', label: 'Internal' },
-  { value: 'market', label: 'Market' },
-  { value: 'technology', label: 'Technology' },
-  { value: 'cybersecurity', label: 'Cyber' },
-];
-
-const TIME_CHIPS: { value: TimeFilter; label: string }[] = [
-  { value: 'all', label: 'All time' },
-  { value: 'this-week', label: 'This week' },
-  { value: '12-24mo', label: '12–24 mo' },
-  { value: '5yr', label: 'Last 5 years' },
-];
-
-/* ─── Partner Involvement Card ─── */
-function PartnerInvolvementCard({ data }: { data: PartnerInvolvement }) {
-  return (
-    <SectionCard title="Partner Involvement" icon={<Users className="w-3.5 h-3.5" />}>
-      <div className="space-y-1.5">
-        <KVRow label="MS Account Team" value={data.microsoft_account_team_known} />
-        {data.active_partners && data.active_partners.length > 0 && (
-          <div className="flex items-start gap-2 text-sm">
-            <span className="text-muted-foreground min-w-[140px] flex-shrink-0">Active Partners</span>
-            <div className="flex flex-wrap gap-1.5">
-              {data.active_partners.map((p) => (
-                <span key={p} className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-primary/5 text-primary border border-primary/10">{p}</span>
-              ))}
-            </div>
-          </div>
-        )}
-        {data.competitor_partners && data.competitor_partners.length > 0 && (
-          <div className="flex items-start gap-2 text-sm">
-            <span className="text-muted-foreground min-w-[140px] flex-shrink-0">Competitor Partners</span>
-            <div className="flex flex-wrap gap-1.5">
-              {data.competitor_partners.map((p) => (
-                <span key={p} className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-muted/40 text-muted-foreground border border-border/40">{p}</span>
-              ))}
-            </div>
-          </div>
-        )}
-        <KVRow label="Public Case Studies" value={data.public_case_studies} />
-        {data.recent_partner_activity_count != null && (
-          <KVRow label="Recent Activity" value={`${data.recent_partner_activity_count} engagements (12 mo)`} />
-        )}
-        {data.notes && <KVRow label="Notes" value={data.notes} />}
-      </div>
-    </SectionCard>
-  );
-}
-
 /* ─── Main View ─── */
 
-export function AccountIntelligenceView({ focusId }: AccountIntelligenceViewProps) {
+export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: AccountIntelligenceViewProps) {
   const vm = useMemo<AccountIntelligenceVM | null>(() => {
     if (!focusId) return null;
     return resolveAccountIntelligence({ focusId, weekOf: '2026-02-10' });
   }, [focusId]);
 
-  // Filter state
-  const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>('all');
+  const [openSection, setOpenSection] = useState<SectionId>('ai-exec-summary');
+  const [signalFilter, setSignalFilter] = useState<SignalQuickFilter>('all');
+  const [commercialTab, setCommercialTab] = useState<CommercialTab>('licenses');
+  const [techTab, setTechTab] = useState<TechTab>('vendors');
+  const [expandedEvidence, setExpandedEvidence] = useState<EvidenceCategory | null>(null);
 
-  // Section-level "view all" toggles
-  const [expandedLists, setExpandedLists] = useState<Record<string, boolean>>({});
-  const toggleList = (key: string) => setExpandedLists((prev) => ({ ...prev, [key]: !prev[key] }));
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Destructure VM (safe — may be null)
+  const toggleSection = useCallback((id: SectionId) => {
+    setOpenSection((prev) => prev === id ? prev : id);
+    // Auto-scroll
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  }, []);
+
+  // Destructure VM
   const snapshot = vm?.snapshot ?? null;
   const commercial = vm?.commercial ?? null;
   const technical = vm?.technical ?? null;
@@ -322,68 +313,23 @@ export function AccountIntelligenceView({ focusId }: AccountIntelligenceViewProp
   const requests = vm?.requests ?? [];
   const readiness = vm?.readiness ?? { score: 0, pillars: {} as any };
 
-  // Search helper
-  const q = searchQuery.toLowerCase().trim();
-  const matchesSearch = (text: string) => !q || text.toLowerCase().includes(q);
-  const matchesCategory = (cat: string) => {
-    if (categoryFilter === 'all') return true;
-    if (categoryFilter === 'account') return cat === 'internalActivity' || cat === 'account';
-    return cat.toLowerCase() === categoryFilter.toLowerCase();
-  };
-
-  // Trend titles for de-duplication hints
   const trendTitles = useMemo(
     () => industryAuthorityTrends?.trends.map((t) => t.trend_title) ?? [],
     [industryAuthorityTrends],
   );
 
-  // --- Filtered data ---
-  const filteredStrategy = useMemo(() => {
-    if (!strategyPillars) return [];
-    return strategyPillars.strategy_pillars.filter((sp) =>
-      matchesSearch(sp.title + ' ' + sp.summary)
-    );
-  }, [strategyPillars, q]);
-
-  const filteredInitiatives = useMemo(() => {
-    if (!publicInitiatives) return [];
-    return publicInitiatives.public_it_initiatives.filter((init) =>
-      matchesSearch(init.title + ' ' + init.summary) &&
-      (timeFilter === 'all' || timeFilter === '5yr')
-    );
-  }, [publicInitiatives, q, timeFilter]);
-
-  const filteredProof = useMemo(() => {
-    if (!proofArtifacts) return [];
-    return proofArtifacts.proof_artifacts.filter((pa) =>
-      matchesSearch(pa.title + ' ' + pa.summary)
-    );
-  }, [proofArtifacts, q]);
-
-  const filteredTrends = useMemo(() => {
-    if (!industryAuthorityTrends) return [];
-    return industryAuthorityTrends.trends.filter((t) =>
-      matchesSearch(t.trend_title + ' ' + t.thesis_summary) &&
-      (timeFilter === 'all' || timeFilter === '12-24mo')
-    );
-  }, [industryAuthorityTrends, q, timeFilter]);
-
-  const filteredPulseSignals = useMemo(() => {
-    if (!industryNews) return [];
-    return industryNews.signals.filter((s) =>
-      matchesSearch(s.title + ' ' + s.summary) &&
-      matchesCategory(s.category) &&
-      (timeFilter === 'all' || timeFilter === 'this-week')
-    );
-  }, [industryNews, q, categoryFilter, timeFilter]);
-
-  const filteredSignalHistory = useMemo(() => {
-    return signalHistory.filter((sig) =>
-      matchesSearch(sig.description + ' ' + (sig.implication ?? '')) &&
-      matchesCategory(sig.category) &&
-      (timeFilter === 'all' || timeFilter === 'this-week')
-    );
-  }, [signalHistory, q, categoryFilter, timeFilter]);
+  // Filter signals by quick filter
+  const filteredSignals = useMemo(() => {
+    if (signalFilter === 'all') return signalHistory;
+    return signalHistory.filter((s) => {
+      const cat = (s.category ?? '').toLowerCase();
+      if (signalFilter === 'ai') return cat.includes('technology') || cat.includes('vendor') || cat.includes('ai');
+      if (signalFilter === 'regulatory') return cat.includes('regulat') || cat.includes('cyber');
+      if (signalFilter === 'commercial') return cat.includes('market') || cat.includes('commercial');
+      if (signalFilter === 'technical') return cat.includes('technology') || cat.includes('operations');
+      return true;
+    });
+  }, [signalHistory, signalFilter]);
 
   // Early returns AFTER all hooks
   if (!focusId) {
@@ -397,482 +343,154 @@ export function AccountIntelligenceView({ focusId }: AccountIntelligenceViewProp
 
   if (!vm) return null;
 
-  // View limits
-  const LIMITS = { strategy: 3, initiatives: 3, proof: 2, trends: 3, pulse: 3, signals: 3 };
-
-  const sliced = (items: any[], key: string, limit: number) =>
-    expandedLists[key] ? items : items.slice(0, limit);
+  const accountName = focusId.charAt(0).toUpperCase() + focusId.slice(1);
 
   return (
-    <div className="space-y-4">
-      {/* Readiness Panel — top */}
-      <ReadinessPanel readinessPercent={readiness.score} pillars={readiness.pillars} />
-
-      {/* ─── Global Filters ─── */}
-      <div className="rounded-xl border border-border/60 bg-card p-3 space-y-2.5">
-        {/* Search */}
-        <div className="relative">
-          <Search className="w-3.5 h-3.5 text-muted-foreground/50 absolute left-2.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search titles & summaries…"
-            className="w-full pl-8 pr-3 py-2 rounded-lg text-xs bg-background border border-border/60 text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/30"
-          />
-        </div>
-        {/* Category chips */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[9px] font-semibold text-muted-foreground/50 uppercase tracking-wider mr-1">Category</span>
-          {CATEGORY_CHIPS.map((c) => (
-            <button
-              key={c.value}
-              onClick={() => setCategoryFilter(c.value)}
-              className={cn(
-                'px-2 py-1 rounded-full text-[10px] font-medium border transition-colors',
-                categoryFilter === c.value
-                  ? 'bg-primary/10 text-primary border-primary/20'
-                  : 'bg-muted/20 text-muted-foreground border-border/40 hover:border-primary/20'
-              )}
-            >
-              {c.label}
-            </button>
-          ))}
-        </div>
-        {/* Time horizon chips */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[9px] font-semibold text-muted-foreground/50 uppercase tracking-wider mr-1">Time</span>
-          {TIME_CHIPS.map((c) => (
-            <button
-              key={c.value}
-              onClick={() => setTimeFilter(c.value)}
-              className={cn(
-                'px-2 py-1 rounded-full text-[10px] font-medium border transition-colors',
-                timeFilter === c.value
-                  ? 'bg-primary/10 text-primary border-primary/20'
-                  : 'bg-muted/20 text-muted-foreground border-border/40 hover:border-primary/20'
-              )}
-            >
-              {c.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ─── This Week summary (collapsed, points to Quick Brief) ─── */}
-      {signalHistory.length > 0 && (
-        <CollapsibleSectionCard
-          title="This Week"
-          icon={<Zap className="w-3.5 h-3.5 text-primary" />}
-          defaultOpen
-          sublabel="Account-specific signals this week"
-        >
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            {signalHistory.length} signal{signalHistory.length !== 1 ? 's' : ''} detected this week across regulatory, vendor, and operational domains.
-          </p>
-          <ul className="space-y-0.5">
-            {signalHistory.slice(0, 3).map((sig) => (
-              <li key={sig.id} className="text-[11px] text-foreground flex items-start gap-1.5">
-                <span className="text-primary/50 mt-0.5 flex-shrink-0">•</span>
-                <span className="line-clamp-1">{sig.description}</span>
-              </li>
-            ))}
-          </ul>
-          <p className="text-[10px] text-muted-foreground/60 italic">
-            For full narrative and talk tracks → use Quick Brief above.
-          </p>
-        </CollapsibleSectionCard>
-      )}
-
-      {/* ─── Account Snapshot (always open) ─── */}
-      <SectionCard title="Account Snapshot" icon={<Building2 className="w-3.5 h-3.5" />}>
-        {snapshot ? (
-          <div className="space-y-1.5">
-            <KVRow label="Industry" value={snapshot.industry} />
-            <KVRow label="Region" value={snapshot.region} />
-            <KVRow label="Revenue" value={snapshot.revenue_band} />
-            <KVRow label="Employees" value={snapshot.employee_band} />
-            <KVRow label="Transformation" value={snapshot.transformation_stage} />
-            <KVRow label="AI Maturity" value={snapshot.maturity_level} />
-            <KVRow label="Primary Vendor" value={snapshot.primary_vendor_relationship} />
-            <KVRow label="Competitive Pressure" value={snapshot.competitive_pressure_level} />
-            {snapshot.strategic_priority_tags && snapshot.strategic_priority_tags.length > 0 && (
-              <div className="flex items-start gap-2 text-sm pt-1">
-                <span className="text-muted-foreground min-w-[140px] flex-shrink-0">Priorities</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {snapshot.strategic_priority_tags.map((tag) => (
-                    <span key={tag} className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-primary/5 text-primary border border-primary/10">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
+    <div ref={containerRef} className="space-y-0">
+      {/* ─── STICKY HEADER ─── */}
+      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border/40 -mx-1 px-1 pb-3 pt-1 space-y-2">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <Building2 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+            <h1 className="text-base font-bold text-foreground truncate">{accountName}</h1>
+            <ReadinessCompact score={readiness.score} />
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {onGoToDealPlanning && (
+              <button
+                onClick={onGoToDealPlanning}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-border/60 bg-background hover:border-primary/30 hover:text-primary transition-colors"
+              >
+                <Brain className="w-3 h-3" />
+                Open Deal Planning
+              </button>
             )}
           </div>
-        ) : (
-          <p className="text-sm text-muted-foreground/60">No snapshot data.</p>
-        )}
-      </SectionCard>
+        </div>
 
-      {/* Two-column: Commercial + Technical */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <SectionCard title="Commercial Footprint" icon={<DollarSign className="w-3.5 h-3.5" />}>
-          {commercial ? (
-            <div className="space-y-3">
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 mb-1">Licenses</p>
-                <BulletList items={commercial.existing_licenses} />
-              </div>
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 mb-1">Contract Dates</p>
-                <BulletList items={commercial.contract_end_dates} />
-              </div>
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 mb-1">Renewal Windows</p>
-                <BulletList items={commercial.renewal_windows} />
-              </div>
-              {commercial.estimated_spend_band && (
-                <KVRow label="Est. Spend" value={commercial.estimated_spend_band} />
+        {/* Mini-navigation */}
+        <div className="flex items-center gap-1 overflow-x-auto">
+          {SECTIONS.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => toggleSection(s.id)}
+              className={cn(
+                "px-2.5 py-1 rounded-md text-[10px] font-medium transition-colors whitespace-nowrap",
+                openSection === s.id
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground/60 hover:text-muted-foreground hover:bg-muted/30"
               )}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground/60">No commercial data.</p>
-          )}
-        </SectionCard>
-
-        <SectionCard title="Technical Landscape" icon={<Server className="w-3.5 h-3.5" />}>
-          {technical ? (
-            <div className="space-y-3">
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 mb-1">Vendors</p>
-                <BulletList items={technical.known_vendors} />
-              </div>
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 mb-1">Applications</p>
-                <BulletList items={technical.known_applications} />
-              </div>
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 mb-1">Architecture</p>
-                <BulletList items={technical.architecture_patterns} />
-              </div>
-              {technical.cloud_strategy && (
-                <KVRow label="Cloud Strategy" value={technical.cloud_strategy} />
-              )}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground/60">No technical data.</p>
-          )}
-        </SectionCard>
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Partner Involvement */}
-      {partnerInvolvement && <PartnerInvolvementCard data={partnerInvolvement} />}
+      {/* ─── SECTIONS ─── */}
+      <div className="divide-y divide-border/30">
 
-      {/* ─── Strategy (always open, capped at 3) ─── */}
-      <SectionCard title={`Strategy (${filteredStrategy.length})`} icon={<Target className="w-3.5 h-3.5" />}>
-        {filteredStrategy.length > 0 ? (
-          <>
-            <div className="space-y-2.5">
-              {sliced(filteredStrategy, 'strategy', LIMITS.strategy).map((sp) => (
-                <div key={sp.id} className="p-2.5 rounded-lg border border-border/40 bg-muted/10 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <p className="text-xs font-medium text-foreground flex-1">{sp.title}</p>
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-medium bg-primary/5 text-primary border border-primary/10 flex-shrink-0">
-                      {sp.time_horizon}
-                    </span>
+        {/* SECTION 1: Executive Summary */}
+        <DocSection
+          id="ai-exec-summary"
+          title="Executive Summary"
+          icon={<Target className="w-3.5 h-3.5" />}
+          isOpen={openSection === 'ai-exec-summary'}
+          onToggle={() => toggleSection('ai-exec-summary')}
+        >
+          {snapshot ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+                <KVRow label="Industry" value={snapshot.industry} />
+                <KVRow label="AI Maturity" value={snapshot.maturity_level} />
+                <KVRow label="Primary Vendor" value={snapshot.primary_vendor_relationship} />
+                <KVRow label="Competitive Pressure" value={snapshot.competitive_pressure_level} />
+                <KVRow label="Est. Spend" value={commercial?.estimated_spend_band} />
+                <KVRow label="Transformation" value={snapshot.transformation_stage} />
+              </div>
+
+              {/* Top 3 priorities */}
+              {snapshot.strategic_priority_tags && snapshot.strategic_priority_tags.length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Top Priorities</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {snapshot.strategic_priority_tags.slice(0, 3).map((tag) => (
+                      <span key={tag} className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-primary/5 text-primary border border-primary/10">
+                        {tag}
+                      </span>
+                    ))}
                   </div>
-                  <p className="text-[11px] text-muted-foreground line-clamp-2">{sp.summary}</p>
-                  <div className="flex items-center gap-2 pt-0.5">
-                    <OriginBadge label="Strategy" />
-                    <span className="text-[10px] text-muted-foreground/60">{sp.source_type.replace(/_/g, ' ')}</span>
-                    <ConfidenceBadge level={sp.confidence_level} />
-                    {sp.source_url && (
-                      <a href={sp.source_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 ml-auto">
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    )}
+                </div>
+              )}
+
+              {/* Renewal window */}
+              {commercial?.renewal_windows && commercial.renewal_windows.length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Renewal Windows</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {commercial.renewal_windows.map((w, i) => (
+                      <span key={i} className="text-xs text-muted-foreground">{w}</span>
+                    ))}
                   </div>
                 </div>
-              ))}
+              )}
+
+              {/* Why this account matters */}
+              <div className="rounded-lg bg-muted/20 border border-border/30 p-3 space-y-1">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Why This Account Matters</p>
+                <p className="text-xs text-foreground leading-relaxed">
+                  {snapshot.primary_vendor_relationship ? `Strong ${snapshot.primary_vendor_relationship} relationship` : 'Active vendor engagement'} combined with {snapshot.maturity_level?.toLowerCase() ?? 'emerging'} AI maturity creates a natural engagement window. {snapshot.competitive_pressure_level === 'High' ? 'High competitive pressure means timing is critical.' : 'Stable competitive landscape allows for deliberate positioning.'}{' '}
+                  {strategyPillars && strategyPillars.strategy_pillars.length > 0 ? `Strategic focus on ${strategyPillars.strategy_pillars[0].title.toLowerCase()} aligns with partner capabilities.` : ''}
+                </p>
+              </div>
             </div>
-            <ViewAllToggle
-              expanded={!!expandedLists['strategy']}
-              total={filteredStrategy.length}
-              limit={LIMITS.strategy}
-              onToggle={() => toggleList('strategy')}
-            />
-          </>
-        ) : (
-          <p className="text-sm text-muted-foreground/60">No strategy data.</p>
-        )}
-      </SectionCard>
-
-      {/* ─── Public IT Initiatives (collapsed) ─── */}
-      {filteredInitiatives.length > 0 && (
-        <CollapsibleSectionCard
-          title="Public IT Initiatives"
-          icon={<Lightbulb className="w-3.5 h-3.5 text-muted-foreground" />}
-          count={filteredInitiatives.length}
-          sublabel="Digitalization, security, and platform projects (5-year history)"
-        >
-          <div className="space-y-2.5">
-            {sliced(filteredInitiatives, 'initiatives', LIMITS.initiatives).map((init) => (
-              <div key={init.id} className="p-2.5 rounded-lg border border-border/40 bg-muted/10 space-y-1">
-                <div className="flex items-start gap-2">
-                  {init.source_url ? (
-                    <a href={init.source_url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-foreground hover:text-primary flex-1 underline-offset-2 hover:underline">
-                      {init.title}
-                    </a>
-                  ) : (
-                    <p className="text-xs font-medium text-foreground flex-1">{init.title}</p>
-                  )}
-                  <UseDealPlanButton onClick={() => {
-                    if (!focusId) return;
-                    addItem(focusId, {
-                      id: makeInboxItemId(focusId, 'initiative', init.id),
-                      focusId,
-                      source_type: 'initiative',
-                      source_id: init.id,
-                      title: init.title,
-                      why_now: init.summary.slice(0, 160),
-                      impact_area: deriveImpactArea(init.initiative_type),
-                      tags: init.technology_domain.filter((d) => d !== 'other'),
-                      created_at: new Date().toISOString(),
-                    });
-                    toast.success('Added to Deal Planning Inbox');
-                  }} />
-                </div>
-                <p className="text-[11px] text-muted-foreground/70">
-                  {init.announcement_date ?? init.source_published_at ?? 'Unknown'} · {init.initiative_type.replace(/_/g, ' ')}
-                </p>
-                <p className="text-[11px] text-muted-foreground line-clamp-2">{init.summary}</p>
-                <div className="flex items-center gap-1.5 pt-0.5">
-                  <OriginBadge label="Public initiative" />
-                  <span className="px-1.5 py-0.5 rounded-full text-[9px] font-medium bg-primary/5 text-primary border border-primary/10">
-                    {init.estimated_magnitude}
-                  </span>
-                  <TagsRow tags={init.technology_domain.filter((d) => d !== 'other')} />
-                </div>
-              </div>
-            ))}
-          </div>
-          <ViewAllToggle
-            expanded={!!expandedLists['initiatives']}
-            total={filteredInitiatives.length}
-            limit={LIMITS.initiatives}
-            onToggle={() => toggleList('initiatives')}
-          />
-        </CollapsibleSectionCard>
-      )}
-
-      {/* ─── Proof / Success Stories (collapsed) ─── */}
-      {filteredProof.length > 0 && (
-        <CollapsibleSectionCard
-          title="Proof / Success Stories"
-          icon={<Award className="w-3.5 h-3.5 text-muted-foreground" />}
-          count={filteredProof.length}
-        >
-          <div className="space-y-2.5">
-            {sliced(filteredProof, 'proof', LIMITS.proof).map((pa) => (
-              <div key={pa.id} className="p-2.5 rounded-lg border border-border/40 bg-muted/10 space-y-1">
-                <div className="flex items-start gap-2">
-                  {pa.source_url ? (
-                    <a href={pa.source_url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-foreground hover:text-primary flex-1 underline-offset-2 hover:underline">
-                      {pa.title}
-                    </a>
-                  ) : (
-                    <p className="text-xs font-medium text-foreground flex-1">{pa.title}</p>
-                  )}
-                  {pa.source_url && (
-                    <a href={pa.source_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 flex-shrink-0">
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  )}
-                </div>
-                <p className="text-[11px] text-muted-foreground/70">
-                  {pa.year ?? ''} · {pa.artifact_type.replace(/_/g, ' ')}
-                </p>
-                <p className="text-[11px] text-muted-foreground line-clamp-2">{pa.summary}</p>
-                <div className="flex items-center gap-1.5 pt-0.5">
-                  <OriginBadge label="Proof" />
-                  <ConfidenceBadge level={pa.confidence_level} />
-                  <TagsRow tags={pa.capability_proven.filter((c) => c !== 'other')} />
-                </div>
-              </div>
-            ))}
-          </div>
-          <ViewAllToggle
-            expanded={!!expandedLists['proof']}
-            total={filteredProof.length}
-            limit={LIMITS.proof}
-            onToggle={() => toggleList('proof')}
-          />
-        </CollapsibleSectionCard>
-      )}
-
-      {/* ─── Industry Trends (collapsed) ─── */}
-      {filteredTrends.length > 0 && (
-        <CollapsibleSectionCard
-          title="Industry Trends"
-          icon={<TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />}
-          count={filteredTrends.length}
-          sublabel="Authority-backed trends (12–24 month horizon)"
-        >
-          <div className="space-y-2.5">
-            {sliced(filteredTrends, 'trends', LIMITS.trends).map((t) => (
-              <div key={t.id} className="p-2.5 rounded-lg border border-border/40 bg-muted/10 space-y-1">
-                <div className="flex items-start gap-2">
-                  {t.source_url ? (
-                    <a href={t.source_url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-foreground hover:text-primary flex-1 underline-offset-2 hover:underline">
-                      {t.trend_title}
-                    </a>
-                  ) : (
-                    <p className="text-xs font-medium text-foreground flex-1">{t.trend_title}</p>
-                  )}
-                  <UseDealPlanButton onClick={() => {
-                    if (!focusId) return;
-                    addItem(focusId, {
-                      id: makeInboxItemId(focusId, 'trend', t.id),
-                      focusId,
-                      source_type: 'trend',
-                      source_id: t.id,
-                      title: t.trend_title,
-                      why_now: t.thesis_summary.slice(0, 160),
-                      impact_area: deriveImpactArea(t.applied_to_focus?.why_it_matters ?? 'other'),
-                      tags: [t.confidence],
-                      created_at: new Date().toISOString(),
-                    });
-                    toast.success('Added to Deal Planning Inbox');
-                  }} />
-                </div>
-                <p className="text-[11px] text-muted-foreground/70">
-                  {t.source_org}{t.source_published_at ? ` · ${t.source_published_at}` : ''}
-                </p>
-                <p className="text-[11px] text-muted-foreground line-clamp-2">{t.thesis_summary}</p>
-                <div className="flex items-center gap-1.5 pt-0.5">
-                  <OriginBadge label="Authority trend" />
-                  <ConfidenceBadge level={t.confidence} />
-                </div>
-                {t.applied_to_focus?.why_it_matters && (
-                  <p className="text-[11px] text-muted-foreground/60 italic line-clamp-1">{t.applied_to_focus.why_it_matters}</p>
-                )}
-              </div>
-            ))}
-          </div>
-          <ViewAllToggle
-            expanded={!!expandedLists['trends']}
-            total={filteredTrends.length}
-            limit={LIMITS.trends}
-            onToggle={() => toggleList('trends')}
-          />
-        </CollapsibleSectionCard>
-      )}
-
-      {/* ─── Industry News (collapsed) ─── */}
-      {filteredPulseSignals.length > 0 && industryNews && (
-        <CollapsibleSectionCard
-          title={`Industry News — ${industryNews.weekKey}`}
-          icon={<Newspaper className="w-3.5 h-3.5 text-muted-foreground" />}
-          count={filteredPulseSignals.length}
-          sublabel="Sector-level news. Not account-specific triggers."
-        >
-          <div className="space-y-2.5">
-            {sliced(filteredPulseSignals, 'pulse', LIMITS.pulse).map((s) => (
-              <div key={s.id} className="p-2.5 rounded-lg border border-border/40 bg-muted/10 space-y-1">
-                <div className="flex items-start gap-2">
-                  {s.source_url ? (
-                    <a href={s.source_url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-foreground hover:text-primary flex-1 underline-offset-2 hover:underline">
-                      {s.title}
-                    </a>
-                  ) : (
-                    <p className="text-xs font-medium text-foreground flex-1">{s.title}</p>
-                  )}
-                  {s.source_url && (
-                    <a href={s.source_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 flex-shrink-0">
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  )}
-                </div>
-                <p className="text-[11px] text-muted-foreground/70">
-                  {s.source_org}{s.source_published_at ? ` · ${s.source_published_at}` : ''}
-                </p>
-                <p className="text-[11px] text-muted-foreground line-clamp-2">{s.summary}</p>
-                <div className="flex items-center gap-1.5 pt-0.5">
-                  <OriginBadge label="Weekly signal" />
-                  <CategoryBadge category={s.category} />
-                  <ConfidenceBadge level={s.confidence} />
-                </div>
-                <p className="text-[11px] text-muted-foreground/60 italic line-clamp-1">
-                  Applied to account: {s.applied_to_focus.why_it_matters}
-                </p>
-              </div>
-            ))}
-          </div>
-          <ViewAllToggle
-            expanded={!!expandedLists['pulse']}
-            total={filteredPulseSignals.length}
-            limit={LIMITS.pulse}
-            onToggle={() => toggleList('pulse')}
-          />
-
-          {/* Big Paper of the Week */}
-          {industryNews.big_paper_of_week && (
-            <div className="p-3 rounded-lg border border-primary/20 bg-primary/5 space-y-2">
-              <div className="flex items-center gap-2">
-                <FileText className="w-3.5 h-3.5 text-primary" />
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">Big Paper of the Week</p>
-              </div>
-              <div className="flex items-center gap-2">
-                {industryNews.big_paper_of_week.source_url ? (
-                  <a href={industryNews.big_paper_of_week.source_url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-foreground hover:text-primary underline-offset-2 hover:underline flex-1">
-                    {industryNews.big_paper_of_week.title}
-                  </a>
-                ) : (
-                  <p className="text-xs font-medium text-foreground flex-1">{industryNews.big_paper_of_week.title}</p>
-                )}
-              </div>
-              <p className="text-[11px] text-muted-foreground/70">
-                {industryNews.big_paper_of_week.source_org}{industryNews.big_paper_of_week.source_published_at ? ` · ${industryNews.big_paper_of_week.source_published_at}` : ''}
-              </p>
-              <ul className="space-y-0.5">
-                {industryNews.big_paper_of_week.core_theses.slice(0, 3).map((t, i) => (
-                  <li key={i} className="text-[11px] text-muted-foreground flex items-start gap-1.5">
-                    <span className="text-muted-foreground/40 mt-0.5 flex-shrink-0">•</span>
-                    {t}
-                  </li>
-                ))}
-              </ul>
-            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground/60">No account snapshot data.</p>
           )}
-        </CollapsibleSectionCard>
-      )}
+        </DocSection>
 
-      {/* ─── Signal History (collapsed) ─── */}
-      <CollapsibleSectionCard
-        title="Signal History"
-        icon={<Signal className="w-3.5 h-3.5 text-muted-foreground" />}
-        count={filteredSignalHistory.length}
-        sublabel="Weekly account-specific signals"
-      >
-        {filteredSignalHistory.length > 0 ? (
-          <>
+        {/* SECTION 2: This Week Signals */}
+        <DocSection
+          id="ai-signals"
+          title="This Week Signals"
+          icon={<Zap className="w-3.5 h-3.5" />}
+          count={signalHistory.length}
+          isOpen={openSection === 'ai-signals'}
+          onToggle={() => toggleSection('ai-signals')}
+        >
+          {/* Quick filter tabs */}
+          <div className="flex items-center gap-1 mb-3">
+            {SIGNAL_FILTERS.map((f) => (
+              <button
+                key={f.value}
+                onClick={() => setSignalFilter(f.value)}
+                className={cn(
+                  "px-2.5 py-1 rounded-md text-[10px] font-medium transition-colors",
+                  signalFilter === f.value
+                    ? "bg-primary/10 text-primary border border-primary/20"
+                    : "text-muted-foreground/60 hover:text-muted-foreground border border-transparent hover:border-border/40"
+                )}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          {filteredSignals.length > 0 ? (
             <div className="space-y-2">
-              {sliced(filteredSignalHistory, 'signals', LIMITS.signals).map((sig) => {
+              {filteredSignals.map((sig) => {
                 const hint = dedupeHint(sig.description, trendTitles);
                 return (
-                  <div key={sig.id} className="flex items-start gap-3 p-2.5 rounded-lg border border-border/40 bg-muted/10">
+                  <div key={sig.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/10 border border-border/30">
                     <div className="flex-1 min-w-0 space-y-1">
                       <p className="text-xs font-medium text-foreground">{sig.description}</p>
                       {sig.implication && (
-                        <p className="text-[11px] text-muted-foreground line-clamp-1">{sig.implication}</p>
+                        <p className="text-[11px] text-muted-foreground line-clamp-2">{sig.implication}</p>
                       )}
                       <div className="flex items-center gap-1.5 pt-0.5">
                         <OriginBadge label="Weekly signal" />
                         <CategoryBadge category={sig.category} />
-                        <span className="text-[10px] text-muted-foreground/50">{sig.weekKey}</span>
-                        {sig.impact_level && (
-                          <span className="text-[10px] text-muted-foreground/60">{sig.impact_level}</span>
-                        )}
+                        {sig.impact_level && <ConfidenceBadge level={sig.impact_level} />}
                       </div>
                       {hint && (
                         <p className="text-[10px] text-primary/60 italic flex items-center gap-1">
@@ -900,43 +518,470 @@ export function AccountIntelligenceView({ focusId }: AccountIntelligenceViewProp
                 );
               })}
             </div>
-            <ViewAllToggle
-              expanded={!!expandedLists['signals']}
-              total={filteredSignalHistory.length}
-              limit={LIMITS.signals}
-              onToggle={() => toggleList('signals')}
-            />
-          </>
-        ) : (
-          <p className="text-sm text-muted-foreground/60">No signals match current filters.</p>
-        )}
-      </CollapsibleSectionCard>
+          ) : (
+            <p className="text-xs text-muted-foreground/60">No signals match current filter.</p>
+          )}
 
-      {/* Inbox + Requests side by side */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <SectionCard title={`Account Inbox (${inbox.length})`} icon={<Inbox className="w-3.5 h-3.5" />}>
-          {inbox.length > 0 ? (
-            <div className="space-y-1.5">
-              {inbox.map((item) => (
-                <div key={item.id} className="flex items-center gap-2 text-sm">
-                  <FileText className="w-3 h-3 text-muted-foreground/40 flex-shrink-0" />
-                  <span className="text-foreground truncate">{item.title}</span>
-                  <span className="text-[10px] text-muted-foreground/50 flex-shrink-0">{item.type}</span>
+          {/* Industry News compact */}
+          {industryNews && industryNews.signals.length > 0 && (
+            <div className="mt-4 pt-3 border-t border-border/30 space-y-2">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                Industry News ({industryNews.signals.length})
+              </p>
+              <p className="text-[10px] text-muted-foreground/50">Sector-level news. Not account-specific triggers.</p>
+              {industryNews.signals.slice(0, 3).map((s) => (
+                <div key={s.id} className="flex items-start gap-2 p-2 rounded-lg bg-muted/10 border border-border/30">
+                  <div className="flex-1 min-w-0">
+                    {s.source_url ? (
+                      <a href={s.source_url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-foreground hover:text-primary underline-offset-2 hover:underline">
+                        {s.title}
+                      </a>
+                    ) : (
+                      <p className="text-xs font-medium text-foreground">{s.title}</p>
+                    )}
+                    <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">{s.summary}</p>
+                  </div>
+                  <CategoryBadge category={s.category} />
                 </div>
               ))}
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground/60">No items in inbox.</p>
           )}
-        </SectionCard>
+        </DocSection>
 
-        <SectionCard title={`Content Requests (${requests.length})`} icon={<MessageSquare className="w-3.5 h-3.5" />}>
-          {requests.length > 0 ? (
-            <div className="space-y-1.5">
+        {/* SECTION 3: Strategy & Priorities */}
+        <DocSection
+          id="ai-strategy"
+          title="Strategy & Priorities"
+          icon={<Target className="w-3.5 h-3.5" />}
+          count={(strategyPillars?.strategy_pillars.length ?? 0) + (industryAuthorityTrends?.trends.length ?? 0)}
+          isOpen={openSection === 'ai-strategy'}
+          onToggle={() => toggleSection('ai-strategy')}
+        >
+          {/* Strategic Themes */}
+          {strategyPillars && strategyPillars.strategy_pillars.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Strategic Themes</p>
+              {strategyPillars.strategy_pillars.map((sp) => (
+                <div key={sp.id} className="p-2.5 rounded-lg bg-muted/10 border border-border/30 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-medium text-foreground flex-1">{sp.title}</p>
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-medium bg-primary/5 text-primary border border-primary/10">
+                      {sp.time_horizon}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground line-clamp-2">{sp.summary}</p>
+                  <div className="flex items-center gap-1.5">
+                    <OriginBadge label="Strategy" />
+                    <ConfidenceBadge level={sp.confidence_level} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Public IT Initiatives */}
+          {publicInitiatives && publicInitiatives.public_it_initiatives.length > 0 && (
+            <div className="space-y-2 pt-3 border-t border-border/30">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                Public IT Initiatives ({publicInitiatives.public_it_initiatives.length})
+              </p>
+              {publicInitiatives.public_it_initiatives.map((init) => (
+                <div key={init.id} className="p-2.5 rounded-lg bg-muted/10 border border-border/30 space-y-1">
+                  <div className="flex items-start gap-2">
+                    <p className="text-xs font-medium text-foreground flex-1">{init.title}</p>
+                    <UseDealPlanButton onClick={() => {
+                      if (!focusId) return;
+                      addItem(focusId, {
+                        id: makeInboxItemId(focusId, 'initiative', init.id),
+                        focusId,
+                        source_type: 'initiative',
+                        source_id: init.id,
+                        title: init.title,
+                        why_now: init.summary.slice(0, 160),
+                        impact_area: deriveImpactArea(init.initiative_type),
+                        tags: init.technology_domain.filter((d) => d !== 'other'),
+                        created_at: new Date().toISOString(),
+                      });
+                      toast.success('Added to Deal Planning Inbox');
+                    }} />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground/70">
+                    {init.announcement_date ?? init.source_published_at ?? 'Unknown'} · {init.initiative_type.replace(/_/g, ' ')}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground line-clamp-2">{init.summary}</p>
+                  <div className="flex items-center gap-1.5">
+                    <OriginBadge label="Public initiative" />
+                    <span className="px-1.5 py-0.5 rounded-full text-[9px] font-medium bg-primary/5 text-primary border border-primary/10">
+                      {init.estimated_magnitude}
+                    </span>
+                    <TagsRow tags={init.technology_domain.filter((d) => d !== 'other')} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Authority Trends */}
+          {industryAuthorityTrends && industryAuthorityTrends.trends.length > 0 && (
+            <div className="space-y-2 pt-3 border-t border-border/30">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                Authority-Backed Trends ({industryAuthorityTrends.trends.length})
+              </p>
+              <p className="text-[10px] text-muted-foreground/50">12-24 month horizon</p>
+              {industryAuthorityTrends.trends.map((t) => (
+                <div key={t.id} className="p-2.5 rounded-lg bg-muted/10 border border-border/30 space-y-1">
+                  <div className="flex items-start gap-2">
+                    <p className="text-xs font-medium text-foreground flex-1">{t.trend_title}</p>
+                    <UseDealPlanButton onClick={() => {
+                      if (!focusId) return;
+                      addItem(focusId, {
+                        id: makeInboxItemId(focusId, 'trend', t.id),
+                        focusId,
+                        source_type: 'trend',
+                        source_id: t.id,
+                        title: t.trend_title,
+                        why_now: t.thesis_summary.slice(0, 160),
+                        impact_area: deriveImpactArea(t.applied_to_focus?.why_it_matters ?? 'other'),
+                        tags: [t.confidence],
+                        created_at: new Date().toISOString(),
+                      });
+                      toast.success('Added to Deal Planning Inbox');
+                    }} />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground/70">{t.source_org}{t.source_published_at ? ` · ${t.source_published_at}` : ''}</p>
+                  <p className="text-[11px] text-muted-foreground line-clamp-2">{t.thesis_summary}</p>
+                  <div className="flex items-center gap-1.5">
+                    <OriginBadge label="Authority trend" />
+                    <ConfidenceBadge level={t.confidence} />
+                  </div>
+                  {t.applied_to_focus?.why_it_matters && (
+                    <p className="text-[10px] text-muted-foreground/60 italic line-clamp-1">Impact: {t.applied_to_focus.why_it_matters}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Proof / Success Stories */}
+          {proofArtifacts && proofArtifacts.proof_artifacts.length > 0 && (
+            <div className="space-y-2 pt-3 border-t border-border/30">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                Proof / Success Stories ({proofArtifacts.proof_artifacts.length})
+              </p>
+              {proofArtifacts.proof_artifacts.map((pa) => (
+                <div key={pa.id} className="p-2.5 rounded-lg bg-muted/10 border border-border/30 space-y-1">
+                  <div className="flex items-start gap-2">
+                    {pa.source_url ? (
+                      <a href={pa.source_url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-foreground hover:text-primary flex-1 underline-offset-2 hover:underline">
+                        {pa.title}
+                      </a>
+                    ) : (
+                      <p className="text-xs font-medium text-foreground flex-1">{pa.title}</p>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground line-clamp-2">{pa.summary}</p>
+                  <div className="flex items-center gap-1.5">
+                    <OriginBadge label="Proof" />
+                    <ConfidenceBadge level={pa.confidence_level} />
+                    <TagsRow tags={pa.capability_proven.filter((c) => c !== 'other')} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </DocSection>
+
+        {/* SECTION 4: Commercial Footprint */}
+        <DocSection
+          id="ai-commercial"
+          title="Commercial Footprint"
+          icon={<DollarSign className="w-3.5 h-3.5" />}
+          isOpen={openSection === 'ai-commercial'}
+          onToggle={() => toggleSection('ai-commercial')}
+        >
+          {commercial ? (
+            <div className="space-y-3">
+              {/* Sub-tabs */}
+              <div className="flex items-center gap-1 border-b border-border/30 pb-2">
+                {(['licenses', 'contracts', 'renewals', 'spend'] as CommercialTab[]).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setCommercialTab(tab)}
+                    className={cn(
+                      "px-2.5 py-1 rounded-md text-[10px] font-medium transition-colors capitalize",
+                      commercialTab === tab
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground/60 hover:text-muted-foreground"
+                    )}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+
+              {commercialTab === 'licenses' && (
+                <div className="space-y-1">
+                  {commercial.existing_licenses?.map((l, i) => (
+                    <div key={i} className="flex items-center gap-2 py-1.5 px-2 rounded bg-muted/10 text-xs text-foreground">
+                      <Layers className="w-3 h-3 text-muted-foreground/50 flex-shrink-0" />
+                      {l}
+                    </div>
+                  )) ?? <p className="text-xs text-muted-foreground/60">No license data.</p>}
+                </div>
+              )}
+              {commercialTab === 'contracts' && (
+                <div className="space-y-1">
+                  {commercial.contract_end_dates?.map((c, i) => (
+                    <div key={i} className="flex items-center gap-2 py-1.5 px-2 rounded bg-muted/10 text-xs text-foreground">
+                      <FileText className="w-3 h-3 text-muted-foreground/50 flex-shrink-0" />
+                      {c}
+                    </div>
+                  )) ?? <p className="text-xs text-muted-foreground/60">No contract data.</p>}
+                </div>
+              )}
+              {commercialTab === 'renewals' && (
+                <div className="space-y-1">
+                  {commercial.renewal_windows?.map((r, i) => (
+                    <div key={i} className="flex items-center gap-2 py-1.5 px-2 rounded bg-muted/10 text-xs text-foreground">
+                      <TrendingUp className="w-3 h-3 text-muted-foreground/50 flex-shrink-0" />
+                      {r}
+                    </div>
+                  )) ?? <p className="text-xs text-muted-foreground/60">No renewal data.</p>}
+                </div>
+              )}
+              {commercialTab === 'spend' && (
+                <div className="py-2 px-3 rounded bg-muted/10">
+                  <p className="text-xs text-foreground">{commercial.estimated_spend_band ?? 'No spend estimate available.'}</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground/60">No commercial data.</p>
+          )}
+        </DocSection>
+
+        {/* SECTION 5: Technical Landscape */}
+        <DocSection
+          id="ai-technical"
+          title="Technical Landscape"
+          icon={<Server className="w-3.5 h-3.5" />}
+          isOpen={openSection === 'ai-technical'}
+          onToggle={() => toggleSection('ai-technical')}
+        >
+          {technical ? (
+            <div className="space-y-3">
+              {/* Sub-tabs */}
+              <div className="flex items-center gap-1 border-b border-border/30 pb-2">
+                {(['vendors', 'applications', 'architecture'] as TechTab[]).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setTechTab(tab)}
+                    className={cn(
+                      "px-2.5 py-1 rounded-md text-[10px] font-medium transition-colors capitalize",
+                      techTab === tab
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground/60 hover:text-muted-foreground"
+                    )}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+
+              {techTab === 'vendors' && (
+                <div className="space-y-1">
+                  {technical.known_vendors?.map((v, i) => (
+                    <div key={i} className="flex items-center gap-2 py-1.5 px-2 rounded bg-muted/10 text-xs text-foreground">
+                      <Building2 className="w-3 h-3 text-muted-foreground/50 flex-shrink-0" />
+                      {v}
+                    </div>
+                  )) ?? <p className="text-xs text-muted-foreground/60">No vendor data.</p>}
+                </div>
+              )}
+              {techTab === 'applications' && (
+                <div className="space-y-1">
+                  {technical.known_applications?.map((a, i) => (
+                    <div key={i} className="flex items-center gap-2 py-1.5 px-2 rounded bg-muted/10 text-xs text-foreground">
+                      <Layers className="w-3 h-3 text-muted-foreground/50 flex-shrink-0" />
+                      {a}
+                    </div>
+                  )) ?? <p className="text-xs text-muted-foreground/60">No application data.</p>}
+                </div>
+              )}
+              {techTab === 'architecture' && (
+                <div className="space-y-2">
+                  {technical.architecture_patterns?.map((p, i) => (
+                    <div key={i} className="flex items-center gap-2 py-1.5 px-2 rounded bg-muted/10 text-xs text-foreground">
+                      <Server className="w-3 h-3 text-muted-foreground/50 flex-shrink-0" />
+                      {p}
+                    </div>
+                  )) ?? <p className="text-xs text-muted-foreground/60">No architecture data.</p>}
+                  {technical.cloud_strategy && (
+                    <div className="flex items-start gap-2 pt-1">
+                      <span className="text-[10px] text-muted-foreground min-w-[100px]">Cloud Strategy</span>
+                      <span className="text-xs text-foreground">{technical.cloud_strategy}</span>
+                    </div>
+                  )}
+                  {/* Visual tags */}
+                  <div className="flex items-center gap-1.5 pt-1">
+                    {technical.cloud_strategy?.toLowerCase().includes('hybrid') && (
+                      <span className="px-2 py-0.5 rounded text-[9px] font-medium bg-blue-500/10 text-blue-600 border border-blue-500/20">Hybrid</span>
+                    )}
+                    {technical.architecture_patterns?.some(p => p.toLowerCase().includes('legacy')) && (
+                      <span className="px-2 py-0.5 rounded text-[9px] font-medium bg-muted/40 text-muted-foreground border border-border/40">Legacy constraint</span>
+                    )}
+                    {(technical.known_applications?.some(a => a.toLowerCase().includes('ai') || a.toLowerCase().includes('ml')) ||
+                      technical.cloud_strategy?.toLowerCase().includes('ai')) && (
+                      <span className="px-2 py-0.5 rounded text-[9px] font-medium bg-primary/10 text-primary border border-primary/20">AI-Ready</span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground/60">No technical data.</p>
+          )}
+        </DocSection>
+
+        {/* SECTION 6: Partner & Competitive Context */}
+        <DocSection
+          id="ai-partners"
+          title="Partner & Competitive Context"
+          icon={<Users className="w-3.5 h-3.5" />}
+          isOpen={openSection === 'ai-partners'}
+          onToggle={() => toggleSection('ai-partners')}
+        >
+          {partnerInvolvement ? (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">MS Account Team</p>
+                  <p className="text-xs text-foreground">{partnerInvolvement.microsoft_account_team_known ?? 'Unknown'}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Recent Activity</p>
+                  <p className="text-xs text-foreground">
+                    {partnerInvolvement.recent_partner_activity_count != null
+                      ? `${partnerInvolvement.recent_partner_activity_count} engagements (12 mo)`
+                      : 'No data'}
+                  </p>
+                </div>
+              </div>
+
+              {partnerInvolvement.active_partners && partnerInvolvement.active_partners.length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Active Partners</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {partnerInvolvement.active_partners.map((p) => (
+                      <span key={p} className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-primary/5 text-primary border border-primary/10">{p}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {partnerInvolvement.competitor_partners && partnerInvolvement.competitor_partners.length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Competitors</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {partnerInvolvement.competitor_partners.map((p) => (
+                      <span key={p} className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-muted/40 text-muted-foreground border border-border/40">{p}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Case Studies</p>
+                  <p className="text-xs text-foreground">{partnerInvolvement.public_case_studies ?? 'Unknown'}</p>
+                </div>
+                {partnerInvolvement.notes && (
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Notes</p>
+                    <p className="text-xs text-muted-foreground">{partnerInvolvement.notes}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground/60">No partner involvement data.</p>
+          )}
+        </DocSection>
+
+        {/* SECTION 7: Evidence & Memory */}
+        <DocSection
+          id="ai-evidence"
+          title="Evidence & Memory"
+          icon={<FileText className="w-3.5 h-3.5" />}
+          count={inbox.length + requests.length}
+          isOpen={openSection === 'ai-evidence'}
+          onToggle={() => toggleSection('ai-evidence')}
+        >
+          {/* Evidence categories */}
+          <div className="space-y-2">
+            {EVIDENCE_CATEGORIES.map((cat) => {
+              const isExpanded = expandedEvidence === cat.value;
+              // Filter inbox items by rough category mapping
+              const catItems = inbox.filter((item) => {
+                const t = item.type;
+                if (cat.value === 'security') return false; // future
+                if (cat.value === 'technical') return t === 'architecture_diagram' || t === 'rfp_requirements';
+                if (cat.value === 'business') return t === 'slides_deck' || t === 'news_article';
+                if (cat.value === 'procurement') return t === 'other' || t === 'link';
+                return false;
+              });
+              return (
+                <div key={cat.value} className="rounded-lg border border-border/30 overflow-hidden">
+                  <button
+                    onClick={() => setExpandedEvidence(isExpanded ? null : cat.value)}
+                    className="w-full flex items-center gap-2 p-2.5 text-left hover:bg-muted/20 transition-colors"
+                  >
+                    <span className="text-muted-foreground/60">{cat.icon}</span>
+                    <span className="text-xs font-medium text-foreground flex-1">{cat.label}</span>
+                    <span className="text-[10px] text-muted-foreground/50">{catItems.length}</span>
+                    <ChevronDown className={cn("w-3 h-3 text-muted-foreground/40 transition-transform", isExpanded && "rotate-180")} />
+                  </button>
+                  {isExpanded && (
+                    <div className="px-2.5 pb-2.5 space-y-1">
+                      {catItems.length > 0 ? catItems.map((item) => (
+                        <div key={item.id} className="flex items-center gap-2 py-1.5 px-2 rounded bg-muted/10 text-xs">
+                          <FileText className="w-3 h-3 text-muted-foreground/40 flex-shrink-0" />
+                          <span className="text-foreground truncate">{item.title}</span>
+                          <span className="text-[10px] text-muted-foreground/50 flex-shrink-0">{item.type.replace(/_/g, ' ')}</span>
+                        </div>
+                      )) : (
+                        <p className="text-[10px] text-muted-foreground/50 py-1">No items in this category.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Uncategorized inbox items */}
+          {inbox.filter((i) => i.type === 'recording' || i.type === 'transcript_notes').length > 0 && (
+            <div className="pt-3 border-t border-border/30 space-y-1">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Context & Recordings</p>
+              {inbox.filter((i) => i.type === 'recording' || i.type === 'transcript_notes').map((item) => (
+                <div key={item.id} className="flex items-center gap-2 py-1.5 px-2 rounded bg-muted/10 text-xs">
+                  <FileText className="w-3 h-3 text-muted-foreground/40 flex-shrink-0" />
+                  <span className="text-foreground truncate">{item.title}</span>
+                  <span className="text-[10px] text-muted-foreground/50 flex-shrink-0">{item.type.replace(/_/g, ' ')}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Content Requests */}
+          {requests.length > 0 && (
+            <div className="pt-3 border-t border-border/30 space-y-1">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Content Requests ({requests.length})</p>
               {requests.map((req) => (
-                <div key={req.request_id} className="flex items-center gap-2 text-sm">
+                <div key={req.request_id} className="flex items-center gap-2 py-1.5 px-2 rounded bg-muted/10 text-xs">
+                  <MessageSquare className="w-3 h-3 text-muted-foreground/40 flex-shrink-0" />
                   <span className={cn(
-                    "px-1.5 py-0.5 rounded text-[9px] font-medium",
+                    "px-1.5 py-0.5 rounded text-[9px] font-medium flex-shrink-0",
                     req.status === 'pending' ? "bg-yellow-500/10 text-yellow-600" :
                     req.status === 'answered' ? "bg-primary/10 text-primary" :
                     "bg-muted/30 text-muted-foreground"
@@ -947,10 +992,8 @@ export function AccountIntelligenceView({ focusId }: AccountIntelligenceViewProp
                 </div>
               ))}
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground/60">No requests.</p>
           )}
-        </SectionCard>
+        </DocSection>
       </div>
     </div>
   );
