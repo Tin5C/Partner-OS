@@ -1,20 +1,21 @@
-// Partner Stories Row - Partner-only stories section
-// Stories are the primary entry point → Story detail → Quick Brief / Deal Planning
+// Partner Stories Row - Compact intelligence strip
+// Contextual signals supporting Deal Planning workspace
 
 import { useState, useCallback, useMemo } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { SectionHeader } from '@/components/shared/SectionHeader';
-import { PartnerStoryTile } from './PartnerStoryTile';
 import { SignalIntelligencePanel } from './SignalIntelligencePanel';
 import { PartnerStory, PartnerSignalType, signalTypeColors } from '@/data/partnerStories';
 import { useStoryState } from '@/hooks/useStoryState';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { PartnerStoryTile } from './PartnerStoryTile';
 import { usePartnerData } from '@/contexts/FocusDataContext';
 import type { StoryCardsV1, StoryCardV1 } from '@/data/partner/contracts';
 import { hasWeeklySignals } from '@/data/partner/weeklySignalStore';
 import { toast } from 'sonner';
+import { getRotatedCategoryImage, getTimeAgo } from '@/data/partner/signalImageTaxonomy';
+import type { SignalCategory } from '@/data/partner/signalImageTaxonomy';
 
 // Adapter: convert StoryCardV1 → PartnerStory for existing tile/viewer components
 function adaptCardToStory(card: StoryCardV1): PartnerStory {
@@ -46,6 +47,70 @@ function adaptCardToStory(card: StoryCardV1): PartnerStory {
 
   return adapted;
 }
+
+// ============= Compact Signal Strip Item =============
+
+function CompactSignalItem({ story, onClick }: { story: PartnerStory; onClick: () => void }) {
+  const category = story.signalType as SignalCategory;
+  const coverImg = story.coverUrl || getRotatedCategoryImage(category, story.id);
+  const impact = ((story.relevance_score ?? 70) / 10).toFixed(1);
+  const timeAgo = getTimeAgo(story.publishedAt);
+
+  const TAG_STYLES: Record<string, string> = {
+    Vendor: 'bg-muted text-muted-foreground border-border/60',
+    Regulatory: 'bg-muted text-muted-foreground border-border/60',
+    LocalMarket: 'bg-muted text-muted-foreground border-border/60',
+    Competitive: 'bg-muted text-muted-foreground border-border/60',
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex-shrink-0 w-[280px] flex items-start gap-3 p-2.5 rounded-md text-left",
+        "border border-border/50 bg-muted/20",
+        "hover:bg-muted/40 hover:border-border/80 transition-colors"
+      )}
+    >
+      {/* Thumbnail */}
+      <div className="w-14 h-14 rounded flex-shrink-0 overflow-hidden bg-muted">
+        <img
+          src={coverImg}
+          alt=""
+          className="w-full h-full object-cover"
+        />
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0 space-y-1">
+        <h4 className="text-[12px] font-medium text-foreground leading-snug line-clamp-1">
+          {story.headline}
+        </h4>
+        <p className="text-[11px] text-muted-foreground leading-snug line-clamp-1">
+          {story.soWhat}
+        </p>
+        {/* Meta row */}
+        <div className="flex items-center gap-2">
+          <span className={cn(
+            "text-[9px] font-medium px-1.5 py-0.5 rounded border",
+            TAG_STYLES[story.signalType] ?? TAG_STYLES.Vendor
+          )}>
+            {story.signalType}
+          </span>
+          <span className="text-[10px] font-semibold text-muted-foreground tabular-nums">
+            {impact}<span className="font-normal">/10</span>
+          </span>
+          <span className="flex items-center gap-0.5 text-[9px] text-muted-foreground">
+            <Clock className="w-2.5 h-2.5" />
+            {timeAgo}
+          </span>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+// ============= Main Component =============
 
 interface PartnerStoriesRowProps {
   className?: string;
@@ -111,7 +176,6 @@ export function PartnerStoriesRow({
   }, [selectedIndex, currentPlaylist]);
 
   const handleBuildAccountBrief = useCallback((anchorStory: PartnerStory, selectedSignals: PartnerStory[]) => {
-    // Scroll to customer brief section if it exists
     const el = document.getElementById('section-customer-brief');
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     toast.success('Deal Planning initiated', {
@@ -126,13 +190,13 @@ export function PartnerStoriesRow({
 
   if (homepageStories.length === 0 && !weeklyAvailable) {
     return (
-      <section className={cn("space-y-3", className)}>
-        <SectionHeader
-          title="AI Selling Signals"
-          subtitle="What changed, why it matters, what to do."
-        />
-        <div className="rounded-2xl border border-border/60 bg-muted/20 p-8 text-center">
-          <p className="text-sm text-muted-foreground">No curated signals for this week yet.</p>
+      <section className={cn("space-y-1.5", className)}>
+        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+          Contextual signals impacting this account.
+        </p>
+        <p className="text-sm font-medium text-muted-foreground">Account Intelligence Feed</p>
+        <div className="rounded border border-border/50 bg-muted/20 p-6 text-center">
+          <p className="text-xs text-muted-foreground">No curated signals for this week yet.</p>
         </div>
       </section>
     );
@@ -143,12 +207,16 @@ export function PartnerStoriesRow({
   }
 
   return (
-    <section className={cn("space-y-2 mt-2", className)}>
-      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Account Intelligence Feed</p>
-      <SectionHeader
-        title="AI Selling Signals"
-        subtitle="What changed, why it matters, what to do."
-        action={hasMore ? (
+    <section className={cn("space-y-1.5", className)}>
+      {/* Section Header — demoted */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+            Contextual signals impacting this account.
+          </p>
+          <p className="text-sm font-medium text-muted-foreground mt-0.5">Account Intelligence Feed</p>
+        </div>
+        {hasMore && (
           <Button
             variant="ghost"
             size="sm"
@@ -158,24 +226,23 @@ export function PartnerStoriesRow({
             View all
             <ChevronRight className="h-3.5 w-3.5 ml-1" />
           </Button>
-        ) : undefined}
-      />
+        )}
+      </div>
 
-      {/* Horizontal scrollable row */}
+      {/* Compact horizontal strip — max ~160px height */}
       <div className="relative -mx-5 lg:-mx-0">
-        <div className="flex gap-4 overflow-x-auto px-5 lg:px-0 pb-2 scrollbar-hide">
+        <div className="flex gap-2.5 overflow-x-auto px-5 lg:px-0 pb-1 scrollbar-hide">
           {homepageStories.map((story) => (
-            <PartnerStoryTile
+            <CompactSignalItem
               key={story.id}
               story={story}
-              listenedState={getState(story.id)}
               onClick={() => handleOpenSignal(story, homepageStories)}
             />
           ))}
         </div>
       </div>
 
-      {/* Signal Intelligence Panel */}
+      {/* Signal Intelligence Panel — unchanged */}
       <SignalIntelligencePanel
         story={selectedStory}
         open={viewerOpen}
@@ -191,7 +258,7 @@ export function PartnerStoriesRow({
         onBuildAccountBrief={handleBuildAccountBrief}
       />
 
-      {/* Browse All Sheet */}
+      {/* Browse All Sheet — uses original tiles for full view */}
       <Sheet open={browseOpen} onOpenChange={setBrowseOpen}>
         <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
           <SheetHeader className="mb-6">
