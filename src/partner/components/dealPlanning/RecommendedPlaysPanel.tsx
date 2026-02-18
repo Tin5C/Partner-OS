@@ -3,17 +3,18 @@
 
 import { useState, useMemo } from 'react';
 import {
-  Sparkles, Plus, TrendingUp, Check,
+  Sparkles, TrendingUp, Check,
   ChevronRight, ChevronDown, Trash2, Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { PromotedSignal } from '@/data/partner/dealPlanStore';
-// PLAY_SERVICE_PACKS imported below (after ReadinessAssessmentPanel)
 import { scorePlayPacks, type PropensityInput, type ScoredPlay } from '@/partner/lib/dealPlanning/propensity';
 import { addSelectedPack, getSelectedPacks, addContentRequest, getActivePlay } from '@/partner/data/dealPlanning/selectedPackStore';
 import { getByFocusId as getInitiatives } from '@/data/partner/publicInitiativesStore';
 import { getByFocusId as getTrends } from '@/data/partner/industryAuthorityTrendsStore';
+import { getActiveSignalIds } from '@/partner/data/dealPlanning/activeSignalsStore';
+import { buildSignalPool } from '@/partner/data/dealPlanning/signalPool';
 import { Progress } from '@/components/ui/progress';
 import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
@@ -46,9 +47,8 @@ interface RecommendedPlaysPanelProps {
   showPicker: boolean;
   pickerNode?: React.ReactNode;
   onPlaySelected?: (play: { packId: string; packName: string; drivers: string[]; gaps: string[] }) => void;
+  weekOf?: string;
 }
-
-// PlayBasis removed — consolidated into ScoreBreakdownPanel
 
 // ============= Main Component =============
 
@@ -64,9 +64,44 @@ export function RecommendedPlaysPanel({
   showPicker,
   pickerNode,
   onPlaySelected,
+  weekOf = '2026-02-10',
 }: RecommendedPlaysPanelProps) {
   const [driversOpen, setDriversOpen] = useState(false);
   const [readinessPlay, setReadinessPlay] = useState<ScoredPlay | null>(null);
+
+  // Active signals from the picker store
+  const activeSignalIds = useMemo(() => getActiveSignalIds(accountId), [accountId, promotedSignals, showPicker]);
+  const activeSignalCount = activeSignalIds.length;
+
+  // Build promoted signals from active signal IDs by looking up in pool
+  const activeAsPromoted = useMemo((): PromotedSignal[] => {
+    if (activeSignalCount === 0) return promotedSignals; // fallback to legacy
+    const pool = buildSignalPool(accountId, weekOf);
+    return activeSignalIds.map((id) => {
+      const found = pool.find((p) => p.id === id);
+      return {
+        signalId: id,
+        snapshot: {
+          type: (found?.type as any) ?? 'vendor',
+          title: found?.title ?? id,
+          whatChanged: [],
+          soWhat: found?.soWhat ?? '',
+          recommendedAction: '',
+          whoCares: [],
+          talkTrack: '',
+          proofToRequest: [],
+          whatsMissing: [],
+          confidence: found?.confidence ?? 50,
+          confidenceLabel: (found?.confidence ?? 50) >= 60 ? 'High' : 'Medium',
+          sources: [],
+        },
+        promotedAt: new Date().toISOString(),
+      } satisfies PromotedSignal;
+    });
+  }, [activeSignalIds, accountId, weekOf, promotedSignals]);
+
+  // Use active signals for scoring if any selected, otherwise fall back to legacy promoted
+  const signalsForScoring = activeSignalCount > 0 ? activeAsPromoted : promotedSignals;
 
   // Read canonical stores
   const initiativesTitles = useMemo(() => {
@@ -82,7 +117,7 @@ export function RecommendedPlaysPanel({
   // Score plays
   const scoredPlays = useMemo(() => {
     const input: PropensityInput = {
-      promotedSignals,
+      promotedSignals: signalsForScoring,
       engagementType,
       motion,
       readinessScore,
@@ -90,12 +125,12 @@ export function RecommendedPlaysPanel({
       trends: trendsTitles,
     };
     const all = scorePlayPacks(PLAY_SERVICE_PACKS, input);
-    return promotedSignals.length === 0 ? all.slice(0, 2) : all.slice(0, 3);
-  }, [promotedSignals, engagementType, motion, readinessScore, initiativesTitles, trendsTitles]);
+    return signalsForScoring.length === 0 ? all.slice(0, 2) : all.slice(0, 3);
+  }, [signalsForScoring, engagementType, motion, readinessScore, initiativesTitles, trendsTitles]);
 
   const selectedPacks = useMemo(() => getSelectedPacks(accountId), [accountId, scoredPlays]);
   const activePlay = useMemo(() => getActivePlay(accountId), [accountId, scoredPlays]);
-  const hasNoContext = promotedSignals.length === 0 && initiativesTitles.length === 0 && trendsTitles.length === 0;
+  const hasNoContext = signalsForScoring.length === 0 && initiativesTitles.length === 0 && trendsTitles.length === 0;
 
   const handleAddToPlan = (play: ScoredPlay) => {
     addSelectedPack(accountId, play.packId);
@@ -110,6 +145,9 @@ export function RecommendedPlaysPanel({
   };
 
   const confidenceLabel = (c: 'High' | 'Medium' | 'Low') => c;
+
+  // Display signal count: active signals if using picker, else legacy promoted
+  const displaySignalCount = activeSignalCount > 0 ? activeSignalCount : promotedSignals.length;
 
   return (
     <div className="rounded-xl border border-primary/15 bg-primary/[0.02] p-4 space-y-3">
@@ -128,15 +166,14 @@ export function RecommendedPlaysPanel({
           onClick={onOpenPicker}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] font-medium border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors flex-shrink-0"
         >
-          <Plus className="w-3.5 h-3.5" />
-          Add signals
+          Edit signals
         </button>
       </div>
 
       {/* ===== Drivers Used Strip ===== */}
       <div className="flex items-center gap-3 text-[10px]">
         <span className="text-muted-foreground font-semibold uppercase tracking-wider">Drivers used:</span>
-        <span className="text-muted-foreground font-medium">Signals: {promotedSignals.length}</span>
+        <span className="text-muted-foreground font-medium">Signals: {displaySignalCount}</span>
         <span className="text-muted-foreground font-medium">·</span>
         <span className="text-muted-foreground font-medium">Initiatives: {initiativesTitles.length}</span>
         <span className="text-muted-foreground font-medium">·</span>
@@ -223,9 +260,6 @@ export function RecommendedPlaysPanel({
                     </div>
                   )}
 
-
-
-
                   {/* Score debug breakdown */}
                   {(() => {
                     const packDef = PLAY_SERVICE_PACKS.find((p) => p.id === play.packId);
@@ -237,7 +271,7 @@ export function RecommendedPlaysPanel({
                         packBias={packDef.bias}
                         packMotionFit={packDef.motionFit}
                         packPrerequisites={packDef.prerequisites}
-                        promotedSignals={promotedSignals}
+                        promotedSignals={signalsForScoring}
                         engagementType={engagementType}
                         motion={motion}
                         readinessScore={readinessScore}
@@ -315,7 +349,7 @@ export function RecommendedPlaysPanel({
       {readinessPlay && (
         <ReadinessAssessmentPanel
           play={readinessPlay}
-          promotedSignals={promotedSignals}
+          promotedSignals={signalsForScoring}
           initiativeCount={initiativesTitles.length}
           trendCount={trendsTitles.length}
           onClose={() => setReadinessPlay(null)}
