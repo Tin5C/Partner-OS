@@ -256,7 +256,11 @@ export function RecommendedPlaysPanel({
         </div>
       ) : (
         /* ===== Play Cards ===== */
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 auto-rows-[1fr]">
+        <div className="space-y-3">
+          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+            Recommended Entry Plays Based on Current Readiness
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 auto-rows-[1fr]">
           {scoredPlays.map((play) => {
             const isAdded = selectedPacks.includes(play.packId);
             const isActivePlan = activePlay?.playId === play.packId;
@@ -348,6 +352,7 @@ export function RecommendedPlaysPanel({
               </div>
             );
           })}
+          </div>
         </div>
       )}
 

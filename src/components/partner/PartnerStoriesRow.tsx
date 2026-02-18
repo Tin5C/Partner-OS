@@ -143,7 +143,8 @@ export function PartnerStoriesRow({
   }
 
   return (
-    <section className={cn("space-y-3", className)}>
+    <section className={cn("space-y-2 mt-2", className)}>
+      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Account Intelligence Feed</p>
       <SectionHeader
         title="AI Selling Signals"
         subtitle="What changed, why it matters, what to do."

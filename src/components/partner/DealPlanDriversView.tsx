@@ -768,6 +768,16 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
             </div>
           )}
 
+          {/* ===== Next Best Action Strip ===== */}
+          <div className="border-t border-b border-border/40 bg-muted/20 px-4 py-3">
+            <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-widest mb-1">Next Recommended Action</p>
+            <p className="text-xs text-foreground leading-relaxed">
+              {(avgConfidence?.score ?? 0) < 50
+                ? 'Engage missing executive sponsor before progressing proposal.'
+                : 'Formalize scope and confirm commercial pathway.'}
+            </p>
+          </div>
+
           {/* ===== Recommended Plays (unified: plays + promoted drivers) ===== */}
           <RecommendedPlaysPanel
             accountId={selectedAccount}
