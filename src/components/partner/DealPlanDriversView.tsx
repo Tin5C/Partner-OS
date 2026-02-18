@@ -70,6 +70,7 @@ import {
 } from '@/data/partner/dealPlanningInboxStore';
 import { addTags } from '@/data/partner/dealPlanningSignalTagsStore';
 import { RecommendedPlaysPanel } from '@/partner/components/dealPlanning/RecommendedPlaysPanel';
+import { SignalPickerPanel } from '@/partner/components/dealPlanning/SignalPickerPanel';
 import { StrategicFramingSection } from '@/partner/components/dealPlanning/StrategicFramingSection';
 import { TechnicalRecommendationsSection } from '@/partner/components/dealPlanning/TechnicalRecommendationsSection';
 import { PLAY_SERVICE_PACKS } from '@/partner/data/dealPlanning/servicePacks';
@@ -784,18 +785,21 @@ export function DealPlanDriversView({ onGoToQuickBrief }: DealPlanDriversViewPro
             promotedSignals={drivers}
             engagementType={engagementType as 'new_logo' | 'existing_customer' | null}
             motion={motion}
+            weekOf={WEEK_OF}
             onRefresh={refresh}
             onRemoveSignal={handleRemove}
             onOpenPicker={() => setShowPicker(true)}
             showPicker={showPicker}
             onPlaySelected={handlePlaySelected}
             pickerNode={
-              <SignalPicker
-                existingIds={existingIds}
-                onSelect={handleAddSignals}
-                onClose={() => setShowPicker(false)}
-                accountId={selectedAccount}
-              />
+              showPicker ? (
+                <SignalPickerPanel
+                  accountId={selectedAccount}
+                  weekOf={WEEK_OF}
+                  onClose={() => setShowPicker(false)}
+                  onChanged={refresh}
+                />
+              ) : null
             }
           />
 
