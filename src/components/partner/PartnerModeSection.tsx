@@ -39,7 +39,7 @@ export function PartnerModeSection() {
   };
 
   return (
-    <section className="space-y-5">
+    <section className="space-y-5 pt-4">
       {/* Mode Toggle */}
       <div className="flex items-center justify-between">
         <div className="inline-flex rounded-xl bg-muted/50 p-1 border border-border">
@@ -102,8 +102,9 @@ export function PartnerModeSection() {
       ) : mode === 'deal-planning' ? (
         <div className={cn(
           "rounded-2xl border border-primary/20 bg-primary/[0.02]",
-          "p-5"
+          "p-5 space-y-1"
         )}>
+          <p className="text-[11px] text-muted-foreground tracking-wide">Active Deal Workspace</p>
           <DealPlanDriversView onGoToQuickBrief={() => setMode('quick-brief')} />
         </div>
       ) : (

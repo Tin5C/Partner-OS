@@ -20,21 +20,21 @@ export const partnerConfig: SpaceConfig = {
   displayName: 'Partner',
   
   sections: [
-    // 1. STORIES — primary entry point → Story detail → Account Brief
-    {
-      id: 'stories',
-      type: 'storiesRow',
-      title: 'AI Selling Signals',
-      subtitle: 'What changed, why it matters, what to do.',
-      variant: 'primary',
-      enabled: true,
-    },
-    // 2. PARTNER MODE — Quick Brief ↔ Deal Planning toggle
+    // 1. PARTNER MODE — Deal Planning is primary workspace anchor
     {
       id: 'partner-mode',
       type: 'partnerMode',
       title: 'Execution',
       subtitle: 'Quick Brief for fast prep, Deal Planning for structured strategy.',
+      variant: 'primary',
+      enabled: true,
+    },
+    // 2. STORIES — supporting context feed
+    {
+      id: 'stories',
+      type: 'storiesRow',
+      title: 'AI Selling Signals',
+      subtitle: 'What changed, why it matters, what to do.',
       variant: 'primary',
       enabled: true,
     },
