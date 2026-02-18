@@ -9,7 +9,7 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { PromotedSignal } from '@/data/partner/dealPlanStore';
-import { PLAY_SERVICE_PACKS } from '@/partner/data/dealPlanning/servicePacks';
+// PLAY_SERVICE_PACKS imported below (after ReadinessAssessmentPanel)
 import { scorePlayPacks, type PropensityInput, type ScoredPlay } from '@/partner/lib/dealPlanning/propensity';
 import { addSelectedPack, getSelectedPacks, addContentRequest, getActivePlay } from '@/partner/data/dealPlanning/selectedPackStore';
 import { getByFocusId as getInitiatives } from '@/data/partner/publicInitiativesStore';
@@ -19,6 +19,8 @@ import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { ReadinessAssessmentPanel } from './ReadinessAssessmentPanel';
+import { ScoreBreakdownPanel } from './ScoreBreakdownPanel';
+import { PLAY_SERVICE_PACKS } from '@/partner/data/dealPlanning/servicePacks';
 
 // ============= Signal Type Badge Colors =============
 
@@ -308,6 +310,27 @@ export function RecommendedPlaysPanel({
                     initiativesTitles={initiativesTitles}
                     trendsTitles={trendsTitles}
                   />
+
+                  {/* Score debug breakdown */}
+                  {(() => {
+                    const packDef = PLAY_SERVICE_PACKS.find((p) => p.id === play.packId);
+                    if (!packDef) return null;
+                    return (
+                      <ScoreBreakdownPanel
+                        play={play}
+                        packTags={packDef.tags}
+                        packBias={packDef.bias}
+                        packMotionFit={packDef.motionFit}
+                        packPrerequisites={packDef.prerequisites}
+                        promotedSignals={promotedSignals}
+                        engagementType={engagementType}
+                        motion={motion}
+                        readinessScore={readinessScore}
+                        initiatives={initiativesTitles}
+                        trends={trendsTitles}
+                      />
+                    );
+                  })()}
                 </div>
 
                 {/* Fixed footer — always at bottom */}
