@@ -1,7 +1,7 @@
-// Deal Plan Drivers View — final Commercial + Technical structure
-// Commercial tab: Recommended Plays (hero), Deal Strategy, Stakeholders & Process, Commercial Path, Risks & Blockers
-// Technical tab: Technical Recommendations (hero), Requirements & Constraints, Architecture & Landscape, Delivery Feasibility, Technical Risks & Blockers
-// Plan Inbox shared across tabs, Customer Evidence right rail
+// Deal Plan Drivers View — Sales / Business / Technical tabs with shared Recommended Plays header
+// Sales: operational deal execution (stakeholders, execution motion, CRM, inbox, risks)
+// Business: investment justification (strategy, hypothesis, commercial path, evidence, positioning)
+// Technical: feasibility & delivery (requirements, architecture, delivery, technical risks)
 
 import { useState, useMemo, useCallback, useRef } from 'react';
 import {
@@ -48,6 +48,9 @@ import {
   FileText,
   Layers,
   Server,
+  DollarSign,
+  Lightbulb,
+  ArrowRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -91,14 +94,13 @@ import { CollapsibleSection } from '@/components/shared/CollapsibleSection';
 
 const WEEK_OF = '2026-02-10';
 
-// Available accounts (demo data)
 const ACCOUNTS = [
   { id: 'schindler', label: 'Schindler' },
   { id: 'sulzer', label: 'Sulzer' },
   { id: 'ubs', label: 'UBS' },
 ];
 
-type ViewTab = 'commercial' | 'technical';
+type ViewTab = 'sales' | 'business' | 'technical';
 
 interface DealPlanDriversViewProps {
   onGoToQuickBrief: () => void;
@@ -279,6 +281,23 @@ function EmptyPlaceholder({ icon, title, description }: {
   );
 }
 
+// ============= Next Recommended Action Strip =============
+
+function NextActionStrip({ readinessScore }: { readinessScore: number | null }) {
+  if (readinessScore == null) return null;
+  const advice = readinessScore < 50
+    ? 'Engage missing executive sponsor before progressing proposal.'
+    : 'Formalize scope and confirm commercial pathway.';
+  return (
+    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/30 border border-border/40">
+      <Lightbulb className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+      <p className="text-[11px] text-muted-foreground">
+        <span className="font-semibold text-foreground">Next action:</span> {advice}
+      </p>
+    </div>
+  );
+}
+
 // ============= Main Component =============
 
 export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligence }: DealPlanDriversViewProps) {
@@ -286,7 +305,6 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
   const refresh = useCallback(() => forceUpdate((n) => n + 1), []);
   const strategicFramingRef = useRef<HTMLDivElement>(null);
 
-  // Account selection
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
 
   const plan = useMemo(
@@ -296,9 +314,8 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
   const drivers = plan?.promotedSignals ?? [];
 
   const [showPicker, setShowPicker] = useState(false);
-  const [viewTab, setViewTab] = useState<ViewTab>('commercial');
+  const [viewTab, setViewTab] = useState<ViewTab>('sales');
 
-  // Metadata state
   const [engagementType, setEngagementType] = useState<EngagementType | null>(null);
   const [motion, setMotion] = useState<Motion | null>(null);
 
@@ -344,7 +361,6 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
   const confidenceColor = (score: number) =>
     score >= 60 ? 'text-green-600' : score >= 40 ? 'text-primary' : 'text-red-500';
 
-  // Aggregated risks
   const aggregatedRisks = useMemo(() => {
     const items = new Set<string>();
     drivers.forEach((d) => d.snapshot.whatsMissing.forEach((m) => items.add(m)));
@@ -352,11 +368,9 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
     return Array.from(items);
   }, [drivers]);
 
-  // Plan generation state
   const [planGenerated, setPlanGenerated] = useState(false);
   const canGenerate = selectedAccount !== null && engagementType !== null && motion !== null;
 
-  // Plan Inbox items
   const [inboxVersion, setInboxVersion] = useState(0);
   const inboxItems = useMemo(
     () => (selectedAccount ? listByFocusId(selectedAccount) : []),
@@ -377,7 +391,6 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
     toast('Dismissed from inbox');
   }, []);
 
-  // Service pack recommendations
   const recommendedPacks = useMemo<ScoredPack[]>(() => {
     if (!selectedAccount || !planGenerated) return [];
     return scoreServicePacks({
@@ -388,7 +401,6 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
     });
   }, [selectedAccount, engagementType, motion, planGenerated, inboxVersion]);
 
-  // Top play pack name
   const topPlayPackName = useMemo(() => {
     if (drivers.length === 0) return null;
     const plays = scorePlayPacks(PLAY_SERVICE_PACKS, {
@@ -406,7 +418,6 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
     toast.success(`Added ${signals.length} signal${signals.length > 1 ? 's' : ''} to Deal Plan`);
   }, [refresh, selectedAccount]);
 
-  // Handle play selected from Recommended Plays
   const handlePlaySelected = useCallback((play: { packId: string; packName: string; drivers: string[]; gaps: string[] }) => {
     if (!selectedAccount) return;
     const whatText = `Launch ${play.packName} to validate priority use cases and define a delivery scope.`;
@@ -440,19 +451,16 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
     }, 100);
   }, [selectedAccount, refresh, engagementType, motion]);
 
-  // Readiness score
   const readinessData = useMemo(() => {
     if (!selectedAccount) return null;
     return getReadinessScore(selectedAccount, drivers.length > 0);
   }, [selectedAccount, drivers.length]);
 
-  // Technical landscape
   const techLandscape = useMemo(() => {
     if (!selectedAccount) return null;
     return getTechLandscape(selectedAccount);
   }, [selectedAccount]);
 
-  // Hydrated plan
   const hydratedPlan = useMemo(() => {
     if (!selectedAccount) return null;
     return getHydratedPlan(selectedAccount) ?? null;
@@ -487,14 +495,12 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
     </div>
   );
 
-  // ============= PLAN INBOX (shared across tabs) =============
+  // ============= PLAN INBOX =============
   const planInbox = inboxItems.length > 0 ? (
     <div className="rounded-lg border border-border/50 bg-muted/10 p-3 space-y-2">
       <div className="flex items-center gap-2">
         <InboxIcon className="w-3.5 h-3.5 text-muted-foreground" />
-        <p className="text-[11px] font-semibold text-foreground">
-          Plan Inbox
-        </p>
+        <p className="text-[11px] font-semibold text-foreground">Plan Inbox</p>
         <span className="px-1.5 py-0.5 rounded-full bg-muted/60 text-muted-foreground text-[10px] font-bold">
           {inboxItems.length}
         </span>
@@ -537,6 +543,29 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
     </div>
   ) : null;
 
+  // ============= CONTEXT STRIP (compact Account Intelligence) =============
+  const contextStrip = onGoToAccountIntelligence && drivers.length > 0 ? (
+    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/20 border border-border/40">
+      <Zap className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+      <p className="text-[11px] text-muted-foreground flex-1">
+        <span className="font-medium text-foreground">Context:</span> {drivers.length} signal{drivers.length !== 1 ? 's' : ''} impacting this account
+      </p>
+      <button
+        onClick={onGoToAccountIntelligence}
+        className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+      >
+        Open Account Intelligence <ArrowRight className="w-3 h-3" />
+      </button>
+    </div>
+  ) : null;
+
+  // ============= TAB DEFINITIONS =============
+  const TABS: { key: ViewTab; label: string; icon: React.ReactNode }[] = [
+    { key: 'sales', label: 'Sales', icon: <Target className="w-3 h-3" /> },
+    { key: 'business', label: 'Business', icon: <Briefcase className="w-3 h-3" /> },
+    { key: 'technical', label: 'Technical', icon: <Wrench className="w-3 h-3" /> },
+  ];
+
   // ============= RETURN =============
   return (
     <div className="space-y-4">
@@ -547,36 +576,6 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
           Select or create an account to ground this plan.
         </p>
       )}
-
-      {/* Tab toggle */}
-      <div className="flex items-center justify-between">
-        <div className="inline-flex rounded-lg bg-muted/50 p-0.5 border border-border/60">
-          <button
-            onClick={() => setViewTab('commercial')}
-            className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all',
-              viewTab === 'commercial'
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            <Briefcase className="w-3 h-3" />
-            Commercial
-          </button>
-          <button
-            onClick={() => setViewTab('technical')}
-            className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all',
-              viewTab === 'technical'
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            <Wrench className="w-3 h-3" />
-            Technical
-          </button>
-        </div>
-      </div>
 
       {/* Generate Plan CTA */}
       {!planGenerated && (
@@ -610,39 +609,139 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
         {/* Left: Main workspace */}
         <div className="flex-1 min-w-0 space-y-4">
 
-          {/* ===== Plan Inbox (shared, subdued) ===== */}
-          {planInbox}
+          {/* ===== SHARED HERO: Recommended Plays ===== */}
+          <RecommendedPlaysPanel
+            accountId={selectedAccount}
+            promotedSignals={drivers}
+            engagementType={engagementType as 'new_logo' | 'existing_customer' | null}
+            motion={motion}
+            readinessScore={readinessData?.score}
+            weekOf={WEEK_OF}
+            onRefresh={refresh}
+            onRemoveSignal={handleRemove}
+            onOpenPicker={() => setShowPicker(true)}
+            showPicker={showPicker}
+            onPlaySelected={handlePlaySelected}
+            onGoToAccountIntelligence={onGoToAccountIntelligence}
+            pickerNode={
+              showPicker ? (
+                <SignalPickerPanel
+                  accountId={selectedAccount}
+                  weekOf={WEEK_OF}
+                  onClose={() => setShowPicker(false)}
+                  onChanged={refresh}
+                />
+              ) : null
+            }
+          />
 
-          {/* ===== COMMERCIAL TAB ===== */}
-          {viewTab === 'commercial' && (
+          {/* ===== Context strip (compact Account Intelligence) ===== */}
+          {contextStrip}
+
+          {/* ===== Tab toggle ===== */}
+          <div className="flex items-center justify-between">
+            <div className="inline-flex rounded-lg bg-muted/50 p-0.5 border border-border/60">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setViewTab(tab.key)}
+                  className={cn(
+                    'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all',
+                    viewTab === tab.key
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  {tab.icon}
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ===== SALES TAB ===== */}
+          {viewTab === 'sales' && (
             <div className="space-y-3">
-              {/* 1) HERO: Recommended Plays */}
-              <RecommendedPlaysPanel
-                accountId={selectedAccount}
-                promotedSignals={drivers}
-                engagementType={engagementType as 'new_logo' | 'existing_customer' | null}
-                motion={motion}
-                readinessScore={readinessData?.score}
-                weekOf={WEEK_OF}
-                onRefresh={refresh}
-                onRemoveSignal={handleRemove}
-                onOpenPicker={() => setShowPicker(true)}
-                showPicker={showPicker}
-                onPlaySelected={handlePlaySelected}
-                onGoToAccountIntelligence={onGoToAccountIntelligence}
-                pickerNode={
-                  showPicker ? (
-                    <SignalPickerPanel
-                      accountId={selectedAccount}
-                      weekOf={WEEK_OF}
-                      onClose={() => setShowPicker(false)}
-                      onChanged={refresh}
-                    />
-                  ) : null
-                }
-              />
+              {/* Next Recommended Action */}
+              <NextActionStrip readinessScore={readinessData?.score ?? null} />
 
-              {/* 2) Deal Strategy */}
+              {/* Stakeholders & Process */}
+              <CollapsibleSection title="Stakeholders & Process" subtitle="Political map and procurement pathway" defaultOpen={true}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <StakeholderRow role="Sponsor" icon={<Crown className="w-3 h-3" />} name={sponsor.name} notes={sponsor.notes} onChange={(n, no) => setSponsor({ name: n, notes: no })} />
+                  <StakeholderRow role="Champion" icon={<UserCheck className="w-3 h-3" />} name={champion.name} notes={champion.notes} onChange={(n, no) => setChampion({ name: n, notes: no })} />
+                  <StakeholderRow role="Blocker" icon={<UserX className="w-3 h-3" />} name={blocker.name} notes={blocker.notes} onChange={(n, no) => setBlocker({ name: n, notes: no })} />
+                  <StakeholderRow role="Procurement" icon={<ShoppingCart className="w-3 h-3" />} name={procurement.name} notes={procurement.notes} onChange={(n, no) => setProcurement({ name: n, notes: no })} />
+                </div>
+              </CollapsibleSection>
+
+              {/* Execution Motion */}
+              <CollapsibleSection title="Execution Motion" subtitle="Entry pack, pilot scope, and timeline" defaultOpen={true}>
+                <div className="space-y-3">
+                  <EditableBlock label="Recommended Entry Pack" icon={<Package className="w-3 h-3" />} value={entryPack} onChange={setEntryPack} placeholder="Which package or engagement model opens the door?" compact />
+                  <EditableBlock label="Pilot Scope" icon={<Target className="w-3 h-3" />} value={pilotScope} onChange={setPilotScope} placeholder="Define the initial pilot: users, scope, success criteria." compact />
+                  <EditableBlock label="Timeline Hypothesis" icon={<CalendarDays className="w-3 h-3" />} value={timeline} onChange={setTimeline} placeholder="Week-by-week execution plan." compact />
+                </div>
+              </CollapsibleSection>
+
+              {/* CRM Context */}
+              <CollapsibleSection title="CRM Context" subtitle="Recent engagement and vendor involvement" defaultOpen={false}>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="p-2.5 rounded-lg bg-muted/20 border border-border/40">
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                      <CalendarDays className="w-3 h-3" /> Last Meeting
+                    </p>
+                    <p className="text-xs text-foreground">{lastMeeting.split('—')[0]}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{lastMeeting.split('—')[1]}</p>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-muted/20 border border-border/40">
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                      <BarChart3 className="w-3 h-3" /> Engagement Score
+                    </p>
+                    <p className="text-xs font-bold text-foreground">72 / 100</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Active, multi-stakeholder</p>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-muted/20 border border-border/40">
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                      <Building2 className="w-3 h-3" /> Vendor Involvement
+                    </p>
+                    <p className="text-xs text-foreground">Microsoft CSA assigned</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Azure Swiss GA — Copilot preview pending</p>
+                  </div>
+                </div>
+              </CollapsibleSection>
+
+              {/* Plan Inbox */}
+              {planInbox}
+
+              {/* Risks & Blockers (Sales) */}
+              <CollapsibleSection title="Risks & Blockers" subtitle="Sales risks and deal blockers" defaultOpen={false}>
+                {hydratedPlan ? (
+                  <RisksBlockersSection
+                    risks={hydratedPlan.risks}
+                    focusId={selectedAccount}
+                    onRefresh={refresh}
+                  />
+                ) : aggregatedRisks.length > 0 ? (
+                  <div className="space-y-1.5">
+                    {aggregatedRisks.map((item, i) => (
+                      <div key={i} className="flex items-start gap-2 text-xs">
+                        <AlertTriangle className="w-3 h-3 text-destructive/60 mt-0.5 flex-shrink-0" />
+                        <p className="text-muted-foreground">{item}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground italic">No risks identified yet — add signals to surface gaps.</p>
+                )}
+              </CollapsibleSection>
+            </div>
+          )}
+
+          {/* ===== BUSINESS TAB ===== */}
+          {viewTab === 'business' && (
+            <div className="space-y-3">
+              {/* Deal Strategy */}
               <div ref={strategicFramingRef}>
                 <CollapsibleSection title="Deal Strategy" subtitle="Strategic framing and positioning" defaultOpen={true}>
                   <div className="space-y-3">
@@ -670,58 +769,28 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
                 </CollapsibleSection>
               </div>
 
-              {/* 3) Stakeholders & Process */}
-              <CollapsibleSection title="Stakeholders & Process" subtitle="Political map and procurement pathway" defaultOpen={true}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <StakeholderRow role="Sponsor" icon={<Crown className="w-3 h-3" />} name={sponsor.name} notes={sponsor.notes} onChange={(n, no) => setSponsor({ name: n, notes: no })} />
-                  <StakeholderRow role="Champion" icon={<UserCheck className="w-3 h-3" />} name={champion.name} notes={champion.notes} onChange={(n, no) => setChampion({ name: n, notes: no })} />
-                  <StakeholderRow role="Blocker" icon={<UserX className="w-3 h-3" />} name={blocker.name} notes={blocker.notes} onChange={(n, no) => setBlocker({ name: n, notes: no })} />
-                  <StakeholderRow role="Procurement" icon={<ShoppingCart className="w-3 h-3" />} name={procurement.name} notes={procurement.notes} onChange={(n, no) => setProcurement({ name: n, notes: no })} />
-                </div>
+              {/* Deal Hypothesis */}
+              <CollapsibleSection title="Deal Hypothesis" subtitle="Investment thesis and expected outcome" defaultOpen={true}>
+                {hydratedPlan ? (
+                  <DealHypothesisBlock hypothesis={hydratedPlan.dealHypothesis} />
+                ) : (
+                  <EmptyPlaceholder
+                    icon={<Lightbulb className="w-5 h-5" />}
+                    title="No hypothesis generated yet"
+                    description="Add a play to your plan to generate the deal hypothesis and commercial framing."
+                  />
+                )}
               </CollapsibleSection>
 
-              {/* 4) Commercial Path */}
-              <CollapsibleSection title="Commercial Path" subtitle="Execution motion, timeline, and CRM context" defaultOpen={false}>
-                <div className="space-y-4">
-                  <div className="space-y-3">
-                    <EditableBlock label="Recommended Entry Pack" icon={<Package className="w-3 h-3" />} value={entryPack} onChange={setEntryPack} placeholder="Which package or engagement model opens the door?" compact />
-                    <EditableBlock label="Pilot Scope" icon={<Target className="w-3 h-3" />} value={pilotScope} onChange={setPilotScope} placeholder="Define the initial pilot: users, scope, success criteria." compact />
-                    <EditableBlock label="Timeline Hypothesis" icon={<CalendarDays className="w-3 h-3" />} value={timeline} onChange={setTimeline} placeholder="Week-by-week execution plan." compact />
-                  </div>
-                  {/* CRM context */}
-                  <div className="border-t border-border/30 pt-3">
-                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">CRM Context</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      <div className="p-2.5 rounded-lg bg-muted/20 border border-border/40">
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
-                          <CalendarDays className="w-3 h-3" /> Last Meeting
-                        </p>
-                        <p className="text-xs text-foreground">{lastMeeting.split('—')[0]}</p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">{lastMeeting.split('—')[1]}</p>
-                      </div>
-                      <div className="p-2.5 rounded-lg bg-muted/20 border border-border/40">
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
-                          <BarChart3 className="w-3 h-3" /> Engagement Score
-                        </p>
-                        <p className="text-xs font-bold text-foreground">72 / 100</p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">Active, multi-stakeholder</p>
-                      </div>
-                      <div className="p-2.5 rounded-lg bg-muted/20 border border-border/40">
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
-                          <Building2 className="w-3 h-3" /> Vendor Involvement
-                        </p>
-                        <p className="text-xs text-foreground">Microsoft CSA assigned</p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">Azure Swiss GA — Copilot preview pending</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Deal Hypothesis if hydrated */}
-                  {hydratedPlan && (
-                    <DealHypothesisBlock hypothesis={hydratedPlan.dealHypothesis} />
-                  )}
-
-                  {/* What we need if hydrated */}
+              {/* Commercial Path */}
+              <CollapsibleSection title="Commercial Path" subtitle="Sizing, budget, and commercial pathway" defaultOpen={false}>
+                <div className="space-y-3">
+                  <EmptyPlaceholder
+                    icon={<DollarSign className="w-5 h-5" />}
+                    title="Sizing and budget"
+                    description="Deal sizing and budget framing will be generated based on play selection and account context."
+                  />
+                  {/* Evidence Checklist if hydrated */}
                   {hydratedPlan && (
                     <div className="border-t border-border/30 pt-3">
                       <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Evidence Checklist</p>
@@ -732,38 +801,35 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
                       />
                     </div>
                   )}
-
-                  {/* Execution Bundle if hydrated */}
-                  {hydratedPlan && (
-                    <div className="border-t border-border/30 pt-3">
-                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Execution Bundle</p>
-                      <ExecutionBundleSection assets={hydratedPlan.executionBundle} />
-                    </div>
-                  )}
                 </div>
               </CollapsibleSection>
 
-              {/* 5) Risks & Blockers (Commercial) */}
-              <CollapsibleSection title="Risks & Blockers" subtitle="Commercial risks and deal blockers" defaultOpen={false}>
-                {hydratedPlan ? (
-                  <RisksBlockersSection
-                    risks={hydratedPlan.risks}
-                    focusId={selectedAccount}
-                    onRefresh={refresh}
-                  />
-                ) : aggregatedRisks.length > 0 ? (
-                  <div className="space-y-1.5">
-                    {aggregatedRisks.map((item, i) => (
-                      <div key={i} className="flex items-start gap-2 text-xs">
-                        <AlertTriangle className="w-3 h-3 text-destructive/60 mt-0.5 flex-shrink-0" />
-                        <p className="text-muted-foreground">{item}</p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground italic">No risks identified yet — add signals to surface gaps.</p>
-                )}
+              {/* Commercial Assets */}
+              {hydratedPlan && (
+                <CollapsibleSection title="Commercial Assets" subtitle="Execution materials and deliverables" defaultOpen={false}>
+                  <ExecutionBundleSection assets={hydratedPlan.executionBundle} />
+                </CollapsibleSection>
+              )}
+
+              {/* Positioning */}
+              <CollapsibleSection title="Positioning" subtitle="Executive POV and talk tracks" defaultOpen={false}>
+                <EmptyPlaceholder
+                  icon={<MessageSquare className="w-5 h-5" />}
+                  title="Positioning framework"
+                  description="Executive point-of-view outline and stakeholder talk tracks will be generated from deal strategy and play selection."
+                />
               </CollapsibleSection>
+
+              {/* Cross-reference to Sales risks */}
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/10 border border-border/30">
+                <AlertTriangle className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                <p className="text-[10px] text-muted-foreground">
+                  Risks and blockers are tracked in the{' '}
+                  <button onClick={() => setViewTab('sales')} className="text-foreground underline underline-offset-2 decoration-border hover:decoration-foreground transition-colors">
+                    Sales
+                  </button> tab.
+                </p>
+              </div>
             </div>
           )}
 
@@ -895,6 +961,17 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
                   />
                 )}
               </CollapsibleSection>
+
+              {/* Cross-reference */}
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/10 border border-border/30">
+                <Briefcase className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                <p className="text-[10px] text-muted-foreground">
+                  Commercial sizing and ROI are tracked in the{' '}
+                  <button onClick={() => setViewTab('business')} className="text-foreground underline underline-offset-2 decoration-border hover:decoration-foreground transition-colors">
+                    Business
+                  </button> tab.
+                </p>
+              </div>
             </div>
           )}
         </div>
