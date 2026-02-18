@@ -3,7 +3,7 @@
 
 import { useState, useMemo } from 'react';
 import {
-  Sparkles, Plus, TrendingUp, Check, Info,
+  Sparkles, Plus, TrendingUp, Check,
   ChevronRight, ChevronDown, Trash2, Zap, Eye, EyeOff,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -15,9 +15,6 @@ import { addSelectedPack, getSelectedPacks, addContentRequest, getActivePlay } f
 import { getByFocusId as getInitiatives } from '@/data/partner/publicInitiativesStore';
 import { getByFocusId as getTrends } from '@/data/partner/industryAuthorityTrendsStore';
 import { Progress } from '@/components/ui/progress';
-import {
-  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
-} from '@/components/ui/tooltip';
 import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from '@/components/ui/collapsible';
@@ -202,9 +199,7 @@ export function RecommendedPlaysPanel({
             <p className="text-xs font-semibold text-foreground">Recommended Plays</p>
           </div>
           <p className="text-[11px] text-muted-foreground mt-0.5">
-            {promotedSignals.length === 0
-              ? 'Based on: Type/Motion · Account context (initiatives and industry trends). Add signals to refine.'
-              : 'Based on: Selected signals · Account context.'}
+            Account Intelligence–driven recommendations.
           </p>
         </div>
         <button
@@ -219,26 +214,10 @@ export function RecommendedPlaysPanel({
       {/* ===== Drivers Used Strip ===== */}
       <div className="flex items-center gap-3 text-[10px]">
         <span className="text-muted-foreground font-semibold uppercase tracking-wider">Drivers used:</span>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className={cn(
-                'font-medium inline-flex items-center gap-0.5',
-                promotedSignals.length > 0 ? 'text-foreground' : 'text-muted-foreground/50 cursor-help'
-              )}>
-                <Zap className="w-3 h-3" />
-                Signals: {promotedSignals.length}
-                {promotedSignals.length === 0 && <Info className="w-2.5 h-2.5 ml-0.5" />}
-              </span>
-            </TooltipTrigger>
-            {promotedSignals.length === 0 && (
-              <TooltipContent side="top" className="text-[10px]">
-                Add signals to increase precision.
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
+        <span className="text-muted-foreground font-medium">Signals: {promotedSignals.length}</span>
+        <span className="text-muted-foreground font-medium">·</span>
         <span className="text-muted-foreground font-medium">Initiatives: {initiativesTitles.length}</span>
+        <span className="text-muted-foreground font-medium">·</span>
         <span className="text-muted-foreground font-medium">Trends: {trendsTitles.length}</span>
       </div>
 
@@ -258,7 +237,10 @@ export function RecommendedPlaysPanel({
         /* ===== Play Cards ===== */
         <div className="space-y-3">
           <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-            Recommended Entry Plays Based on Current Readiness
+            Recommended Plays
+          </p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">
+            Top entry plays for this account.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 auto-rows-[1fr]">
           {scoredPlays.map((play) => {
