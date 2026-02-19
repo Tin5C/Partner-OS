@@ -326,6 +326,7 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
   const [commercialTab, setCommercialTab] = useState<CommercialTab>('licenses');
   const [techTab, setTechTab] = useState<TechTab>('vendors');
   const [expandedEvidence, setExpandedEvidence] = useState<EvidenceCategory | null>(null);
+  const [expandedEvidenceItemId, setExpandedEvidenceItemId] = useState<string | null>(null);
   
   const [expandedInitiative, setExpandedInitiative] = useState<string | null>(null);
   const [expandedTrend, setExpandedTrend] = useState<string | null>(null);
@@ -989,7 +990,7 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
           {/* Evidence categories */}
           <div className="space-y-2">
             {EVIDENCE_CATEGORIES.map((cat) => {
-              const isExpanded = expandedEvidence === cat.value;
+              const isCatExpanded = expandedEvidence === cat.value;
               const catItems = inbox.filter((item) => {
                 const t = item.type;
                 if (cat.value === 'security') return false;
@@ -1001,27 +1002,108 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
               return (
                 <div key={cat.value} className="rounded-lg border border-border/30 overflow-hidden">
                   <button
-                    onClick={() => setExpandedEvidence(isExpanded ? null : cat.value)}
+                    onClick={() => setExpandedEvidence(isCatExpanded ? null : cat.value)}
                     className="w-full flex items-center gap-2 p-2.5 text-left hover:bg-muted/20 transition-colors"
                   >
                     <span className="text-muted-foreground/60">{cat.icon}</span>
                     <span className="text-xs font-medium text-foreground flex-1">{cat.label}</span>
                     <span className="text-[10px] text-muted-foreground/50">{catItems.length}</span>
-                    <ChevronDown className={cn("w-3 h-3 text-muted-foreground/40 transition-transform", isExpanded && "rotate-180")} />
+                    <ChevronDown className={cn("w-3 h-3 text-muted-foreground/40 transition-transform", isCatExpanded && "rotate-180")} />
                   </button>
-                  {isExpanded && (
-                    <div className="px-2.5 pb-2.5 space-y-1">
-                      {catItems.length > 0 ? catItems.map((item) => (
-                        <div key={item.id} className="flex items-center gap-2 py-1.5 px-2 rounded bg-muted/10 text-xs">
-                          <FileText className="w-3 h-3 text-muted-foreground/40 flex-shrink-0" />
-                          <span className="text-foreground truncate">{item.title}</span>
-                          <span className="text-[10px] text-muted-foreground/50 flex-shrink-0">{item.type.replace(/_/g, ' ')}</span>
-                        </div>
-                      )) : (
-                        <p className="text-[10px] text-muted-foreground/50 py-1">No items in this category.</p>
-                      )}
+                  <div className={cn(
+                    "grid transition-all duration-200 ease-in-out",
+                    isCatExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                  )}>
+                    <div className="overflow-hidden">
+                      <div className="px-2.5 pb-2.5 space-y-1">
+                        {catItems.length > 0 ? catItems.map((item) => {
+                          const isItemExpanded = expandedEvidenceItemId === item.id;
+                          const summary = item.content_text
+                            ? item.content_text.split('\n').find((l) => l.trim())?.slice(0, 140) || ''
+                            : '';
+                          return (
+                            <div key={item.id} className="rounded-md border border-border/20 overflow-hidden transition-colors hover:border-border/50">
+                              <button
+                                type="button"
+                                onClick={() => setExpandedEvidenceItemId(isItemExpanded ? null : item.id)}
+                                className="w-full flex items-center gap-2 p-2 text-left cursor-pointer group"
+                              >
+                                <FileText className="w-3 h-3 text-muted-foreground/40 flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[11px] font-medium text-foreground truncate">{item.title}</p>
+                                  {summary && !isItemExpanded && (
+                                    <p className="text-[10px] text-muted-foreground/70 truncate mt-0.5">{summary}…</p>
+                                  )}
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <span className="text-[9px] text-muted-foreground">{item.type.replace(/_/g, ' ')}</span>
+                                    <span className="text-[9px] text-muted-foreground/60">
+                                      {new Date(item.created_at).toLocaleDateString()}
+                                    </span>
+                                    {item.tags?.map((tag) => (
+                                      <span key={tag} className="text-[8px] px-1 py-px rounded bg-muted/40 text-muted-foreground">{tag}</span>
+                                    ))}
+                                  </div>
+                                </div>
+                                <ChevronRight className={cn(
+                                  'w-3 h-3 text-muted-foreground/40 flex-shrink-0 transition-transform duration-150',
+                                  isItemExpanded && 'rotate-90'
+                                )} />
+                              </button>
+                              <div className={cn(
+                                'grid transition-all duration-200 ease-in-out',
+                                isItemExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                              )}>
+                                <div className="overflow-hidden">
+                                  <div className="px-2 pb-2 space-y-2">
+                                    {item.content_text && (
+                                      <div className="max-h-48 overflow-y-auto rounded-md bg-muted/20 p-2">
+                                        <p className="text-[10px] text-foreground/90 whitespace-pre-wrap leading-relaxed">
+                                          {item.content_text}
+                                        </p>
+                                      </div>
+                                    )}
+                                    <div className="flex flex-wrap gap-1.5 pt-1">
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); toast.info('Promote to Driver — coming soon'); }}
+                                        className="flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-medium text-primary/80 hover:bg-primary/10 transition-colors"
+                                      >
+                                        <ArrowUpRight className="w-3 h-3" />
+                                        Promote to Driver
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          const inboxId = makeInboxItemId(focusId!, 'initiative', item.id);
+                                          addItem(focusId!, {
+                                            id: inboxId,
+                                            focusId: focusId!,
+                                            source_type: 'initiative',
+                                            source_id: item.id,
+                                            title: item.title,
+                                            why_now: `Evidence: ${item.type.replace(/_/g, ' ')}`,
+                                            impact_area: deriveImpactArea(item.type),
+                                            tags: item.tags ?? [],
+                                            created_at: new Date().toISOString(),
+                                          });
+                                          toast.success('Added to Deal Plan');
+                                        }}
+                                        className="flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-medium text-muted-foreground hover:bg-muted/30 transition-colors"
+                                      >
+                                        <BookOpen className="w-3 h-3" />
+                                        Add to Deal Plan
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        }) : (
+                          <p className="text-[10px] text-muted-foreground/50 py-1">No items in this category.</p>
+                        )}
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               );
             })}
