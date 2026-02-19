@@ -9,6 +9,8 @@
 
 import type { AccountIntelligenceVM, SignalHistoryItem } from './contract';
 import { resolveCanonicalMeta } from '@/services/ids';
+// Ensure demo seed data is loaded before any reads
+import '@/data/partner/demo/helioworksSeed';
 import { getByFocusId as getSnapshot } from '@/data/partner/accountSnapshotStore';
 import { getByFocusId as getCommercial } from '@/data/partner/commercialFootprintStore';
 import { getByFocusId as getTechnical } from '@/data/partner/technicalLandscapeStore';
