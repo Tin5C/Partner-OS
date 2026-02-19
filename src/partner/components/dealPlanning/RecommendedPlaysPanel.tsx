@@ -362,7 +362,7 @@ export function RecommendedPlaysPanel({
                   {(isAdded || isActivePlan) ? (
                     <button
                       onClick={() => handleRemoveFromPlan(play)}
-                      className="h-9 px-3 rounded text-[11px] font-medium whitespace-nowrap transition-colors border border-destructive/30 text-destructive hover:bg-destructive/10"
+                      className="h-9 px-3 rounded text-[11px] font-medium whitespace-nowrap transition-colors border border-border text-muted-foreground hover:text-foreground hover:bg-muted/30"
                     >
                       Remove from Plan
                     </button>
