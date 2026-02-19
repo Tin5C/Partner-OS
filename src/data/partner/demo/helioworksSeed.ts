@@ -350,6 +350,37 @@ Opportunity:
     tags: ['transcript', 'application-owner', 'field-service', 'integration'],
     scope_id: null,
   });
+
+  addMemoryItem({
+    account_id: 'schindler',
+    type: 'architecture_diagram',
+    title: 'Architecture sketch — AI-ready data platform (draft)',
+    content_text: `Draft target architecture (conceptual)
+
+Layers
+1) Sources: ERP, CRM, IoT telemetry, field service apps (incl. Dispatch Hub)
+2) Ingestion: batch + streaming; prefer event-driven publishing for operational systems
+3) Storage: lakehouse with curated domain data products
+4) Governance: catalog + lineage + policy enforcement + data contracts
+5) Serving: semantic layer + APIs; controlled ML/feature access patterns
+6) Consumption: BI, advanced analytics, ML training, operational insights
+
+Operating model
+- Federated domain teams ship data products
+- Central guardrails: identity, access policy, audit logging, contract templates
+
+Known gaps / blockers
+- Dataset inventory + ownership mapping not complete
+- Standard event/data contracts (naming + definitions) missing
+- Identity + entitlement model inconsistent across regions
+- Access approvals are manual; needs automation workflow
+
+Suggested pilots
+- Pilot A: 3 governed datasets with standardized onboarding (catalog + lineage + policy)
+- Pilot B: Dispatch Hub event stream (JobCreated/Assigned/Completed) with contract + security review`,
+    tags: ['technology', 'architecture', 'data-platform', 'governance', 'lakehouse'],
+    scope_id: null,
+  });
 }
 
 // Auto-seed on import
