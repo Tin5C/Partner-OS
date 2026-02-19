@@ -299,7 +299,7 @@ export function seedHelioWorksDemo(): void {
   // ── F) Evidence & Memory (Transcripts) ──
   addMemoryItem({
     account_id: 'schindler',
-    type: 'transcript_notes',
+    type: 'architecture_diagram',
     title: 'Transcript — Head of Data: AI-ready data platform',
     content_text: `Discovery call with Head of Data.
 
@@ -325,7 +325,7 @@ Next steps discussed:
 
   addMemoryItem({
     account_id: 'schindler',
-    type: 'transcript_notes',
+    type: 'architecture_diagram',
     title: 'Transcript — Application Owner: Service Dispatch Hub',
     content_text: `Call with Application Owner of "Service Dispatch Hub"
 (Field technician scheduling application)
