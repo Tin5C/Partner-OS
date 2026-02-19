@@ -21,6 +21,9 @@ export interface ExtractorRun {
   rawText: string;
   createdAt: string;
   meta?: ExtractorRunMeta;
+  // Prompt lineage (Phase 1 — optional, additive)
+  promptId?: string;
+  promptVersion?: string;
 }
 
 // ============= In-memory store =============

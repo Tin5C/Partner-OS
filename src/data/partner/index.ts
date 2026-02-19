@@ -40,6 +40,9 @@ export * from './weeklySignalStore';
 export * from './briefingTaxonomy';
 export * from './briefingSelectionStore';
 
+// Prompt Catalog (Phase 1 — governance metadata only)
+export * from './promptCatalog';
+
 // HelioWorks demo seed (auto-runs on import)
 import './demo/helioworksSeed';
 
