@@ -93,6 +93,9 @@ import { buildComposerInputBusiness } from '@/services/partner/dealPlanning/buil
 import { getActiveSignalIds } from '@/partner/data/dealPlanning/activeSignalsStore';
 import { getByFocusId as getTechLandscape } from '@/data/partner/technicalLandscapeStore';
 import { CollapsibleSection } from '@/components/shared/CollapsibleSection';
+import { getBusinessPlayPackage, getAvailableVariants, type BusinessVariant } from '@/data/partner/businessPlayPackageStore';
+import '@/data/partner/demo/businessPlayPackagesSeed';
+import { BusinessPlayPackageView } from '@/partner/components/dealPlanning/BusinessPlayPackageView';
 
 const WEEK_OF = '2026-02-10';
 
@@ -372,6 +375,7 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
 
   const [planGenerated, setPlanGenerated] = useState(false);
   const [composerFallbackJson, setComposerFallbackJson] = useState<string | null>(null);
+  const [businessVariant, setBusinessVariant] = useState<BusinessVariant>('executive');
   const canGenerate = selectedAccount !== null && engagementType !== null && motion !== null;
 
   const [inboxVersion, setInboxVersion] = useState(0);
@@ -744,84 +748,116 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
           {/* ===== BUSINESS TAB ===== */}
           {viewTab === 'business' && (
             <div className="space-y-3">
-              {/* Deal Strategy */}
-              <div ref={strategicFramingRef}>
-                <CollapsibleSection title="Deal Strategy" subtitle="Strategic framing and positioning" defaultOpen={true}>
-                  <div className="space-y-3">
-                    <StrategicFramingSection
-                      promotedSignals={drivers}
-                      topPackName={topPlayPackName}
-                      activePlayFraming={selectedAccount ? getActivePlay(selectedAccount)?.framing ?? null : null}
+              {(() => {
+                const activePlay = selectedAccount ? getActivePlay(selectedAccount) : null;
+                const lookupParams = {
+                  focusId: selectedAccount ?? '',
+                  playId: activePlay?.playId ?? '',
+                  type: engagementType ?? '',
+                  motion: motion ?? '',
+                };
+                const variants = getAvailableVariants(lookupParams);
+                const effectiveVariant = variants.includes(businessVariant)
+                  ? businessVariant
+                  : variants[0] ?? null;
+                const pkg = effectiveVariant
+                  ? getBusinessPlayPackage({ ...lookupParams, variant: effectiveVariant })
+                  : null;
+
+                if (pkg && effectiveVariant) {
+                  return (
+                    <BusinessPlayPackageView
+                      pkg={pkg}
+                      availableVariants={variants}
+                      activeVariant={effectiveVariant}
+                      onVariantChange={setBusinessVariant}
                     />
-                    <button
-                      onClick={() => setShowStrategicDetails(!showStrategicDetails)}
-                      className="flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {showStrategicDetails ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                      Details
-                    </button>
-                    {showStrategicDetails && (
-                      <div className="space-y-3 pt-1 border-t border-border/30">
-                        <EditableBlock label="Why Now" icon={<Clock className="w-3 h-3" />} value={whyNow} onChange={setWhyNow} placeholder="What creates urgency for this deal right now?" compact />
-                        <EditableBlock label="Wedge" icon={<Target className="w-3 h-3" />} value={wedge} onChange={setWedge} placeholder="What's our differentiated entry point?" compact />
-                        <EditableBlock label="Competitive Pressure" icon={<Swords className="w-3 h-3" />} value={competitivePressure} onChange={setCompetitivePressure} placeholder="Key competitive dynamics to navigate." compact />
-                        <EditableBlock label="Executive Framing" icon={<Crown className="w-3 h-3" />} value={execFraming} onChange={setExecFraming} placeholder="How should we frame this to the C-suite?" compact />
-                      </div>
-                    )}
-                  </div>
-                </CollapsibleSection>
-              </div>
+                  );
+                }
 
-              {/* Deal Hypothesis */}
-              <CollapsibleSection title="Deal Hypothesis" subtitle="Investment thesis and expected outcome" defaultOpen={true}>
-                {hydratedPlan ? (
-                  <DealHypothesisBlock hypothesis={hydratedPlan.dealHypothesis} />
-                ) : (
-                  <EmptyPlaceholder
-                    icon={<Lightbulb className="w-5 h-5" />}
-                    title="No hypothesis generated yet"
-                    description="Add a play to your plan to generate the deal hypothesis and commercial framing."
-                  />
-                )}
-              </CollapsibleSection>
-
-              {/* Commercial Path */}
-              <CollapsibleSection title="Commercial Path" subtitle="Sizing, budget, and commercial pathway" defaultOpen={false}>
-                <div className="space-y-3">
-                  <EmptyPlaceholder
-                    icon={<DollarSign className="w-5 h-5" />}
-                    title="Sizing and budget"
-                    description="Deal sizing and budget framing will be generated based on play selection and account context."
-                  />
-                  {/* Evidence Checklist if hydrated */}
-                  {hydratedPlan && (
-                    <div className="border-t border-border/30 pt-3">
-                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Evidence Checklist</p>
-                      <WhatWeNeedSection
-                        items={hydratedPlan.checklist}
-                        focusId={selectedAccount}
-                        onRefresh={refresh}
-                      />
+                // Fallback: existing editable sections when no package is materialized
+                return (
+                  <>
+                    {/* Deal Strategy */}
+                    <div ref={strategicFramingRef}>
+                      <CollapsibleSection title="Deal Strategy" subtitle="Strategic framing and positioning" defaultOpen={true}>
+                        <div className="space-y-3">
+                          <StrategicFramingSection
+                            promotedSignals={drivers}
+                            topPackName={topPlayPackName}
+                            activePlayFraming={selectedAccount ? getActivePlay(selectedAccount)?.framing ?? null : null}
+                          />
+                          <button
+                            onClick={() => setShowStrategicDetails(!showStrategicDetails)}
+                            className="flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            {showStrategicDetails ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                            Details
+                          </button>
+                          {showStrategicDetails && (
+                            <div className="space-y-3 pt-1 border-t border-border/30">
+                              <EditableBlock label="Why Now" icon={<Clock className="w-3 h-3" />} value={whyNow} onChange={setWhyNow} placeholder="What creates urgency for this deal right now?" compact />
+                              <EditableBlock label="Wedge" icon={<Target className="w-3 h-3" />} value={wedge} onChange={setWedge} placeholder="What's our differentiated entry point?" compact />
+                              <EditableBlock label="Competitive Pressure" icon={<Swords className="w-3 h-3" />} value={competitivePressure} onChange={setCompetitivePressure} placeholder="Key competitive dynamics to navigate." compact />
+                              <EditableBlock label="Executive Framing" icon={<Crown className="w-3 h-3" />} value={execFraming} onChange={setExecFraming} placeholder="How should we frame this to the C-suite?" compact />
+                            </div>
+                          )}
+                        </div>
+                      </CollapsibleSection>
                     </div>
-                  )}
-                </div>
-              </CollapsibleSection>
 
-              {/* Commercial Assets */}
-              {hydratedPlan && (
-                <CollapsibleSection title="Commercial Assets" subtitle="Execution materials and deliverables" defaultOpen={false}>
-                  <ExecutionBundleSection assets={hydratedPlan.executionBundle} />
-                </CollapsibleSection>
-              )}
+                    {/* Deal Hypothesis */}
+                    <CollapsibleSection title="Deal Hypothesis" subtitle="Investment thesis and expected outcome" defaultOpen={true}>
+                      {hydratedPlan ? (
+                        <DealHypothesisBlock hypothesis={hydratedPlan.dealHypothesis} />
+                      ) : (
+                        <EmptyPlaceholder
+                          icon={<Lightbulb className="w-5 h-5" />}
+                          title="No hypothesis generated yet"
+                          description="Add a play to your plan to generate the deal hypothesis and commercial framing."
+                        />
+                      )}
+                    </CollapsibleSection>
 
-              {/* Positioning */}
-              <CollapsibleSection title="Positioning" subtitle="Executive POV and talk tracks" defaultOpen={false}>
-                <EmptyPlaceholder
-                  icon={<MessageSquare className="w-5 h-5" />}
-                  title="Positioning framework"
-                  description="Executive point-of-view outline and stakeholder talk tracks will be generated from deal strategy and play selection."
-                />
-              </CollapsibleSection>
+                    {/* Commercial Path */}
+                    <CollapsibleSection title="Commercial Path" subtitle="Sizing, budget, and commercial pathway" defaultOpen={false}>
+                      <div className="space-y-3">
+                        <EmptyPlaceholder
+                          icon={<DollarSign className="w-5 h-5" />}
+                          title="Sizing and budget"
+                          description="Deal sizing and budget framing will be generated based on play selection and account context."
+                        />
+                        {hydratedPlan && (
+                          <div className="border-t border-border/30 pt-3">
+                            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Evidence Checklist</p>
+                            <WhatWeNeedSection
+                              items={hydratedPlan.checklist}
+                              focusId={selectedAccount}
+                              onRefresh={refresh}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </CollapsibleSection>
+
+                    {/* Commercial Assets */}
+                    {hydratedPlan && (
+                      <CollapsibleSection title="Commercial Assets" subtitle="Execution materials and deliverables" defaultOpen={false}>
+                        <ExecutionBundleSection assets={hydratedPlan.executionBundle} />
+                      </CollapsibleSection>
+                    )}
+
+                    {/* Positioning */}
+                    <CollapsibleSection title="Positioning" subtitle="Executive POV and talk tracks" defaultOpen={false}>
+                      <EmptyPlaceholder
+                        icon={<MessageSquare className="w-5 h-5" />}
+                        title="Positioning framework"
+                        description="Executive point-of-view outline and stakeholder talk tracks will be generated from deal strategy and play selection."
+                      />
+                    </CollapsibleSection>
+                  </>
+                );
+              })()}
 
               {/* Copy Composer Input */}
               {selectedAccount && (
