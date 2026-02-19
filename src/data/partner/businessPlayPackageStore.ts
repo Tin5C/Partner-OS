@@ -51,6 +51,7 @@ export interface EnablementBlock {
 }
 
 export interface BusinessBlock {
+  signal_citation_ids?: string[];
   deal_strategy: {
     what: string;
     how: string[];
