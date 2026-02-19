@@ -25,6 +25,9 @@ import {
   Filter,
   CheckSquare,
   Square,
+  ChevronRight,
+  ArrowUpRight,
+  BookOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -161,6 +164,7 @@ export function AccountInbox({ accountId, onSignalPicker }: AccountInboxProps) {
 
   // Delete confirm
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
 
   // Drag state
   const [dragOver, setDragOver] = useState(false);
@@ -626,60 +630,89 @@ export function AccountInbox({ accountId, onSignalPicker }: AccountInboxProps) {
           <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
             Items ({filteredItems.length}{filterType ? ` of ${items.length}` : ''})
           </p>
-          {filteredItems.map((item) => (
-            <div key={item.id} className="flex items-center gap-2 p-1.5 rounded-md hover:bg-muted/20 group">
-              <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
-                {TYPE_ICONS[item.type]}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-medium text-foreground truncate">{item.title}</p>
-                <div className="flex items-center gap-2">
-                  <span className="text-[9px] text-muted-foreground">
-                    {MEMORY_TYPE_OPTIONS.find((o) => o.value === item.type)?.label ?? item.type}
-                  </span>
-                  <span className="text-[9px] text-muted-foreground/60">
-                    {new Date(item.created_at).toLocaleDateString()}
-                  </span>
+          {filteredItems.map((item) => {
+            const isExpanded = expandedItemId === item.id;
+            const summary = item.content_text
+              ? item.content_text.split('\n').find((l) => l.trim())?.slice(0, 140) || ''
+              : '';
+            return (
+              <div key={item.id} className="rounded-lg border border-border/40 overflow-hidden transition-colors hover:border-border/70">
+                {/* Collapsed row — clickable */}
+                <button
+                  type="button"
+                  onClick={() => setExpandedItemId(isExpanded ? null : item.id)}
+                  className="w-full flex items-center gap-2 p-2 text-left cursor-pointer group"
+                >
+                  <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                    {TYPE_ICONS[item.type]}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-medium text-foreground truncate">{item.title}</p>
+                    {summary && !isExpanded && (
+                      <p className="text-[10px] text-muted-foreground/80 truncate mt-0.5">{summary}…</p>
+                    )}
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[9px] text-muted-foreground">
+                        {MEMORY_TYPE_OPTIONS.find((o) => o.value === item.type)?.label ?? item.type}
+                      </span>
+                      <span className="text-[9px] text-muted-foreground/60">
+                        {new Date(item.created_at).toLocaleDateString()}
+                      </span>
+                      {item.tags?.map((tag) => (
+                        <span key={tag} className="text-[8px] px-1 py-px rounded bg-muted/40 text-muted-foreground">{tag}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <ChevronRight className={cn(
+                    'w-3.5 h-3.5 text-muted-foreground/50 flex-shrink-0 transition-transform duration-200',
+                    isExpanded && 'rotate-90'
+                  )} />
+                </button>
+
+                {/* Expanded content */}
+                <div className={cn(
+                  'grid transition-all duration-200 ease-in-out',
+                  isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                )}>
+                  <div className="overflow-hidden">
+                    <div className="px-2 pb-2 space-y-2">
+                      {item.content_text && (
+                        <div className="max-h-48 overflow-y-auto rounded-md bg-muted/20 p-2">
+                          <p className="text-[10px] text-foreground/90 whitespace-pre-wrap leading-relaxed">
+                            {item.content_text}
+                          </p>
+                        </div>
+                      )}
+                      {/* Action buttons */}
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
+                          className="flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-medium text-destructive/80 hover:bg-destructive/10 transition-colors"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          Remove from Deal
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toast.info('Promote to Driver — coming soon'); }}
+                          className="flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-medium text-primary/80 hover:bg-primary/10 transition-colors"
+                        >
+                          <ArrowUpRight className="w-3 h-3" />
+                          Promote to Driver
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toast.info('Open in Account Intelligence — coming soon'); }}
+                          className="flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-medium text-muted-foreground hover:bg-muted/30 transition-colors"
+                        >
+                          <BookOpen className="w-3 h-3" />
+                          Open in Intelligence
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-              {/* Quick actions */}
-              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                {(item.url || item.file_url) && (
-                  <>
-                    <button
-                      onClick={() => handleOpen(item)}
-                      className="p-0.5 rounded text-muted-foreground/50 hover:text-primary transition-colors"
-                      title="Open"
-                    >
-                      <ExternalLink className="w-3 h-3" />
-                    </button>
-                    <button
-                      onClick={() => handleCopyUrl(item)}
-                      className="p-0.5 rounded text-muted-foreground/50 hover:text-primary transition-colors"
-                      title="Copy link"
-                    >
-                      <Copy className="w-3 h-3" />
-                    </button>
-                  </>
-                )}
-                {deleteConfirmId === item.id ? (
-                  <button
-                    onClick={() => handleDelete(item.id)}
-                    className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
-                  >
-                    Confirm
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => setDeleteConfirmId(item.id)}
-                    className="p-0.5 rounded text-muted-foreground/30 hover:text-destructive transition-colors"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
