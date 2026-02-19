@@ -13,6 +13,10 @@ export interface GeneratedDraft {
   ttlDays: 7;
   promotedToStoryId?: string;
   promotedToDealPlanningId?: string;
+  // Prompt lineage (Phase 1 — optional, additive)
+  promptId?: string;
+  promptVersion?: string;
+  promptHash?: string;
 }
 
 let idCounter = 0;
