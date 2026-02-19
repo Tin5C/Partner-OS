@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { PromotedSignal } from '@/data/partner/dealPlanStore';
 import { scorePlayPacks, type PropensityInput, type ScoredPlay } from '@/partner/lib/dealPlanning/propensity';
-import { addSelectedPack, getSelectedPacks, addContentRequest, getActivePlay } from '@/partner/data/dealPlanning/selectedPackStore';
+import { addSelectedPack, removeSelectedPack, getSelectedPacks, addContentRequest, getActivePlay, clearActivePlay } from '@/partner/data/dealPlanning/selectedPackStore';
 import { getByFocusId as getInitiatives } from '@/data/partner/publicInitiativesStore';
 import { getByFocusId as getTrends } from '@/data/partner/industryAuthorityTrendsStore';
 import { getActiveSignalIds } from '@/partner/data/dealPlanning/activeSignalsStore';
@@ -166,6 +166,15 @@ export function RecommendedPlaysPanel({
       gaps: play.gaps,
     });
     toast.success(`"${play.packName}" added to plan`);
+    onRefresh?.();
+  };
+
+  const handleRemoveFromPlan = (play: ScoredPlay) => {
+    removeSelectedPack(accountId, play.packId);
+    if (activePlay?.playId === play.packId) {
+      clearActivePlay(accountId);
+    }
+    toast.success(`"${play.packName}" removed from plan`);
     onRefresh?.();
   };
 
@@ -350,18 +359,21 @@ export function RecommendedPlaysPanel({
                 </div>
 
                 <div className="flex items-center gap-3 pt-3 mt-auto">
-                  <button
-                    onClick={() => handleAddToPlan(play)}
-                    disabled={isAdded || isActivePlan}
-                    className={cn(
-                      'h-9 px-3 rounded text-[11px] font-medium whitespace-nowrap transition-colors',
-                      (isAdded || isActivePlan)
-                        ? 'bg-secondary text-secondary-foreground cursor-default'
-                        : 'bg-primary text-primary-foreground hover:bg-primary/90'
-                    )}
-                  >
-                    {isActivePlan ? 'In Plan' : isAdded ? 'Added' : 'Add to Plan'}
-                  </button>
+                  {(isAdded || isActivePlan) ? (
+                    <button
+                      onClick={() => handleRemoveFromPlan(play)}
+                      className="h-9 px-3 rounded text-[11px] font-medium whitespace-nowrap transition-colors border border-destructive/30 text-destructive hover:bg-destructive/10"
+                    >
+                      Remove from Plan
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleAddToPlan(play)}
+                      className="h-9 px-3 rounded text-[11px] font-medium whitespace-nowrap transition-colors bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
+                      Add to Plan
+                    </button>
+                  )}
                   <button
                     onClick={() => setReadinessPlay(play)}
                     className="h-9 px-3 rounded text-[11px] font-medium whitespace-nowrap border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
