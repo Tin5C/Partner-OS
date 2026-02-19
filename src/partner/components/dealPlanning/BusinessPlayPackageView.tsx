@@ -273,6 +273,23 @@ export function BusinessPlayPackageView({ pkg, availableVariants, activeVariant,
           ))}
         </ul>
       </CollapsibleSection>
+
+      {/* Signal Citations — only when present */}
+      {b.signal_citation_ids && b.signal_citation_ids.length > 0 && (
+        <div className="pt-1">
+          <p className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider mb-1.5">Signal Citations</p>
+          <div className="flex flex-wrap gap-1.5">
+            {b.signal_citation_ids.map((id) => (
+              <span
+                key={id}
+                className="inline-flex items-center px-2 py-0.5 rounded bg-muted/30 border border-border/40 text-[10px] font-mono text-muted-foreground"
+              >
+                {id}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
