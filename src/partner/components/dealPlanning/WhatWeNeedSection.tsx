@@ -14,7 +14,7 @@ const GATE_LABELS: Record<string, string> = {
   procurement_commercial: 'Procurement & Commercial',
 };
 
-const GATE_ORDER = ['security_compliance', 'technical_readiness', 'business_value', 'procurement_commercial'];
+const GATE_ORDER = ['business_value', 'technical_readiness', 'security_compliance', 'procurement_commercial'];
 
 const STATUS_STYLES: Record<NeedStatus, { label: string; icon: React.ReactNode; cls: string }> = {
   missing: { label: 'Missing', icon: <AlertCircle className="w-3 h-3" />, cls: 'text-amber-600 bg-amber-500/10 border-amber-500/20' },
