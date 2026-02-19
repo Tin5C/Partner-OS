@@ -89,6 +89,8 @@ import { ExecutionBundleSection } from '@/partner/components/dealPlanning/Execut
 import { DealHypothesisBlock } from '@/partner/components/dealPlanning/DealHypothesisBlock';
 import { RisksBlockersSection } from '@/partner/components/dealPlanning/RisksBlockersSection';
 import { getReadinessScore } from '@/data/partner/accountMemoryStore';
+import { buildComposerInputBusiness } from '@/services/partner/dealPlanning/buildComposerInputBusiness';
+import { getActiveSignalIds } from '@/partner/data/dealPlanning/activeSignalsStore';
 import { getByFocusId as getTechLandscape } from '@/data/partner/technicalLandscapeStore';
 import { CollapsibleSection } from '@/components/shared/CollapsibleSection';
 
@@ -369,6 +371,7 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
   }, [drivers]);
 
   const [planGenerated, setPlanGenerated] = useState(false);
+  const [composerFallbackJson, setComposerFallbackJson] = useState<string | null>(null);
   const canGenerate = selectedAccount !== null && engagementType !== null && motion !== null;
 
   const [inboxVersion, setInboxVersion] = useState(0);
@@ -819,6 +822,65 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
                   description="Executive point-of-view outline and stakeholder talk tracks will be generated from deal strategy and play selection."
                 />
               </CollapsibleSection>
+
+              {/* Copy Composer Input */}
+              {selectedAccount && (
+                <div className="flex justify-end pt-1">
+                  <button
+                    onClick={async () => {
+                      const activePlay = getActivePlay(selectedAccount);
+                      const input = buildComposerInputBusiness({
+                        focusId: selectedAccount,
+                        playId: activePlay?.playId ?? '',
+                        type: engagementType ?? '',
+                        motion: motion ?? '',
+                        activeSignalIds: getActiveSignalIds(selectedAccount),
+                      });
+                      const json = JSON.stringify(input, null, 2);
+                      try {
+                        await navigator.clipboard.writeText(json);
+                        toast.success('Composer input copied');
+                      } catch {
+                        setComposerFallbackJson(json);
+                      }
+                    }}
+                    className="h-8 px-3 rounded text-[11px] font-medium whitespace-nowrap transition-colors border border-border text-muted-foreground hover:text-foreground hover:bg-muted/30 flex items-center gap-1.5"
+                  >
+                    <Copy className="w-3 h-3" />
+                    Copy Composer Input
+                  </button>
+                </div>
+              )}
+
+              {/* Composer Fallback Modal */}
+              {composerFallbackJson && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setComposerFallbackJson(null)}>
+                  <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-lg mx-4 p-4 space-y-3" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold text-foreground">Composer Input</p>
+                      <button onClick={() => setComposerFallbackJson(null)} className="text-muted-foreground hover:text-foreground">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <pre className="text-[10px] text-muted-foreground bg-muted/20 border border-border rounded-lg p-3 max-h-80 overflow-auto whitespace-pre-wrap break-words">
+                      {composerFallbackJson}
+                    </pre>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(composerFallbackJson);
+                          toast.success('Copied');
+                          setComposerFallbackJson(null);
+                        } catch { /* ignore */ }
+                      }}
+                      className="h-8 px-3 rounded text-[11px] font-medium border border-border text-muted-foreground hover:text-foreground hover:bg-muted/30 flex items-center gap-1.5"
+                    >
+                      <Copy className="w-3 h-3" />
+                      Copy
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Cross-reference to Sales risks */}
               <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/10 border border-border/30">
