@@ -7,6 +7,7 @@ import { createAccountSignal, type AccountSignal } from '../accountSignalStore';
 import { createObjection, type Objection } from '../objectionStore';
 import { createBriefingArtifact, type BriefingArtifactRecord } from '../briefingArtifactStore';
 import { createEngagementSignal, type EngagementSignal } from '../engagementStore';
+import { addMemoryItem } from '../accountMemoryStore';
 
 const ORG = 'demo_helioworks';
 const ACCT = 'acct_schindler';
@@ -293,6 +294,61 @@ export function seedHelioWorksDemo(): void {
     body_text: 'PLACEHOLDER: paste objection briefing here',
     tags: ['objections', 'audit', 'security'],
     account_id: ACCT,
+  });
+
+  // ── F) Evidence & Memory (Transcripts) ──
+  addMemoryItem({
+    account_id: 'schindler',
+    type: 'transcript_notes',
+    title: 'Transcript — Head of Data: AI-ready data platform',
+    content_text: `Discovery call with Head of Data.
+
+Key statements:
+- "AI-ready means trusted data, clear ownership, and fast access."
+- Governance is inconsistent across domains.
+- No unified data inventory.
+- Access approvals slow down AI experimentation.
+- Desire for federated data products with central guardrails.
+- Need lineage, catalog, policy automation.
+
+Primary blockers:
+- Manual governance processes
+- No standard onboarding workflow
+- Lack of reference architecture
+
+Next steps discussed:
+- Architecture workshop
+- Pilot domains for governed dataset onboarding`,
+    tags: ['transcript', 'head-of-data', 'governance', 'ai-ready'],
+    scope_id: null,
+  });
+
+  addMemoryItem({
+    account_id: 'schindler',
+    type: 'transcript_notes',
+    title: 'Transcript — Application Owner: Service Dispatch Hub',
+    content_text: `Call with Application Owner of "Service Dispatch Hub"
+(Field technician scheduling application)
+
+Key statements:
+- App is mission-critical for field operations.
+- Integrations are brittle (point-to-point with ERP).
+- Data extracts used for reporting; no governed event stream.
+- Desire for event-driven publishing (JobCreated, JobCompleted).
+- Predictive scheduling blocked by inconsistent data quality.
+- Security approvals slow integration exposure.
+
+Pain points:
+- No standardized integration contracts
+- Regional data inconsistencies
+- Identity fragmentation
+
+Opportunity:
+- Event-driven architecture
+- Shared data contracts
+- Governance alignment with central data platform`,
+    tags: ['transcript', 'application-owner', 'field-service', 'integration'],
+    scope_id: null,
   });
 }
 
