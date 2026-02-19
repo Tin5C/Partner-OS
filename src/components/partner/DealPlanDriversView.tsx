@@ -3,7 +3,7 @@
 // Business: investment justification (strategy, hypothesis, commercial path, evidence, positioning)
 // Technical: feasibility & delivery (requirements, architecture, delivery, technical risks)
 
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import {
   Brain,
   Zap,
@@ -96,6 +96,8 @@ import { CollapsibleSection } from '@/components/shared/CollapsibleSection';
 import { getBusinessPlayPackage, getAvailableVariants, type BusinessVariant } from '@/data/partner/businessPlayPackageStore';
 import '@/data/partner/demo/businessPlayPackagesSeed';
 import { BusinessPlayPackageView } from '@/partner/components/dealPlanning/BusinessPlayPackageView';
+import { ensureSchindlerDefaults } from '@/data/partner/demo/schindlerDefaults';
+import { getDealPlanningSelection } from '@/data/partner/dealPlanningSelectionStore';
 
 const WEEK_OF = '2026-02-10';
 
@@ -310,6 +312,9 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
   const refresh = useCallback(() => forceUpdate((n) => n + 1), []);
   const strategicFramingRef = useRef<HTMLDivElement>(null);
 
+  // Bootstrap Schindler defaults once per session
+  useEffect(() => { ensureSchindlerDefaults(); }, []);
+
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
 
   const plan = useMemo(
@@ -323,6 +328,16 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
 
   const [engagementType, setEngagementType] = useState<EngagementType | null>(null);
   const [motion, setMotion] = useState<Motion | null>(null);
+
+  // Apply preselected type/motion when account changes
+  useEffect(() => {
+    if (!selectedAccount) return;
+    const sel = getDealPlanningSelection(selectedAccount);
+    if (sel) {
+      setEngagementType(sel.type as EngagementType);
+      setMotion(sel.motion as Motion);
+    }
+  }, [selectedAccount]);
 
   // Strategic Framing details
   const [showStrategicDetails, setShowStrategicDetails] = useState(false);
