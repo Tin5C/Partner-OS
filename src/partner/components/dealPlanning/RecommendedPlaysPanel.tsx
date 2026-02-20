@@ -307,12 +307,13 @@ export function RecommendedPlaysPanel({
             <p className="text-[10px] font-medium text-muted-foreground text-center">Options for this trend</p>
           )}
           {/* ===== Inline loader ===== */}
-          {showLoader && (
-            <div className="flex items-center justify-center gap-2 h-7">
-              <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-              <span className="text-[10px] text-muted-foreground">Loading recommendations…</span>
+          {showLoader ? (
+            <div className="flex flex-col items-center justify-center gap-2 py-12" style={{ minHeight: 180 }}>
+              <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              <span className="text-[11px] text-muted-foreground">Loading recommendations…</span>
             </div>
-          )}
+          ) : (
+          <>
           {/* ===== Bar Chart ===== */}
           <div className="flex justify-center items-end gap-6 pt-2 pb-1" style={{ minHeight: 180 }}>
             {scoredPlays.map((play, idx) => {
@@ -458,6 +459,8 @@ export function RecommendedPlaysPanel({
                 })()}
               </div>
             </div>
+          )}
+          </>
           )}
         </>
       )}
