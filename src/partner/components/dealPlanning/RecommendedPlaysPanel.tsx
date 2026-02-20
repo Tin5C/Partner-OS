@@ -1,10 +1,9 @@
-// RecommendedPlaysPanel — unified Recommended Plays + Promoted Drivers section
-// Partner-only, non-breaking
+// RecommendedPlaysPanel — vertical bar chart Recommended Plays
+// Partner-only, non-breaking. Scoring/propensity logic unchanged.
 
 import { useState, useMemo } from 'react';
 import {
-  Sparkles, TrendingUp, Check,
-  ChevronRight, ChevronDown, Trash2, Zap,
+  Sparkles, TrendingUp, ChevronRight, ChevronDown, Trash2, Zap, Info,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -17,10 +16,12 @@ import { getActiveSignalIds } from '@/partner/data/dealPlanning/activeSignalsSto
 import { getActiveInitiativeIds } from '@/partner/data/dealPlanning/activeInitiativesStore';
 import { getActiveTrendIds } from '@/partner/data/dealPlanning/activeTrendsStore';
 import { buildSignalPool } from '@/partner/data/dealPlanning/signalPool';
-import { Progress } from '@/components/ui/progress';
 import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import {
+  Popover, PopoverTrigger, PopoverContent,
+} from '@/components/ui/popover';
 import { ReadinessAssessmentPanel } from './ReadinessAssessmentPanel';
 import { ScoreBreakdownPanel } from './ScoreBreakdownPanel';
 import { PLAY_SERVICE_PACKS } from '@/partner/data/dealPlanning/servicePacks';
@@ -34,6 +35,14 @@ const TYPE_COLORS: Record<string, string> = {
   competitive: 'bg-red-500/10 text-red-600 border-red-500/20',
   localMarket: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
 };
+
+// ============= Bar Color Palette =============
+
+const BAR_COLORS = [
+  'bg-primary',
+  'bg-primary/70',
+  'bg-primary/45',
+];
 
 // ============= Props =============
 
@@ -72,6 +81,7 @@ export function RecommendedPlaysPanel({
 }: RecommendedPlaysPanelProps) {
   const [driversOpen, setDriversOpen] = useState(false);
   const [readinessPlay, setReadinessPlay] = useState<ScoredPlay | null>(null);
+  const [selectedPlayId, setSelectedPlayId] = useState<string | null>(null);
 
   // Active signals from the picker store
   const activeSignalIds = useMemo(() => getActiveSignalIds(accountId), [accountId, promotedSignals, showPicker]);
@@ -83,7 +93,7 @@ export function RecommendedPlaysPanel({
 
   // Build promoted signals from active signal IDs by looking up in pool
   const activeAsPromoted = useMemo((): PromotedSignal[] => {
-    if (activeSignalCount === 0) return promotedSignals; // fallback to legacy
+    if (activeSignalCount === 0) return promotedSignals;
     const pool = buildSignalPool(accountId, weekOf);
     return activeSignalIds.map((id) => {
       const found = pool.find((p) => p.id === id);
@@ -108,10 +118,9 @@ export function RecommendedPlaysPanel({
     });
   }, [activeSignalIds, accountId, weekOf, promotedSignals]);
 
-  // Use active signals for scoring if any selected, otherwise fall back to legacy promoted
   const signalsForScoring = activeSignalCount > 0 ? activeAsPromoted : promotedSignals;
 
-  // Read canonical stores — full lists
+  // Read canonical stores
   const allInitiativesTitles = useMemo(() => {
     const rec = getInitiatives(accountId);
     return rec?.public_it_initiatives ?? [];
@@ -122,7 +131,6 @@ export function RecommendedPlaysPanel({
     return pack?.trends ?? [];
   }, [accountId]);
 
-  // Narrow initiatives/trends based on user selection (empty = use all)
   const initiativesTitlesForScoring = useMemo(() => {
     if (activeInitiativeIds.length > 0) {
       const selectedSet = new Set(activeInitiativeIds);
@@ -139,7 +147,7 @@ export function RecommendedPlaysPanel({
     return allTrendsTitles.map((t) => t.trend_title);
   }, [allTrendsTitles, activeTrendIds]);
 
-  // Score plays
+  // Score plays — logic unchanged
   const scoredPlays = useMemo(() => {
     const input: PropensityInput = {
       promotedSignals: signalsForScoring,
@@ -156,6 +164,10 @@ export function RecommendedPlaysPanel({
   const selectedPacks = useMemo(() => getSelectedPacks(accountId), [accountId, scoredPlays]);
   const activePlay = useMemo(() => getActivePlay(accountId), [accountId, scoredPlays]);
   const hasNoContext = signalsForScoring.length === 0 && allInitiativesTitles.length === 0 && allTrendsTitles.length === 0;
+
+  // Default-select top-ranked play
+  const effectiveSelectedId = selectedPlayId ?? scoredPlays[0]?.packId ?? null;
+  const selectedPlay = scoredPlays.find((p) => p.packId === effectiveSelectedId) ?? null;
 
   const handleAddToPlan = (play: ScoredPlay) => {
     addSelectedPack(accountId, play.packId);
@@ -178,84 +190,71 @@ export function RecommendedPlaysPanel({
     onRefresh?.();
   };
 
-  const confidenceLabel = (c: 'High' | 'Medium' | 'Low') => c;
-
-  // Display signal count: active signals if using picker, else legacy promoted
+  // Display counts
   const displaySignalCount = activeSignalCount > 0 ? activeSignalCount : promotedSignals.length;
+  const initiativeSummary = activeInitiativeIds.length > 0 ? `${activeInitiativeIds.length}/3` : 'All';
+  const trendSummary = activeTrendIds.length > 0 ? `${activeTrendIds.length}/3` : 'All';
 
-  // Drivers summary labels
-  const initiativeSummary = activeInitiativeIds.length > 0
-    ? `${activeInitiativeIds.length}/3`
-    : 'All';
-  const trendSummary = activeTrendIds.length > 0
-    ? `${activeTrendIds.length}/3`
-    : 'All';
+  // Max fit score for bar height normalisation
+  const maxFit = Math.max(...scoredPlays.map((p) => p.engagementFitPct), 1);
 
   return (
-    <div className="rounded-xl border border-primary/15 bg-primary/[0.02] p-4 space-y-3">
-      {/* ===== Header Row ===== */}
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <p className="text-xs font-semibold text-foreground">Recommended Plays</p>
-          </div>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
-            Account Intelligence-driven recommendations.
-          </p>
+    <div className="rounded-xl border border-primary/15 bg-primary/[0.02] p-4 space-y-4">
+      {/* ===== Header ===== */}
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-primary" />
+          <p className="text-xs font-semibold text-foreground">Recommended approach</p>
         </div>
-        <button
-          onClick={onOpenPicker}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] font-medium border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors flex-shrink-0"
-        >
-          Select drivers
-        </button>
-      </div>
 
-      {/* ===== Drivers Used Summary ===== */}
-      <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-        <span className="font-semibold uppercase tracking-wider text-muted-foreground">Drivers used</span>
-        <span>Signals: {displaySignalCount}/3</span>
-        <span className="text-border">|</span>
-        <span>Initiatives: {initiativeSummary}</span>
-        <span className="text-border">|</span>
-        <span>Trends: {trendSummary}</span>
-        {onGoToAccountIntelligence && (
-          <>
-            <span className="text-border">|</span>
-            <button
-              onClick={onGoToAccountIntelligence}
-              className="text-[10px] text-muted-foreground hover:text-foreground underline underline-offset-2 decoration-border hover:decoration-foreground transition-colors"
-            >
-              Browse in Account Intelligence
+        <Popover>
+          <PopoverTrigger asChild>
+            <button className="text-[11px] text-muted-foreground hover:text-foreground transition-colors underline-offset-2 underline decoration-border hover:decoration-foreground">
+              Based on Account Intelligence (Signals: {displaySignalCount}/3 selected)
             </button>
-          </>
-        )}
-      </div>
+          </PopoverTrigger>
+          <PopoverContent className="w-72 p-3 space-y-3" align="start">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Selected drivers</p>
 
-      {/* ===== Selected Drivers Chips ===== */}
-      {activeSignalIds.length > 0 && (
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mr-1">
-            Selected signals
-          </span>
-          {(() => {
-            const pool = buildSignalPool(accountId, weekOf);
-            return activeSignalIds.map((id) => {
-              const found = pool.find((p) => p.id === id);
-              return (
-                <span
-                  key={id}
-                  className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border border-border/60 bg-muted/30 text-foreground truncate max-w-[180px]"
-                  title={found?.title ?? id}
-                >
-                  {found?.title ?? id}
-                </span>
-              );
-            });
-          })()}
-        </div>
-      )}
+            {/* Signal chips */}
+            <div className="space-y-1">
+              <p className="text-[10px] text-muted-foreground">Signals: {displaySignalCount}/3</p>
+              {activeSignalIds.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {(() => {
+                    const pool = buildSignalPool(accountId, weekOf);
+                    return activeSignalIds.map((id) => {
+                      const found = pool.find((p) => p.id === id);
+                      return (
+                        <span
+                          key={id}
+                          className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border border-border/60 bg-muted/30 text-foreground truncate max-w-[200px]"
+                          title={found?.title ?? id}
+                        >
+                          {found?.title ?? id}
+                        </span>
+                      );
+                    });
+                  })()}
+                </div>
+              )}
+            </div>
+
+            {/* Initiative / trend counts */}
+            <div className="space-y-0.5 text-[10px] text-muted-foreground">
+              <p>Initiatives: {initiativeSummary}</p>
+              <p>Trends: {trendSummary}</p>
+            </div>
+
+            <button
+              onClick={onOpenPicker}
+              className="w-full text-center text-[11px] font-medium text-primary hover:text-primary/80 transition-colors pt-1 border-t border-border/40"
+            >
+              Adjust drivers
+            </button>
+          </PopoverContent>
+        </Popover>
+      </div>
 
       {/* ===== Inline Signal Picker ===== */}
       {showPicker && pickerNode && (
@@ -270,122 +269,127 @@ export function RecommendedPlaysPanel({
           </p>
         </div>
       ) : (
-        /* ===== Play Cards ===== */
-        <div className="space-y-3">
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-            Recommended Plays
-          </p>
-          <p className="text-[10px] text-muted-foreground mt-0.5">
-            Top entry plays for this account.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 auto-rows-[1fr]">
-          {scoredPlays.map((play) => {
-            const isAdded = selectedPacks.includes(play.packId);
-            const isActivePlan = activePlay?.playId === play.packId;
-            const gapCount = play.gaps.length;
-            return (
-              <div
-                key={play.packId}
-                className="rounded border border-border/60 bg-card p-3.5 flex flex-col"
-              >
-                {/* Content area */}
-                <div className="flex-1 space-y-3">
-                  <p className="text-xs font-semibold text-foreground leading-snug">{play.packName}</p>
+        <>
+          {/* ===== Bar Chart ===== */}
+          <div className="flex justify-center items-end gap-6 pt-2 pb-1" style={{ minHeight: 180 }}>
+            {scoredPlays.map((play, idx) => {
+              const isSelected = play.packId === effectiveSelectedId;
+              const isAdded = selectedPacks.includes(play.packId);
+              const isActivePlan = activePlay?.playId === play.packId;
+              const barHeight = Math.max(Math.round((play.engagementFitPct / maxFit) * 140), 28);
 
-                  <div className="space-y-1.5">
-                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Fit Score</p>
-                    <Progress value={play.engagementFitPct} className="h-1 bg-secondary" />
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-medium text-foreground">
-                        {play.engagementFitPct}% · {confidenceLabel(play.confidence)}
-                      </span>
-                    </div>
-                    {gapCount > 0 && (
-                      <p className="text-[10px] text-muted-foreground">
-                        {gapCount} readiness gap{gapCount !== 1 ? 's' : ''} identified
-                      </p>
+              return (
+                <button
+                  key={play.packId}
+                  onClick={() => setSelectedPlayId(play.packId)}
+                  className={cn(
+                    'flex flex-col items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg px-1 py-1 transition-all',
+                    isSelected && 'scale-[1.03]',
+                  )}
+                  aria-pressed={isSelected}
+                  aria-label={`Select ${play.packName}`}
+                >
+                  {/* Score label */}
+                  <span className={cn(
+                    'text-[11px] font-semibold tabular-nums',
+                    isSelected ? 'text-foreground' : 'text-muted-foreground',
+                  )}>
+                    {play.engagementFitPct}%
+                  </span>
+
+                  {/* Bar */}
+                  <div
+                    className={cn(
+                      'w-14 rounded-t-md transition-all',
+                      BAR_COLORS[idx] ?? 'bg-primary/30',
+                      isSelected ? 'ring-2 ring-primary/40 ring-offset-1 ring-offset-background' : 'opacity-70',
                     )}
-                  </div>
+                    style={{ height: barHeight }}
+                  />
 
-                  {play.drivers.length > 0 && (
-                    <div>
-                      <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1 mb-1">
-                        <TrendingUp className="w-2.5 h-2.5" /> Why this play
-                      </p>
-                      <div className="space-y-0.5">
-                        {play.drivers.map((d, i) => (
-                          <p key={i} className="text-[10px] text-muted-foreground flex items-start gap-1">
-                            <span className="text-primary/60 mt-px">·</span> {d}
-                          </p>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  {/* Label */}
+                  <span className={cn(
+                    'text-[10px] text-center leading-tight max-w-[80px]',
+                    isSelected ? 'font-semibold text-foreground' : 'text-muted-foreground',
+                  )}>
+                    {play.packName}
+                  </span>
 
-                  {play.gaps.length > 0 && (
-                    <div>
-                      <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                        Readiness Gaps
-                      </p>
-                      <p className="text-[10px] text-muted-foreground leading-snug">
-                        {play.gaps.join(' · ')}
-                      </p>
-                    </div>
-                  )}
-
-                  {(() => {
-                    const packDef = PLAY_SERVICE_PACKS.find((p) => p.id === play.packId);
-                    if (!packDef) return null;
-                    return (
-                      <ScoreBreakdownPanel
-                        play={play}
-                        packTags={packDef.tags}
-                        packBias={packDef.bias}
-                        packMotionFit={packDef.motionFit}
-                        packPrerequisites={packDef.prerequisites}
-                        promotedSignals={signalsForScoring}
-                        engagementType={engagementType}
-                        motion={motion}
-                        readinessScore={readinessScore}
-                        initiatives={initiativesTitlesForScoring}
-                        trends={trendsTitlesForScoring}
-                        allInitiativeCount={allInitiativesTitles.length}
-                        allTrendCount={allTrendsTitles.length}
-                        selectedInitiativeCount={activeInitiativeIds.length}
-                        selectedTrendCount={activeTrendIds.length}
-                      />
-                    );
-                  })()}
-                </div>
-
-                <div className="flex items-center gap-3 pt-3 mt-auto">
+                  {/* CTA */}
                   {(isAdded || isActivePlan) ? (
-                    <button
-                      onClick={() => handleRemoveFromPlan(play)}
-                      className="h-9 px-3 rounded text-[11px] font-medium whitespace-nowrap transition-colors border border-border text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => { e.stopPropagation(); handleRemoveFromPlan(play); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); handleRemoveFromPlan(play); } }}
+                      className="text-[10px] font-medium text-muted-foreground hover:text-foreground border border-border rounded px-2 py-0.5 whitespace-nowrap transition-colors cursor-pointer"
                     >
                       Remove from Plan
-                    </button>
+                    </span>
                   ) : (
-                    <button
-                      onClick={() => handleAddToPlan(play)}
-                      className="h-9 px-3 rounded text-[11px] font-medium whitespace-nowrap transition-colors bg-primary text-primary-foreground hover:bg-primary/90"
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => { e.stopPropagation(); handleAddToPlan(play); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); handleAddToPlan(play); } }}
+                      className="text-[10px] font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded px-2 py-0.5 whitespace-nowrap transition-colors cursor-pointer"
                     >
                       Add to Plan
-                    </button>
+                    </span>
                   )}
-                  <button
-                    onClick={() => setReadinessPlay(play)}
-                    className="h-9 px-3 rounded text-[11px] font-medium whitespace-nowrap border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
-                  >
-                    Review Readiness
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+                </button>
+              );
+            })}
           </div>
-        </div>
+
+          {/* ===== Selected Play Summary ===== */}
+          {selectedPlay && (
+            <div className="border-t border-border/40 pt-3 space-y-2">
+              <p className="text-xs font-semibold text-foreground">{selectedPlay.packName}</p>
+              <p className="text-[11px] text-muted-foreground">
+                {selectedPlay.drivers.length} signal{selectedPlay.drivers.length !== 1 ? 's' : ''}
+                {' · '}
+                {trendsTitlesForScoring.length} trend{trendsTitlesForScoring.length !== 1 ? 's' : ''}
+                {' · '}
+                {selectedPlay.gaps.length} gap{selectedPlay.gaps.length !== 1 ? 's' : ''}
+              </p>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setReadinessPlay(selectedPlay)}
+                  className="text-[10px] text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
+                >
+                  Review Readiness
+                </button>
+
+                {/* Inline Explain Score */}
+                {(() => {
+                  const packDef = PLAY_SERVICE_PACKS.find((p) => p.id === selectedPlay.packId);
+                  if (!packDef) return null;
+                  return (
+                    <ScoreBreakdownPanel
+                      play={selectedPlay}
+                      packTags={packDef.tags}
+                      packBias={packDef.bias}
+                      packMotionFit={packDef.motionFit}
+                      packPrerequisites={packDef.prerequisites}
+                      promotedSignals={signalsForScoring}
+                      engagementType={engagementType}
+                      motion={motion}
+                      readinessScore={readinessScore}
+                      initiatives={initiativesTitlesForScoring}
+                      trends={trendsTitlesForScoring}
+                      allInitiativeCount={allInitiativesTitles.length}
+                      allTrendCount={allTrendsTitles.length}
+                      selectedInitiativeCount={activeInitiativeIds.length}
+                      selectedTrendCount={activeTrendIds.length}
+                    />
+                  );
+                })()}
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* ===== Collapsible Selected Drivers ===== */}
