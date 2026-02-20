@@ -512,6 +512,7 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
           onEngagementTypeChange={setEngagementType}
           motion={motion}
           onMotionChange={setMotion}
+          showNextAdds={false}
         />
       </div>
     </div>
@@ -627,8 +628,8 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
 
       {/* Plan workspace */}
       {planGenerated && (<>
-      <div className="flex gap-4">
-        {/* Left: Main workspace */}
+      <div className="space-y-4">
+        {/* Main workspace (full-width — right rail removed) */}
         <div className="flex-1 min-w-0 space-y-4">
 
           {/* ===== SHARED HERO: Recommended Plays ===== */}
@@ -1089,15 +1090,6 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
           )}
         </div>
 
-        {/* Right: Customer Evidence */}
-        <div className="w-72 flex-shrink-0 hidden lg:block">
-          <div className="sticky top-4">
-            <AccountInbox
-              accountId={selectedAccount}
-              onSignalPicker={() => setShowPicker(true)}
-            />
-          </div>
-        </div>
       </div>
       </>)}
     </div>

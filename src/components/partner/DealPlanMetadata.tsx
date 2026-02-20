@@ -81,6 +81,8 @@ interface DealPlanMetadataProps {
   onEngagementTypeChange: (type: EngagementType | null) => void;
   motion: Motion | null;
   onMotionChange: (motion: Motion | null) => void;
+  /** Hide "Next Best Adds" yellow pills (default true) */
+  showNextAdds?: boolean;
 }
 
 export function DealPlanMetadata({
@@ -90,6 +92,7 @@ export function DealPlanMetadata({
   onEngagementTypeChange,
   motion,
   onMotionChange,
+  showNextAdds = true,
 }: DealPlanMetadataProps) {
   const { score, pillars } = useMemo(
     () => getReadinessScore(accountId, hasPromotedSignals),
@@ -158,7 +161,7 @@ export function DealPlanMetadata({
       </span>
 
       {/* Next Best Adds — render below the row via parent flex-wrap */}
-      {nextAdds.length > 0 && (
+      {showNextAdds && nextAdds.length > 0 && (
         <div className="flex flex-wrap gap-1.5 w-full">
           {nextAdds.map((add, i) => (
             <span
