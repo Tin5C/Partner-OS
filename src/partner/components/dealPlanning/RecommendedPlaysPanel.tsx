@@ -370,12 +370,6 @@ export function RecommendedPlaysPanel({
               <span className="font-medium text-foreground">Inputs:</span>{' '}
               Signals {displaySignalCount}/3 · Evidence {evidenceCount} · Initiatives {initiativeSummary} · Trends {trendSummary}
             </p>
-            <button
-              onClick={() => { setReviewTab('signals'); setShowReviewDrawer(true); }}
-              className="text-[10px] font-medium text-primary hover:text-primary/80 transition-colors whitespace-nowrap underline underline-offset-2"
-            >
-              Review &amp; edit inputs
-            </button>
           </div>
         );
       })()}
