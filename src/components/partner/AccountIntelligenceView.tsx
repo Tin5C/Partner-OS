@@ -31,6 +31,7 @@ import {
   makeInboxItemId,
   deriveImpactArea,
 } from '@/data/partner/dealPlanningInboxStore';
+import { setDealPlanTrigger } from '@/data/partner/dealPlanTrigger';
 
 interface AccountIntelligenceViewProps {
   focusId: string | null;
@@ -777,21 +778,43 @@ export function AccountIntelligenceView({ focusId, onGoToDealPlanning }: Account
                   isExpanded={expandedTrend === t.id}
                   onToggle={() => setExpandedTrend((prev) => prev === t.id ? null : t.id)}
                   dealPlanAction={
-                    <UseDealPlanButton onClick={() => {
-                      if (!focusId) return;
-                      addItem(focusId, {
-                        id: makeInboxItemId(focusId, 'trend', t.id),
-                        focusId,
-                        source_type: 'trend',
-                        source_id: t.id,
-                        title: t.trend_title,
-                        why_now: t.thesis_summary.slice(0, 160),
-                        impact_area: deriveImpactArea(t.applied_to_focus?.why_it_matters ?? 'other'),
-                        tags: [t.confidence],
-                        created_at: new Date().toISOString(),
-                      });
-                      toast.success('Added to Deal Planning Inbox');
-                    }} />
+                    <div className="flex items-center gap-1">
+                      <UseDealPlanButton onClick={() => {
+                        if (!focusId) return;
+                        addItem(focusId, {
+                          id: makeInboxItemId(focusId, 'trend', t.id),
+                          focusId,
+                          source_type: 'trend',
+                          source_id: t.id,
+                          title: t.trend_title,
+                          why_now: t.thesis_summary.slice(0, 160),
+                          impact_area: deriveImpactArea(t.applied_to_focus?.why_it_matters ?? 'other'),
+                          tags: [t.confidence],
+                          created_at: new Date().toISOString(),
+                        });
+                        toast.success('Added to Deal Planning Inbox');
+                      }} />
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!focusId) return;
+                          setDealPlanTrigger({
+                            signalId: t.id,
+                            customer: focusId,
+                            signalTitle: t.trend_title,
+                            focusId,
+                            entry: 'ai_trend',
+                            trendId: t.id,
+                            trendTitle: t.trend_title,
+                          });
+                          onGoToDealPlanning?.();
+                        }}
+                        className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-primary hover:text-primary-foreground hover:bg-primary border border-primary/20 hover:border-primary transition-colors flex-shrink-0"
+                      >
+                        <TrendingUp className="w-3 h-3" />
+                        Plan from this trend
+                      </button>
+                    </div>
                   }
                 >
                   <div className="pt-2 space-y-2">
