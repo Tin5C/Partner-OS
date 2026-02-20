@@ -1,7 +1,7 @@
 // RecommendedPlaysPanel — vertical bar chart Recommended Plays
 // Partner-only, non-breaking. Scoring/propensity logic unchanged.
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   Sparkles, TrendingUp, ChevronRight, ChevronDown, Trash2, Zap, Info,
   X, Upload, FileText, Link2, Plus,
@@ -94,6 +94,12 @@ export function RecommendedPlaysPanel({
   onClearTrendFocus,
 }: RecommendedPlaysPanelProps) {
   const [driversOpen, setDriversOpen] = useState(false);
+  // Inline loader on mount
+  const [showLoader, setShowLoader] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setShowLoader(false), 1200);
+    return () => clearTimeout(t);
+  }, []);
   const [readinessPlay, setReadinessPlay] = useState<ScoredPlay | null>(null);
   const [selectedPlayId, setSelectedPlayId] = useState<string | null>(null);
   const [showReviewDrawer, setShowReviewDrawer] = useState(false);
@@ -299,6 +305,13 @@ export function RecommendedPlaysPanel({
         <>
           {focusTrend && (
             <p className="text-[10px] font-medium text-muted-foreground text-center">Options for this trend</p>
+          )}
+          {/* ===== Inline loader ===== */}
+          {showLoader && (
+            <div className="flex items-center justify-center gap-2 h-7">
+              <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              <span className="text-[10px] text-muted-foreground">Loading recommendations…</span>
+            </div>
           )}
           {/* ===== Bar Chart ===== */}
           <div className="flex justify-center items-end gap-6 pt-2 pb-1" style={{ minHeight: 180 }}>
