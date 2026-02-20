@@ -661,6 +661,12 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
           {/* ===== Context strip (compact Account Intelligence) ===== */}
           {contextStrip}
 
+          {/* ===== Plan workspace section boundary ===== */}
+          <div className="border-t border-border/40 pt-4 mt-2 space-y-1">
+            <p className="text-sm font-semibold text-foreground">Plan workspace</p>
+            <p className="text-[11px] text-muted-foreground">Operational planning for the selected account.</p>
+          </div>
+
           {/* ===== Tab toggle ===== */}
           <div className="flex items-center justify-between">
             <div className="inline-flex rounded-lg bg-muted/50 p-0.5 border border-border/60">
@@ -685,8 +691,7 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
           {/* ===== SALES TAB ===== */}
           {viewTab === 'sales' && (
             <div className="space-y-3">
-              {/* Next Recommended Action */}
-              <NextActionStrip readinessScore={readinessData?.score ?? null} />
+              {/* (Next action strip removed — single entry via Edit input sources) */}
 
               {/* Stakeholders & Process */}
               <CollapsibleSection title="Stakeholders & Process" subtitle="Political map and procurement pathway" defaultOpen={true}>
