@@ -324,20 +324,20 @@ export function RecommendedPlaysPanel({
               </p>
 
               <p className="text-[11px] text-muted-foreground italic">
-                <span className="font-medium text-foreground not-italic">Recommendation:</span>{' '}
+                <span className="font-medium text-foreground not-italic">Outcome:</span>{' '}
                 {(() => {
                   const RECO_MAP: Record<string, string> = {
-                    play_finops: 'Lead with a FinOps-for-AI entry to establish cost visibility and governance guardrails, then expand into broader AI workloads.',
-                    play_governance: 'Start with an AI governance operating model (RACI + guardrails) to de-risk compliance and accelerate scale.',
-                    play_managed_ops: 'Stabilize cloud operations to reduce risk and free capacity before expanding AI initiatives.',
-                    play_discovery: 'Open with an AI discovery sprint to identify high-value use cases and build executive alignment.',
-                    play_copilot_adoption: 'Accelerate Copilot adoption to demonstrate quick wins and build momentum for broader AI investment.',
-                    play_rag_prototype: 'Prove value with a secure RAG prototype that connects enterprise data to AI, then scale across business units.',
-                    play_data_modernization: 'Modernize the data platform to unlock AI-readiness and reduce integration complexity.',
-                    play_competitive_takeout: 'Lead a competitive displacement sprint to capture share while the incumbent is vulnerable.',
+                    play_finops: 'Schindler gains predictable AI spend, clear usage guardrails, and executive accountability—creating the confidence to scale higher-value AI workloads.',
+                    play_governance: 'Schindler establishes decision rights, controls, and audit-ready governance—removing compliance friction and enabling safe AI scale across teams.',
+                    play_managed_ops: 'Schindler stabilizes cloud operations and reduces incident risk—freeing capacity and budget headroom to accelerate the next wave of AI initiatives.',
+                    play_discovery: 'Schindler identifies high-value AI use cases with executive alignment—building the business case to move from exploration to funded initiatives.',
+                    play_copilot_adoption: 'Schindler accelerates productivity gains across teams—demonstrating measurable ROI that justifies broader AI investment.',
+                    play_rag_prototype: 'Schindler connects enterprise data to AI in a secure, governed prototype—proving value before committing to full-scale deployment.',
+                    play_data_modernization: 'Schindler unlocks AI-readiness by modernizing the data platform—reducing integration complexity and enabling trusted, scalable analytics.',
+                    play_competitive_takeout: 'Schindler captures market share while the incumbent is vulnerable—establishing a new technology foundation with faster time to value.',
                   };
-                  const base = RECO_MAP[selectedPlay.packId] ?? `Position ${selectedPlay.packName} as the strategic entry point to drive measurable outcomes.`;
-                  const suffix = motion === 'Strategic Pursuit' ? ' Fastest path to executive credibility.' : '';
+                  const base = RECO_MAP[selectedPlay.packId] ?? `Schindler achieves measurable outcomes through ${selectedPlay.packName}—building momentum for broader transformation.`;
+                  const suffix = motion === 'Strategic Pursuit' ? ' Fastest path to executive confidence.' : '';
                   return base + suffix;
                 })()}
               </p>
