@@ -1,18 +1,17 @@
 // BusinessPlayPackageView — renders materialized Business Composer output
 // Partner-only. Read-only display. No mutations.
+// Progressive disclosure: compact summary, one primary section expanded, sources modal.
 
+import { useState } from 'react';
 import type { BusinessPlayPackage, BusinessVariant } from '@/data/partner/businessPlayPackageStore';
 import { CollapsibleSection } from '@/components/shared/CollapsibleSection';
 import {
-  Target,
-  Route,
-  Lightbulb,
-  MessageSquare,
-  DollarSign,
-  Package,
-  GraduationCap,
   HelpCircle,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  FileText,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -22,6 +21,8 @@ interface Props {
   activeVariant: BusinessVariant;
   onVariantChange: (v: BusinessVariant) => void;
 }
+
+/* ── Shared micro-components (local to this file) ── */
 
 function SectionCard({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
@@ -39,8 +40,84 @@ function Body({ children }: { children: React.ReactNode }) {
   return <p className="text-xs text-muted-foreground leading-relaxed">{children}</p>;
 }
 
+/** Truncate text to ~charLimit and add ellipsis */
+function truncate(text: string, charLimit = 120): string {
+  if (text.length <= charLimit) return text;
+  return text.slice(0, charLimit).trimEnd() + '…';
+}
+
+/** Show more / Show less toggle for long content blocks */
+function ExpandableBody({ text, charLimit = 140 }: { text: string; charLimit?: number }) {
+  const [showAll, setShowAll] = useState(false);
+  const needsTruncation = text.length > charLimit;
+
+  return (
+    <div>
+      <p className="text-xs text-muted-foreground leading-relaxed">
+        {showAll || !needsTruncation ? text : truncate(text, charLimit)}
+      </p>
+      {needsTruncation && (
+        <button
+          type="button"
+          onClick={() => setShowAll((v) => !v)}
+          className="mt-1 text-[10px] font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-0.5"
+        >
+          {showAll ? (
+            <>Show less <ChevronUp className="w-3 h-3" /></>
+          ) : (
+            <>Show more <ChevronDown className="w-3 h-3" /></>
+          )}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** Preview snippet shown beneath collapsed section headers */
+function SectionPreview({ text }: { text: string }) {
+  return (
+    <p className="text-[11px] text-muted-foreground/70 leading-snug mt-1 line-clamp-2 italic">
+      {truncate(text, 160)}
+    </p>
+  );
+}
+
+/** Sources modal overlay — compact citation list */
+function SourcesModal({ ids, onClose }: { ids: string[]; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+      <div
+        className="bg-background border border-border rounded-xl shadow-lg w-full max-w-sm mx-4 p-4 space-y-3"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-foreground">Signal Sources</h3>
+          <button type="button" onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <ul className="space-y-1.5 max-h-48 overflow-y-auto">
+          {ids.map((id) => (
+            <li
+              key={id}
+              className="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-muted/30 border border-border/40"
+            >
+              <FileText className="w-3 h-3 text-primary/50 flex-shrink-0" />
+              <span className="text-[11px] font-mono text-muted-foreground">{id}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+/* ── Main View ── */
+
 export function BusinessPlayPackageView({ pkg, availableVariants, activeVariant, onVariantChange }: Props) {
   const b = pkg.business;
+  const [sourcesOpen, setSourcesOpen] = useState(false);
+  const citationCount = b.signal_citation_ids?.length ?? 0;
 
   return (
     <div className="space-y-3">
@@ -67,12 +144,32 @@ export function BusinessPlayPackageView({ pkg, availableVariants, activeVariant,
         </div>
       )}
 
-      {/* Deal Strategy */}
+      {/* ── Compact Summary Block ── */}
+      <div className="p-3 rounded-xl bg-primary/[0.03] border border-primary/10 space-y-1.5">
+        <p className="text-xs font-semibold text-foreground leading-tight">
+          {truncate(b.deal_strategy.what, 180)}
+        </p>
+        <p className="text-[11px] text-muted-foreground leading-snug">
+          {truncate(b.deal_strategy.why, 140)}
+        </p>
+        {citationCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setSourcesOpen(true)}
+            className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-md bg-muted/40 border border-border/50 text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <FileText className="w-3 h-3" />
+            Sources ({citationCount})
+          </button>
+        )}
+      </div>
+
+      {/* Deal Strategy — expanded by default */}
       <CollapsibleSection title="Deal Strategy" subtitle="What, How, Why" defaultOpen>
         <div className="space-y-2.5">
           <SectionCard>
             <Label>What</Label>
-            <Body>{b.deal_strategy.what}</Body>
+            <ExpandableBody text={b.deal_strategy.what} />
           </SectionCard>
           <SectionCard>
             <Label>How</Label>
@@ -87,54 +184,51 @@ export function BusinessPlayPackageView({ pkg, availableVariants, activeVariant,
           </SectionCard>
           <SectionCard>
             <Label>Why</Label>
-            <Body>{b.deal_strategy.why}</Body>
+            <ExpandableBody text={b.deal_strategy.why} />
           </SectionCard>
         </div>
       </CollapsibleSection>
 
-      {/* Positioning */}
-      <CollapsibleSection title="Positioning" subtitle="Executive POV and stakeholder talk tracks" defaultOpen>
+      {/* Positioning — collapsed by default with preview */}
+      <CollapsibleSection title="Positioning" subtitle="Executive POV and stakeholder talk tracks" defaultOpen={false}>
         <div className="space-y-2.5">
           <SectionCard>
             <Label>Executive Point of View</Label>
-            <Body>{b.positioning.executive_pov}</Body>
+            <ExpandableBody text={b.positioning.executive_pov} />
           </SectionCard>
           <div className="space-y-1.5">
             <Label>Talk Tracks</Label>
             {b.positioning.talk_tracks.map((tt, i) => (
               <SectionCard key={i}>
                 <p className="text-[10px] font-semibold text-foreground">{tt.persona}</p>
-                <Body>{tt.message}</Body>
+                <ExpandableBody text={tt.message} />
               </SectionCard>
             ))}
           </div>
         </div>
       </CollapsibleSection>
 
-      {/* Commercial Assets */}
+      {/* Commercial Assets — collapsed */}
       <CollapsibleSection title="Commercial Assets" subtitle="ROI prompts, value hypotheses, KPIs, sizing inputs" defaultOpen={false}>
         <div className="space-y-3">
-          {/* ROI Prompts */}
           <div className="space-y-1.5">
             <Label>ROI Prompts</Label>
             {b.commercial_assets.roi_prompts.map((r, i) => (
               <SectionCard key={i}>
                 <p className="text-[10px] font-semibold text-foreground">{r.label}</p>
-                <Body>{r.question}</Body>
+                <ExpandableBody text={r.question} />
               </SectionCard>
             ))}
           </div>
-          {/* Value Hypotheses */}
           <div className="space-y-1.5">
             <Label>Value Hypotheses</Label>
             {b.commercial_assets.value_hypotheses.map((v, i) => (
               <SectionCard key={i}>
                 <p className="text-[10px] font-semibold text-foreground">{v.label}</p>
-                <Body>{v.description}</Body>
+                <ExpandableBody text={v.description} />
               </SectionCard>
             ))}
           </div>
-          {/* KPIs */}
           <div className="space-y-1.5">
             <Label>KPIs</Label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
@@ -146,7 +240,6 @@ export function BusinessPlayPackageView({ pkg, availableVariants, activeVariant,
               ))}
             </div>
           </div>
-          {/* Sizing Inputs */}
           <div className="space-y-1.5">
             <Label>Sizing Inputs</Label>
             {b.commercial_assets.sizing_inputs.map((s, i) => (
@@ -159,20 +252,18 @@ export function BusinessPlayPackageView({ pkg, availableVariants, activeVariant,
         </div>
       </CollapsibleSection>
 
-      {/* Delivery Assets */}
+      {/* Delivery Assets — collapsed */}
       <CollapsibleSection title="Delivery Assets" subtitle="Discovery agenda, workshop plan, pilot scope" defaultOpen={false}>
         <div className="space-y-3">
-          {/* Discovery Agenda */}
           <div className="space-y-1.5">
             <Label>Discovery Agenda</Label>
             {b.delivery_assets.discovery_agenda.map((d, i) => (
               <SectionCard key={i} className="p-2.5">
                 <p className="text-[10px] font-semibold text-foreground">{d.theme}</p>
-                <Body>{d.question}</Body>
+                <ExpandableBody text={d.question} />
               </SectionCard>
             ))}
           </div>
-          {/* Workshop Plan */}
           <div className="space-y-1.5">
             <Label>Workshop Plan</Label>
             {b.delivery_assets.workshop_plan.map((w, i) => (
@@ -181,13 +272,12 @@ export function BusinessPlayPackageView({ pkg, availableVariants, activeVariant,
                   <span className="text-[10px] font-bold text-primary/60 mt-0.5 flex-shrink-0">{i + 1}.</span>
                   <div>
                     <p className="text-[10px] font-semibold text-foreground">{w.step}</p>
-                    <Body>{w.description}</Body>
+                    <ExpandableBody text={w.description} />
                   </div>
                 </div>
               </SectionCard>
             ))}
           </div>
-          {/* Pilot Scope */}
           <div className="space-y-2">
             <Label>Pilot Scope</Label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -236,7 +326,7 @@ export function BusinessPlayPackageView({ pkg, availableVariants, activeVariant,
         </div>
       </CollapsibleSection>
 
-      {/* Enablement */}
+      {/* Enablement — collapsed */}
       <CollapsibleSection title="Enablement" subtitle="Seller and engineer preparation" defaultOpen={false}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <SectionCard>
@@ -262,7 +352,7 @@ export function BusinessPlayPackageView({ pkg, availableVariants, activeVariant,
         </div>
       </CollapsibleSection>
 
-      {/* Open Questions */}
+      {/* Open Questions — collapsed */}
       <CollapsibleSection title="Open Questions" subtitle="Items to validate before advancing" defaultOpen={false}>
         <ul className="space-y-1.5">
           {b.open_questions.map((q, i) => (
@@ -274,21 +364,9 @@ export function BusinessPlayPackageView({ pkg, availableVariants, activeVariant,
         </ul>
       </CollapsibleSection>
 
-      {/* Signal Citations — only when present */}
-      {b.signal_citation_ids && b.signal_citation_ids.length > 0 && (
-        <div className="pt-1">
-          <p className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider mb-1.5">Signal Citations</p>
-          <div className="flex flex-wrap gap-1.5">
-            {b.signal_citation_ids.map((id) => (
-              <span
-                key={id}
-                className="inline-flex items-center px-2 py-0.5 rounded bg-muted/30 border border-border/40 text-[10px] font-mono text-muted-foreground"
-              >
-                {id}
-              </span>
-            ))}
-          </div>
-        </div>
+      {/* Sources modal */}
+      {sourcesOpen && b.signal_citation_ids && b.signal_citation_ids.length > 0 && (
+        <SourcesModal ids={b.signal_citation_ids} onClose={() => setSourcesOpen(false)} />
       )}
     </div>
   );
