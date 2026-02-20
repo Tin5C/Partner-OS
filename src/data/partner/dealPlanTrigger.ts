@@ -9,8 +9,11 @@ export interface DealPlanTriggerContext {
   tags?: string[];
   /** Account ID for signal-first entry */
   focusId?: string;
-  /** Entry source — 'quickbrief' for signal-first path */
-  entry?: 'quickbrief' | 'inbox' | 'story';
+  /** Entry source */
+  entry?: 'quickbrief' | 'inbox' | 'story' | 'ai_trend';
+  /** Authority trend focus (ai_trend entry) */
+  trendId?: string;
+  trendTitle?: string;
 }
 
 let _pending: DealPlanTriggerContext | null = null;

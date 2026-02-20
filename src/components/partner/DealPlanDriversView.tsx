@@ -322,13 +322,15 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
   // Quick Brief focus mode state
   const [focusSignal, setFocusSignal] = useState<{ id: string; title: string } | null>(null);
 
-  // Consume deal-plan trigger on mount (signal-first entry from Quick Brief)
+  // Authority Trend focus mode state
+  const [focusTrend, setFocusTrend] = useState<{ id: string; title: string } | null>(null);
+
+  // Consume deal-plan trigger on mount (signal-first or trend-first entry)
   useEffect(() => {
     const ctx = consumeDealPlanTrigger();
     if (!ctx) return;
     if (ctx.entry === 'quickbrief' && ctx.signalId && ctx.focusId) {
       setSelectedAccount(ctx.focusId);
-      // Validate signal exists in pool
       const pool = buildSignalPool(ctx.focusId, WEEK_OF);
       const found = pool.find((p) => p.id === ctx.signalId);
       if (found) {
@@ -338,6 +340,10 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
       } else {
         toast.error('Signal not found in account pool — using default view.');
       }
+    } else if (ctx.entry === 'ai_trend' && ctx.trendId && ctx.focusId) {
+      setSelectedAccount(ctx.focusId);
+      setFocusTrend({ id: ctx.trendId, title: ctx.trendTitle ?? ctx.signalTitle });
+      setPlanGenerated(true);
     } else if (ctx.focusId) {
       setSelectedAccount(ctx.focusId);
     }
@@ -674,6 +680,8 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
             onGoToAccountIntelligence={onGoToAccountIntelligence}
             focusSignal={focusSignal}
             onClearFocus={() => setFocusSignal(null)}
+            focusTrend={focusTrend}
+            onClearTrendFocus={() => setFocusTrend(null)}
             pickerNode={
               showPicker ? (
                 <SignalPickerPanel

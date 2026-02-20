@@ -67,6 +67,9 @@ interface RecommendedPlaysPanelProps {
   /** Signal-first focus from Quick Brief */
   focusSignal?: { id: string; title: string } | null;
   onClearFocus?: () => void;
+  /** Authority Trend focus from Account Intelligence */
+  focusTrend?: { id: string; title: string } | null;
+  onClearTrendFocus?: () => void;
 }
 
 // ============= Main Component =============
@@ -87,6 +90,8 @@ export function RecommendedPlaysPanel({
   onGoToAccountIntelligence,
   focusSignal,
   onClearFocus,
+  focusTrend,
+  onClearTrendFocus,
 }: RecommendedPlaysPanelProps) {
   const [driversOpen, setDriversOpen] = useState(false);
   const [readinessPlay, setReadinessPlay] = useState<ScoredPlay | null>(null);
@@ -180,8 +185,20 @@ export function RecommendedPlaysPanel({
   const activePlay = useMemo(() => getActivePlay(accountId), [accountId, scoredPlays]);
   const hasNoContext = signalsForScoring.length === 0 && allInitiativesTitles.length === 0 && allTrendsTitles.length === 0;
 
-  // Default-select top-ranked play
-  const effectiveSelectedId = selectedPlayId ?? scoredPlays[0]?.packId ?? null;
+  // Deterministic trend → suggested play mapping (UI-only, no scoring mutation)
+  const TREND_PLAY_MAP: Record<string, string> = {
+    'trend_verticaltransport_ey_iso42001_ai_governance_2025': 'play_governance',
+    'trend_verticaltransport_mckinsey_tech_trends_2025_agentic_ai_2025': 'play_finops',
+    'trend_verticaltransport_mckinsey_genai_maintenance_2025': 'play_managed_ops',
+    'trend_verticaltransport_eu_ai_act_official_timeline_undated': 'play_governance',
+    'trend_verticaltransport_mckinsey_digital_twin_undated': 'play_managed_ops',
+    'trend_verticaltransport_deloitte_smart_buildings_undated': 'play_managed_ops',
+  };
+
+  const suggestedPlayId = focusTrend ? (TREND_PLAY_MAP[focusTrend.id] ?? null) : null;
+
+  // Default-select suggested play when trend focus is active and no manual selection
+  const effectiveSelectedId = selectedPlayId ?? (suggestedPlayId && scoredPlays.some(p => p.packId === suggestedPlayId) ? suggestedPlayId : null) ?? scoredPlays[0]?.packId ?? null;
   const selectedPlay = scoredPlays.find((p) => p.packId === effectiveSelectedId) ?? null;
 
   const handleAddToPlan = (play: ScoredPlay) => {
@@ -253,6 +270,24 @@ export function RecommendedPlaysPanel({
         </div>
       )}
 
+      {/* ===== Authority Trend Focus Pill ===== */}
+      {focusTrend && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent/30 border border-accent/40">
+          <TrendingUp className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+          <p className="text-[11px] text-foreground flex-1">
+            <span className="font-medium">Focused from Authority Trend:</span>{' '}
+            <span className="text-muted-foreground">{focusTrend.title}</span>
+          </p>
+          <button
+            onClick={onClearTrendFocus}
+            className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X className="w-3 h-3" />
+            Clear
+          </button>
+        </div>
+      )}
+
       {/* ===== Empty State ===== */}
       {hasNoContext ? (
         <div className="rounded border border-border/40 bg-muted/20 p-6 text-center">
@@ -262,12 +297,16 @@ export function RecommendedPlaysPanel({
         </div>
       ) : (
         <>
+          {focusTrend && (
+            <p className="text-[10px] font-medium text-muted-foreground text-center">Options for this trend</p>
+          )}
           {/* ===== Bar Chart ===== */}
           <div className="flex justify-center items-end gap-6 pt-2 pb-1" style={{ minHeight: 180 }}>
             {scoredPlays.map((play, idx) => {
               const isSelected = play.packId === effectiveSelectedId;
               const isAdded = selectedPacks.includes(play.packId);
               const isActivePlan = activePlay?.playId === play.packId;
+              const isSuggested = suggestedPlayId === play.packId;
               const barHeight = Math.max(Math.round((play.engagementFitPct / maxFit) * 140), 28);
 
               return (
@@ -306,6 +345,13 @@ export function RecommendedPlaysPanel({
                   )}>
                     {play.packName}
                   </span>
+
+                  {/* Suggested badge */}
+                  {isSuggested && focusTrend && (
+                    <span className="text-[9px] font-medium text-primary bg-primary/10 border border-primary/20 rounded-full px-2 py-0.5 whitespace-nowrap">
+                      Suggested
+                    </span>
+                  )}
 
                   {/* CTA */}
                   {(isAdded || isActivePlan) ? (
