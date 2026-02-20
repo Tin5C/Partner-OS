@@ -325,10 +325,17 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
   // Authority Trend focus mode state
   const [focusTrend, setFocusTrend] = useState<{ id: string; title: string } | null>(null);
 
+  // Focus-entry overlay state (shows once per focus navigation)
+  const [showOverlay, setShowOverlay] = useState(false);
+  const [overlayFading, setOverlayFading] = useState(false);
+  const overlayShownRef = useRef(false);
+
   // Consume deal-plan trigger on mount (signal-first or trend-first entry)
   useEffect(() => {
     const ctx = consumeDealPlanTrigger();
     if (!ctx) return;
+    const isFocusEntry = ctx.entry === 'quickbrief' || ctx.entry === 'ai_trend';
+
     if (ctx.entry === 'quickbrief' && ctx.signalId && ctx.focusId) {
       setSelectedAccount(ctx.focusId);
       const pool = buildSignalPool(ctx.focusId, WEEK_OF);
@@ -347,7 +354,21 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
     } else if (ctx.focusId) {
       setSelectedAccount(ctx.focusId);
     }
+
+    // Show overlay once for focus entries
+    if (isFocusEntry && !overlayShownRef.current) {
+      overlayShownRef.current = true;
+      setShowOverlay(true);
+    }
   }, []);
+
+  // Overlay auto-dismiss timer
+  useEffect(() => {
+    if (!showOverlay) return;
+    const fadeTimer = setTimeout(() => setOverlayFading(true), 2700);
+    const hideTimer = setTimeout(() => { setShowOverlay(false); setOverlayFading(false); }, 3000);
+    return () => { clearTimeout(fadeTimer); clearTimeout(hideTimer); };
+  }, [showOverlay]);
 
   const plan = useMemo(
     () => selectedAccount ? getDealPlan(selectedAccount, WEEK_OF) : undefined,
@@ -623,7 +644,22 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
 
   // ============= RETURN =============
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 relative">
+      {/* Focus-entry overlay */}
+      {showOverlay && (
+        <div
+          className={cn(
+            "absolute inset-0 z-50 flex flex-col items-center justify-center rounded-2xl bg-background/80 backdrop-blur-sm transition-opacity duration-300",
+            overlayFading ? "opacity-0" : "opacity-100"
+          )}
+        >
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm font-semibold text-foreground">Preparing plan…</p>
+            <p className="text-[11px] text-muted-foreground">Pulling signals, evidence, and recommendations</p>
+          </div>
+        </div>
+      )}
       {header}
 
       {!selectedAccount && (
