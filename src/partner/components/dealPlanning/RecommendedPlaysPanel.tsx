@@ -324,11 +324,22 @@ export function RecommendedPlaysPanel({
               </p>
 
               <p className="text-[11px] text-muted-foreground italic">
-                <span className="font-medium text-foreground not-italic">Why recommended:</span>{' '}
-                {selectedPlay.gaps.length > 0
-                  ? `Strong alignment with ${selectedPlay.drivers.length} selected signal${selectedPlay.drivers.length !== 1 ? 's' : ''} and ${trendsTitlesForScoring.length} trend${trendsTitlesForScoring.length !== 1 ? 's' : ''}; ${selectedPlay.gaps.length} readiness gap${selectedPlay.gaps.length !== 1 ? 's' : ''} to close.`
-                  : `Strong alignment with ${selectedPlay.drivers.length} selected signal${selectedPlay.drivers.length !== 1 ? 's' : ''} and ${trendsTitlesForScoring.length} trend${trendsTitlesForScoring.length !== 1 ? 's' : ''}.`
-                }
+                <span className="font-medium text-foreground not-italic">Recommendation:</span>{' '}
+                {(() => {
+                  const RECO_MAP: Record<string, string> = {
+                    play_finops: 'Lead with a FinOps-for-AI entry to establish cost visibility and governance guardrails, then expand into broader AI workloads.',
+                    play_governance: 'Start with an AI governance operating model (RACI + guardrails) to de-risk compliance and accelerate scale.',
+                    play_managed_ops: 'Stabilize cloud operations to reduce risk and free capacity before expanding AI initiatives.',
+                    play_discovery: 'Open with an AI discovery sprint to identify high-value use cases and build executive alignment.',
+                    play_copilot_adoption: 'Accelerate Copilot adoption to demonstrate quick wins and build momentum for broader AI investment.',
+                    play_rag_prototype: 'Prove value with a secure RAG prototype that connects enterprise data to AI, then scale across business units.',
+                    play_data_modernization: 'Modernize the data platform to unlock AI-readiness and reduce integration complexity.',
+                    play_competitive_takeout: 'Lead a competitive displacement sprint to capture share while the incumbent is vulnerable.',
+                  };
+                  const base = RECO_MAP[selectedPlay.packId] ?? `Position ${selectedPlay.packName} as the strategic entry point to drive measurable outcomes.`;
+                  const suffix = motion === 'Strategic Pursuit' ? ' Fastest path to executive credibility.' : '';
+                  return base + suffix;
+                })()}
               </p>
 
               <div className="flex items-center gap-3">
@@ -369,18 +380,7 @@ export function RecommendedPlaysPanel({
         </>
       )}
 
-      {/* ===== Inputs Summary Row ===== */}
-      {(() => {
-        const evidenceCount = listMemoryItems(accountId).length + evidenceVersion * 0;
-        return (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/20 border border-border/40">
-            <p className="text-[11px] text-muted-foreground flex-1">
-              <span className="font-medium text-foreground">Inputs:</span>{' '}
-              Signals {displaySignalCount}/3 · Evidence {evidenceCount} · Initiatives {initiativeSummary} · Trends {trendSummary}
-            </p>
-          </div>
-        );
-      })()}
+      {/* Inputs row removed — Edit input sources in header is the single entry point */}
 
       {/* ===== Review & Edit Inputs Drawer ===== */}
       {showReviewDrawer && (
