@@ -217,53 +217,12 @@ export function RecommendedPlaysPanel({
           <p className="text-xs font-semibold text-foreground">Recommended approach</p>
         </div>
 
-        <Popover>
-          <PopoverTrigger asChild>
-            <button className="text-[11px] text-muted-foreground hover:text-foreground transition-colors underline-offset-2 underline decoration-border hover:decoration-foreground">
-              Based on Account Intelligence (Signals: {displaySignalCount}/3 selected)
-            </button>
-          </PopoverTrigger>
-          <PopoverContent className="w-72 p-3 space-y-3" align="start">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Selected drivers</p>
-
-            {/* Signal chips */}
-            <div className="space-y-1">
-              <p className="text-[10px] text-muted-foreground">Signals: {displaySignalCount}/3</p>
-              {activeSignalIds.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {(() => {
-                    const pool = buildSignalPool(accountId, weekOf);
-                    return activeSignalIds.map((id) => {
-                      const found = pool.find((p) => p.id === id);
-                      return (
-                        <span
-                          key={id}
-                          className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border border-border/60 bg-muted/30 text-foreground truncate max-w-[200px]"
-                          title={found?.title ?? id}
-                        >
-                          {found?.title ?? id}
-                        </span>
-                      );
-                    });
-                  })()}
-                </div>
-              )}
-            </div>
-
-            {/* Initiative / trend counts */}
-            <div className="space-y-0.5 text-[10px] text-muted-foreground">
-              <p>Initiatives: {initiativeSummary}</p>
-              <p>Trends: {trendSummary}</p>
-            </div>
-
-            <button
-              onClick={onOpenPicker}
-              className="w-full text-center text-[11px] font-medium text-primary hover:text-primary/80 transition-colors pt-1 border-t border-border/40"
-            >
-              Adjust drivers
-            </button>
-          </PopoverContent>
-        </Popover>
+        <button
+          onClick={() => setShowReviewDrawer(true)}
+          className="text-[11px] text-muted-foreground hover:text-foreground transition-colors underline-offset-2 underline decoration-border hover:decoration-foreground"
+        >
+          Edit input sources
+        </button>
       </div>
 
       {/* ===== Inline Signal Picker ===== */}
