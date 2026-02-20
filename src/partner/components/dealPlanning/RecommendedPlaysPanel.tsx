@@ -64,6 +64,9 @@ interface RecommendedPlaysPanelProps {
   onPlaySelected?: (play: { packId: string; packName: string; drivers: string[]; gaps: string[] }) => void;
   weekOf?: string;
   onGoToAccountIntelligence?: () => void;
+  /** Signal-first focus from Quick Brief */
+  focusSignal?: { id: string; title: string } | null;
+  onClearFocus?: () => void;
 }
 
 // ============= Main Component =============
@@ -82,6 +85,8 @@ export function RecommendedPlaysPanel({
   onPlaySelected,
   weekOf = '2026-02-10',
   onGoToAccountIntelligence,
+  focusSignal,
+  onClearFocus,
 }: RecommendedPlaysPanelProps) {
   const [driversOpen, setDriversOpen] = useState(false);
   const [readinessPlay, setReadinessPlay] = useState<ScoredPlay | null>(null);
@@ -228,6 +233,24 @@ export function RecommendedPlaysPanel({
       {/* ===== Inline Signal Picker ===== */}
       {showPicker && pickerNode && (
         <div>{pickerNode}</div>
+      )}
+
+      {/* ===== Quick Brief Focus Pill ===== */}
+      {focusSignal && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/15">
+          <Zap className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+          <p className="text-[11px] text-foreground flex-1">
+            <span className="font-medium">Focused from Quick Brief:</span>{' '}
+            <span className="text-muted-foreground">{focusSignal.title}</span>
+          </p>
+          <button
+            onClick={onClearFocus}
+            className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X className="w-3 h-3" />
+            Clear
+          </button>
+        </div>
       )}
 
       {/* ===== Empty State ===== */}

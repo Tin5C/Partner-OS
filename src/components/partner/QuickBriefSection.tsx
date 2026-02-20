@@ -35,6 +35,7 @@ import {
   makeInboxItemId,
   deriveImpactArea,
 } from '@/data/partner/dealPlanningInboxStore';
+import { setDealPlanTrigger } from '@/data/partner/dealPlanTrigger';
 
 const ACCOUNTS = [
   { id: 'schindler', label: 'Schindler' },
@@ -396,18 +397,15 @@ export function QuickBriefSection({ onOpenDealBrief }: QuickBriefSectionProps) {
                       </div>
                       <button
                         onClick={() => {
-                          addItem(focusId, {
-                            id: makeInboxItemId(focusId, 'signal', signal.id),
+                          setDealPlanTrigger({
+                            signalId: signal.id,
+                            signalTitle: signal.title,
+                            customer: customerName,
                             focusId,
-                            source_type: 'signal',
-                            source_id: signal.id,
-                            title: signal.title,
-                            why_now: signal.soWhat.slice(0, 160),
-                            impact_area: deriveImpactArea(signal.type),
+                            entry: 'quickbrief',
                             tags: [signal.type],
-                            created_at: new Date().toISOString(),
                           });
-                          toast.success('Added to Deal Planning Inbox');
+                          onOpenDealBrief?.();
                         }}
                         className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 border border-border/40 hover:border-primary/20 transition-colors flex-shrink-0 self-start mt-1"
                       >

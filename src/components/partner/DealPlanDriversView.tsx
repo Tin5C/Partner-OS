@@ -90,7 +90,9 @@ import { DealHypothesisBlock } from '@/partner/components/dealPlanning/DealHypot
 import { RisksBlockersSection } from '@/partner/components/dealPlanning/RisksBlockersSection';
 import { getReadinessScore } from '@/data/partner/accountMemoryStore';
 import { buildComposerInputBusiness } from '@/services/partner/dealPlanning/buildComposerInputBusiness';
-import { getActiveSignalIds } from '@/partner/data/dealPlanning/activeSignalsStore';
+import { getActiveSignalIds, setActiveSignals } from '@/partner/data/dealPlanning/activeSignalsStore';
+import { consumeDealPlanTrigger } from '@/data/partner/dealPlanTrigger';
+import { buildSignalPool } from '@/partner/data/dealPlanning/signalPool';
 import { getByFocusId as getTechLandscape } from '@/data/partner/technicalLandscapeStore';
 import { CollapsibleSection } from '@/components/shared/CollapsibleSection';
 import { getBusinessPlayPackage, getAvailableVariants, type BusinessVariant } from '@/data/partner/businessPlayPackageStore';
@@ -316,6 +318,30 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
   useEffect(() => { ensureSchindlerDefaults(); }, []);
 
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
+
+  // Quick Brief focus mode state
+  const [focusSignal, setFocusSignal] = useState<{ id: string; title: string } | null>(null);
+
+  // Consume deal-plan trigger on mount (signal-first entry from Quick Brief)
+  useEffect(() => {
+    const ctx = consumeDealPlanTrigger();
+    if (!ctx) return;
+    if (ctx.entry === 'quickbrief' && ctx.signalId && ctx.focusId) {
+      setSelectedAccount(ctx.focusId);
+      // Validate signal exists in pool
+      const pool = buildSignalPool(ctx.focusId, WEEK_OF);
+      const found = pool.find((p) => p.id === ctx.signalId);
+      if (found) {
+        setActiveSignals(ctx.focusId, [ctx.signalId]);
+        setFocusSignal({ id: ctx.signalId, title: ctx.signalTitle });
+        setPlanGenerated(true);
+      } else {
+        toast.error('Signal not found in account pool — using default view.');
+      }
+    } else if (ctx.focusId) {
+      setSelectedAccount(ctx.focusId);
+    }
+  }, []);
 
   const plan = useMemo(
     () => selectedAccount ? getDealPlan(selectedAccount, WEEK_OF) : undefined,
@@ -646,6 +672,8 @@ export function DealPlanDriversView({ onGoToQuickBrief, onGoToAccountIntelligenc
             showPicker={showPicker}
             onPlaySelected={handlePlaySelected}
             onGoToAccountIntelligence={onGoToAccountIntelligence}
+            focusSignal={focusSignal}
+            onClearFocus={() => setFocusSignal(null)}
             pickerNode={
               showPicker ? (
                 <SignalPickerPanel
