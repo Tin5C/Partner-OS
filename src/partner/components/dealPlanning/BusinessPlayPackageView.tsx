@@ -1,6 +1,6 @@
-// BusinessPlayPackageView — renders materialized Business Composer output
+// BusinessPlayPackageView — Storyline Canvas layout
 // Partner-only. Read-only display. No mutations.
-// Progressive disclosure: compact summary, one primary section expanded, sources modal.
+// Main canvas: 4 cards (Objective, POV, Plan, Proof). Detail sections in Support drawer.
 
 import { useState } from 'react';
 import type { BusinessPlayPackage, BusinessVariant } from '@/data/partner/businessPlayPackageStore';
@@ -12,6 +12,7 @@ import {
   ChevronUp,
   FileText,
   X,
+  Layers,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -112,257 +113,364 @@ function SourcesModal({ ids, onClose }: { ids: string[]; onClose: () => void }) 
   );
 }
 
+/* ── Sentence splitter — deterministic, no generation ── */
+// Splits text on sentence-ending punctuation; returns first `max` sentences.
+function splitSentences(text: string, max: number): string[] {
+  const matches = text.match(/[^.!?]+[.!?]+/g);
+  if (!matches) return text.trim() ? [text.trim()] : [];
+  return matches.slice(0, max).map((s) => s.trim());
+}
+
+const PLACEHOLDER = 'Add sources to populate this section.';
+
 /* ── Main View ── */
 
 export function BusinessPlayPackageView({ pkg, availableVariants, activeVariant, onVariantChange }: Props) {
   const b = pkg.business;
   const [sourcesOpen, setSourcesOpen] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
   const citationCount = b.signal_citation_ids?.length ?? 0;
+
+  // ── Storyline card content (deterministic extraction) ──
+  // Objective: first sentence of deal_strategy.what
+  const objectiveSentences = splitSentences(b.deal_strategy.what, 1);
+  const objectiveText = objectiveSentences[0] || PLACEHOLDER;
+
+  // Point of View: first sentence of positioning.executive_pov
+  const povSentences = splitSentences(b.positioning.executive_pov, 1);
+  const povText = povSentences[0] || PLACEHOLDER;
+
+  // Plan: first 3 steps from deal_strategy.how (already an array)
+  const planBullets = b.deal_strategy.how.slice(0, 3);
+
+  // Proof: first 3 value hypotheses descriptions
+  const proofBullets = b.commercial_assets.value_hypotheses
+    .slice(0, 3)
+    .map((vh) => vh.description);
 
   return (
     <div className="space-y-3">
       {/* Variant toggle */}
       {availableVariants.length > 1 && (
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">View</span>
-          <div className="inline-flex rounded-md bg-muted/50 p-0.5 border border-border/60">
-            {availableVariants.map((v) => (
-              <button
-                key={v}
-                onClick={() => onVariantChange(v)}
-                className={cn(
-                  'px-3 py-1 rounded text-[11px] font-medium transition-all capitalize',
-                  activeVariant === v
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {v}
-              </button>
-            ))}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">View</span>
+            <div className="inline-flex rounded-md bg-muted/50 p-0.5 border border-border/60">
+              {availableVariants.map((v) => (
+                <button
+                  key={v}
+                  onClick={() => onVariantChange(v)}
+                  className={cn(
+                    'px-3 py-1 rounded text-[11px] font-medium transition-all capitalize',
+                    activeVariant === v
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
           </div>
+          {/* Support drawer trigger */}
+          <button
+            type="button"
+            onClick={() => setSupportOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border/60 bg-muted/30 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+          >
+            <Layers className="w-3.5 h-3.5" />
+            Support ▸
+          </button>
         </div>
       )}
 
-      {/* ── Compact Summary Block ── */}
-      <div className="p-3 rounded-xl bg-primary/[0.03] border border-primary/10 space-y-1.5">
-        <p className="text-xs font-semibold text-foreground leading-tight">
-          {truncate(b.deal_strategy.what, 180)}
-        </p>
-        <p className="text-[11px] text-muted-foreground leading-snug">
-          {truncate(b.deal_strategy.why, 140)}
-        </p>
-        {citationCount > 0 && (
-          <button
-            type="button"
-            onClick={() => setSourcesOpen(true)}
-            className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-md bg-muted/40 border border-border/50 text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <FileText className="w-3 h-3" />
-            Sources ({citationCount})
-          </button>
-        )}
-      </div>
+      {/* ── Storyline Canvas: 4 Cards ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* Card A — Objective */}
+        <SectionCard className="sm:col-span-2">
+          <Label>Objective</Label>
+          <Body>{objectiveText}</Body>
+        </SectionCard>
 
-      {/* Deal Strategy — expanded by default */}
-      <CollapsibleSection title="Deal Strategy" subtitle="What, How, Why" defaultOpen>
-        <div className="space-y-2.5">
-          <SectionCard>
-            <Label>What</Label>
-            <ExpandableBody text={b.deal_strategy.what} />
-          </SectionCard>
-          <SectionCard>
-            <Label>How</Label>
-            <ol className="space-y-1.5 pl-0.5">
-              {b.deal_strategy.how.map((step, i) => (
-                <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground leading-relaxed">
-                  <span className="text-[10px] font-bold text-primary/60 mt-0.5 flex-shrink-0">{i + 1}.</span>
+        {/* Card B — Point of View */}
+        <SectionCard className="sm:col-span-2">
+          <Label>Point of View</Label>
+          <Body>{povText}</Body>
+        </SectionCard>
+
+        {/* Card C — Plan */}
+        <SectionCard>
+          <Label>Plan</Label>
+          {planBullets.length > 0 ? (
+            <ul className="space-y-1.5">
+              {planBullets.map((step, i) => (
+                <li key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground leading-relaxed">
+                  <ChevronRight className="w-3 h-3 text-primary/40 mt-0.5 flex-shrink-0" />
                   {step}
                 </li>
               ))}
-            </ol>
-          </SectionCard>
-          <SectionCard>
-            <Label>Why</Label>
-            <ExpandableBody text={b.deal_strategy.why} />
-          </SectionCard>
-        </div>
-      </CollapsibleSection>
+            </ul>
+          ) : (
+            <Body>{PLACEHOLDER}</Body>
+          )}
+        </SectionCard>
 
-      {/* Positioning — collapsed by default with preview */}
-      <CollapsibleSection title="Positioning" subtitle="Executive POV and stakeholder talk tracks" defaultOpen={false}>
-        <div className="space-y-2.5">
-          <SectionCard>
-            <Label>Executive Point of View</Label>
-            <ExpandableBody text={b.positioning.executive_pov} />
-          </SectionCard>
-          <div className="space-y-1.5">
-            <Label>Talk Tracks</Label>
-            {b.positioning.talk_tracks.map((tt, i) => (
-              <SectionCard key={i}>
-                <p className="text-[10px] font-semibold text-foreground">{tt.persona}</p>
-                <ExpandableBody text={tt.message} />
-              </SectionCard>
-            ))}
-          </div>
-        </div>
-      </CollapsibleSection>
-
-      {/* Commercial Assets — collapsed */}
-      <CollapsibleSection title="Commercial Assets" subtitle="ROI prompts, value hypotheses, KPIs, sizing inputs" defaultOpen={false}>
-        <div className="space-y-3">
-          <div className="space-y-1.5">
-            <Label>ROI Prompts</Label>
-            {b.commercial_assets.roi_prompts.map((r, i) => (
-              <SectionCard key={i}>
-                <p className="text-[10px] font-semibold text-foreground">{r.label}</p>
-                <ExpandableBody text={r.question} />
-              </SectionCard>
-            ))}
-          </div>
-          <div className="space-y-1.5">
-            <Label>Value Hypotheses</Label>
-            {b.commercial_assets.value_hypotheses.map((v, i) => (
-              <SectionCard key={i}>
-                <p className="text-[10px] font-semibold text-foreground">{v.label}</p>
-                <ExpandableBody text={v.description} />
-              </SectionCard>
-            ))}
-          </div>
-          <div className="space-y-1.5">
-            <Label>KPIs</Label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-              {b.commercial_assets.kpis.map((k, i) => (
-                <SectionCard key={i} className="p-2.5">
-                  <p className="text-[10px] font-semibold text-foreground">{k.label}</p>
-                  <p className="text-[11px] text-primary font-medium">{k.target}</p>
-                </SectionCard>
+        {/* Card D — Proof */}
+        <SectionCard>
+          <Label>Proof</Label>
+          {proofBullets.length > 0 ? (
+            <ul className="space-y-1.5">
+              {proofBullets.map((line, i) => (
+                <li key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground leading-relaxed">
+                  <ChevronRight className="w-3 h-3 text-primary/40 mt-0.5 flex-shrink-0" />
+                  {line}
+                </li>
               ))}
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label>Sizing Inputs</Label>
-            {b.commercial_assets.sizing_inputs.map((s, i) => (
-              <SectionCard key={i} className="p-2.5">
-                <p className="text-[10px] font-semibold text-foreground">{s.label}</p>
-                <Body>{s.value}</Body>
-              </SectionCard>
-            ))}
-          </div>
-        </div>
-      </CollapsibleSection>
+            </ul>
+          ) : (
+            <Body>{PLACEHOLDER}</Body>
+          )}
+          {citationCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setSourcesOpen(true)}
+              className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-md bg-muted/40 border border-border/50 text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <FileText className="w-3 h-3" />
+              Sources ({citationCount})
+            </button>
+          )}
+        </SectionCard>
+      </div>
 
-      {/* Delivery Assets — collapsed */}
-      <CollapsibleSection title="Delivery Assets" subtitle="Discovery agenda, workshop plan, pilot scope" defaultOpen={false}>
-        <div className="space-y-3">
-          <div className="space-y-1.5">
-            <Label>Discovery Agenda</Label>
-            {b.delivery_assets.discovery_agenda.map((d, i) => (
-              <SectionCard key={i} className="p-2.5">
-                <p className="text-[10px] font-semibold text-foreground">{d.theme}</p>
-                <ExpandableBody text={d.question} />
-              </SectionCard>
-            ))}
-          </div>
-          <div className="space-y-1.5">
-            <Label>Workshop Plan</Label>
-            {b.delivery_assets.workshop_plan.map((w, i) => (
-              <SectionCard key={i} className="p-2.5">
-                <div className="flex items-start gap-2">
-                  <span className="text-[10px] font-bold text-primary/60 mt-0.5 flex-shrink-0">{i + 1}.</span>
-                  <div>
-                    <p className="text-[10px] font-semibold text-foreground">{w.step}</p>
-                    <ExpandableBody text={w.description} />
+      {/* ── Support Drawer (right-side overlay) ── */}
+      {supportOpen && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/40" onClick={() => setSupportOpen(false)}>
+          <div
+            className="w-full max-w-lg h-full bg-background border-l border-border shadow-xl overflow-y-auto p-5 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-foreground">Support Detail</h3>
+              <button type="button" onClick={() => setSupportOpen(false)} className="text-muted-foreground hover:text-foreground transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Deal Strategy */}
+            <CollapsibleSection title="Deal Strategy" subtitle="What, How, Why" defaultOpen>
+              <div className="space-y-2.5">
+                <SectionCard>
+                  <Label>What</Label>
+                  <ExpandableBody text={b.deal_strategy.what} />
+                </SectionCard>
+                <SectionCard>
+                  <Label>How</Label>
+                  <ol className="space-y-1.5 pl-0.5">
+                    {b.deal_strategy.how.map((step, i) => (
+                      <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground leading-relaxed">
+                        <span className="text-[10px] font-bold text-primary/60 mt-0.5 flex-shrink-0">{i + 1}.</span>
+                        {step}
+                      </li>
+                    ))}
+                  </ol>
+                </SectionCard>
+                <SectionCard>
+                  <Label>Why</Label>
+                  <ExpandableBody text={b.deal_strategy.why} />
+                </SectionCard>
+              </div>
+            </CollapsibleSection>
+
+            {/* Positioning */}
+            <CollapsibleSection title="Positioning" subtitle="Executive POV and stakeholder talk tracks" defaultOpen={false}>
+              <div className="space-y-2.5">
+                <SectionCard>
+                  <Label>Executive Point of View</Label>
+                  <ExpandableBody text={b.positioning.executive_pov} />
+                </SectionCard>
+                <div className="space-y-1.5">
+                  <Label>Talk Tracks</Label>
+                  {b.positioning.talk_tracks.map((tt, i) => (
+                    <SectionCard key={i}>
+                      <p className="text-[10px] font-semibold text-foreground">{tt.persona}</p>
+                      <ExpandableBody text={tt.message} />
+                    </SectionCard>
+                  ))}
+                </div>
+              </div>
+            </CollapsibleSection>
+
+            {/* Commercial Assets */}
+            <CollapsibleSection title="Commercial Assets" subtitle="ROI prompts, value hypotheses, KPIs, sizing inputs" defaultOpen={false}>
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label>ROI Prompts</Label>
+                  {b.commercial_assets.roi_prompts.map((r, i) => (
+                    <SectionCard key={i}>
+                      <p className="text-[10px] font-semibold text-foreground">{r.label}</p>
+                      <ExpandableBody text={r.question} />
+                    </SectionCard>
+                  ))}
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Value Hypotheses</Label>
+                  {b.commercial_assets.value_hypotheses.map((v, i) => (
+                    <SectionCard key={i}>
+                      <p className="text-[10px] font-semibold text-foreground">{v.label}</p>
+                      <ExpandableBody text={v.description} />
+                    </SectionCard>
+                  ))}
+                </div>
+                <div className="space-y-1.5">
+                  <Label>KPIs</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                    {b.commercial_assets.kpis.map((k, i) => (
+                      <SectionCard key={i} className="p-2.5">
+                        <p className="text-[10px] font-semibold text-foreground">{k.label}</p>
+                        <p className="text-[11px] text-primary font-medium">{k.target}</p>
+                      </SectionCard>
+                    ))}
                   </div>
                 </div>
-              </SectionCard>
-            ))}
-          </div>
-          <div className="space-y-2">
-            <Label>Pilot Scope</Label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <SectionCard>
-                <p className="text-[10px] font-semibold text-foreground">In Scope</p>
-                <ul className="space-y-1">
-                  {b.delivery_assets.pilot_scope.in_scope.map((s, i) => (
-                    <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
-                      <ChevronRight className="w-3 h-3 text-primary/40 mt-0.5 flex-shrink-0" /> {s}
-                    </li>
+                <div className="space-y-1.5">
+                  <Label>Sizing Inputs</Label>
+                  {b.commercial_assets.sizing_inputs.map((s, i) => (
+                    <SectionCard key={i} className="p-2.5">
+                      <p className="text-[10px] font-semibold text-foreground">{s.label}</p>
+                      <Body>{s.value}</Body>
+                    </SectionCard>
                   ))}
-                </ul>
-              </SectionCard>
-              <SectionCard>
-                <p className="text-[10px] font-semibold text-foreground">Out of Scope</p>
-                <ul className="space-y-1">
-                  {b.delivery_assets.pilot_scope.out_of_scope.map((s, i) => (
-                    <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
-                      <span className="text-destructive/40 mt-0.5 flex-shrink-0 text-[10px]">-</span> {s}
-                    </li>
+                </div>
+              </div>
+            </CollapsibleSection>
+
+            {/* Delivery Assets */}
+            <CollapsibleSection title="Delivery Assets" subtitle="Discovery agenda, workshop plan, pilot scope" defaultOpen={false}>
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label>Discovery Agenda</Label>
+                  {b.delivery_assets.discovery_agenda.map((d, i) => (
+                    <SectionCard key={i} className="p-2.5">
+                      <p className="text-[10px] font-semibold text-foreground">{d.theme}</p>
+                      <ExpandableBody text={d.question} />
+                    </SectionCard>
                   ))}
-                </ul>
-              </SectionCard>
-              <SectionCard>
-                <p className="text-[10px] font-semibold text-foreground">Deliverables</p>
-                <ul className="space-y-1">
-                  {b.delivery_assets.pilot_scope.deliverables.map((d, i) => (
-                    <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
-                      <ChevronRight className="w-3 h-3 text-primary/40 mt-0.5 flex-shrink-0" /> {d}
-                    </li>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Workshop Plan</Label>
+                  {b.delivery_assets.workshop_plan.map((w, i) => (
+                    <SectionCard key={i} className="p-2.5">
+                      <div className="flex items-start gap-2">
+                        <span className="text-[10px] font-bold text-primary/60 mt-0.5 flex-shrink-0">{i + 1}.</span>
+                        <div>
+                          <p className="text-[10px] font-semibold text-foreground">{w.step}</p>
+                          <ExpandableBody text={w.description} />
+                        </div>
+                      </div>
+                    </SectionCard>
                   ))}
-                </ul>
-              </SectionCard>
-              <SectionCard>
-                <p className="text-[10px] font-semibold text-foreground">Stakeholders</p>
-                <ul className="space-y-1">
-                  {b.delivery_assets.pilot_scope.stakeholders.map((s, i) => (
-                    <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
-                      <ChevronRight className="w-3 h-3 text-primary/40 mt-0.5 flex-shrink-0" /> {s}
-                    </li>
-                  ))}
-                </ul>
-              </SectionCard>
-            </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Pilot Scope</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <SectionCard>
+                      <p className="text-[10px] font-semibold text-foreground">In Scope</p>
+                      <ul className="space-y-1">
+                        {b.delivery_assets.pilot_scope.in_scope.map((s, i) => (
+                          <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                            <ChevronRight className="w-3 h-3 text-primary/40 mt-0.5 flex-shrink-0" /> {s}
+                          </li>
+                        ))}
+                      </ul>
+                    </SectionCard>
+                    <SectionCard>
+                      <p className="text-[10px] font-semibold text-foreground">Out of Scope</p>
+                      <ul className="space-y-1">
+                        {b.delivery_assets.pilot_scope.out_of_scope.map((s, i) => (
+                          <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                            <span className="text-destructive/40 mt-0.5 flex-shrink-0 text-[10px]">-</span> {s}
+                          </li>
+                        ))}
+                      </ul>
+                    </SectionCard>
+                    <SectionCard>
+                      <p className="text-[10px] font-semibold text-foreground">Deliverables</p>
+                      <ul className="space-y-1">
+                        {b.delivery_assets.pilot_scope.deliverables.map((d, i) => (
+                          <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                            <ChevronRight className="w-3 h-3 text-primary/40 mt-0.5 flex-shrink-0" /> {d}
+                          </li>
+                        ))}
+                      </ul>
+                    </SectionCard>
+                    <SectionCard>
+                      <p className="text-[10px] font-semibold text-foreground">Stakeholders</p>
+                      <ul className="space-y-1">
+                        {b.delivery_assets.pilot_scope.stakeholders.map((s, i) => (
+                          <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                            <ChevronRight className="w-3 h-3 text-primary/40 mt-0.5 flex-shrink-0" /> {s}
+                          </li>
+                        ))}
+                      </ul>
+                    </SectionCard>
+                  </div>
+                </div>
+              </div>
+            </CollapsibleSection>
+
+            {/* Enablement */}
+            <CollapsibleSection title="Enablement" subtitle="Seller and engineer preparation" defaultOpen={false}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <SectionCard>
+                  <Label>Seller</Label>
+                  <ul className="space-y-1.5">
+                    {b.enablement.seller.map((s, i) => (
+                      <li key={i} className="text-xs text-muted-foreground leading-relaxed flex items-start gap-1.5">
+                        <ChevronRight className="w-3 h-3 text-primary/40 mt-0.5 flex-shrink-0" /> {s}
+                      </li>
+                    ))}
+                  </ul>
+                </SectionCard>
+                <SectionCard>
+                  <Label>Engineer</Label>
+                  <ul className="space-y-1.5">
+                    {b.enablement.engineer.map((s, i) => (
+                      <li key={i} className="text-xs text-muted-foreground leading-relaxed flex items-start gap-1.5">
+                        <ChevronRight className="w-3 h-3 text-primary/40 mt-0.5 flex-shrink-0" /> {s}
+                      </li>
+                    ))}
+                  </ul>
+                </SectionCard>
+              </div>
+            </CollapsibleSection>
+
+            {/* Open Questions */}
+            <CollapsibleSection title="Open Questions" subtitle="Items to validate before advancing" defaultOpen={false}>
+              <ul className="space-y-1.5">
+                {b.open_questions.map((q, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground leading-relaxed">
+                    <HelpCircle className="w-3 h-3 text-muted-foreground/50 mt-0.5 flex-shrink-0" />
+                    {q}
+                  </li>
+                ))}
+              </ul>
+            </CollapsibleSection>
+
+            {/* Sources button inside drawer */}
+            {citationCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setSourcesOpen(true)}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-muted/40 border border-border/50 text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <FileText className="w-3 h-3" />
+                Sources ({citationCount})
+              </button>
+            )}
           </div>
         </div>
-      </CollapsibleSection>
-
-      {/* Enablement — collapsed */}
-      <CollapsibleSection title="Enablement" subtitle="Seller and engineer preparation" defaultOpen={false}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          <SectionCard>
-            <Label>Seller</Label>
-            <ul className="space-y-1.5">
-              {b.enablement.seller.map((s, i) => (
-                <li key={i} className="text-xs text-muted-foreground leading-relaxed flex items-start gap-1.5">
-                  <ChevronRight className="w-3 h-3 text-primary/40 mt-0.5 flex-shrink-0" /> {s}
-                </li>
-              ))}
-            </ul>
-          </SectionCard>
-          <SectionCard>
-            <Label>Engineer</Label>
-            <ul className="space-y-1.5">
-              {b.enablement.engineer.map((s, i) => (
-                <li key={i} className="text-xs text-muted-foreground leading-relaxed flex items-start gap-1.5">
-                  <ChevronRight className="w-3 h-3 text-primary/40 mt-0.5 flex-shrink-0" /> {s}
-                </li>
-              ))}
-            </ul>
-          </SectionCard>
-        </div>
-      </CollapsibleSection>
-
-      {/* Open Questions — collapsed */}
-      <CollapsibleSection title="Open Questions" subtitle="Items to validate before advancing" defaultOpen={false}>
-        <ul className="space-y-1.5">
-          {b.open_questions.map((q, i) => (
-            <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground leading-relaxed">
-              <HelpCircle className="w-3 h-3 text-muted-foreground/50 mt-0.5 flex-shrink-0" />
-              {q}
-            </li>
-          ))}
-        </ul>
-      </CollapsibleSection>
+      )}
 
       {/* Sources modal */}
       {sourcesOpen && b.signal_citation_ids && b.signal_citation_ids.length > 0 && (
