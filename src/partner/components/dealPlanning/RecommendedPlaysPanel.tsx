@@ -1,12 +1,15 @@
 // RecommendedPlaysPanel — vertical bar chart Recommended Plays
 // Partner-only, non-breaking. Scoring/propensity logic unchanged.
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import {
   Sparkles, TrendingUp, ChevronRight, ChevronDown, Trash2, Zap, Info,
+  X, Upload, FileText, Link2, Plus,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import type { PromotedSignal } from '@/data/partner/dealPlanStore';
 import { scorePlayPacks, type PropensityInput, type ScoredPlay } from '@/partner/lib/dealPlanning/propensity';
 import { addSelectedPack, removeSelectedPack, getSelectedPacks, addContentRequest, getActivePlay, clearActivePlay } from '@/partner/data/dealPlanning/selectedPackStore';
@@ -16,6 +19,7 @@ import { getActiveSignalIds } from '@/partner/data/dealPlanning/activeSignalsSto
 import { getActiveInitiativeIds } from '@/partner/data/dealPlanning/activeInitiativesStore';
 import { getActiveTrendIds } from '@/partner/data/dealPlanning/activeTrendsStore';
 import { buildSignalPool } from '@/partner/data/dealPlanning/signalPool';
+import { listMemoryItems, addMemoryItem, type MemoryItemType } from '@/data/partner/accountMemoryStore';
 import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from '@/components/ui/collapsible';
@@ -82,6 +86,12 @@ export function RecommendedPlaysPanel({
   const [driversOpen, setDriversOpen] = useState(false);
   const [readinessPlay, setReadinessPlay] = useState<ScoredPlay | null>(null);
   const [selectedPlayId, setSelectedPlayId] = useState<string | null>(null);
+  const [showReviewDrawer, setShowReviewDrawer] = useState(false);
+  const [reviewTab, setReviewTab] = useState<'signals' | 'evidence' | 'initiatives' | 'trends'>('signals');
+  const [evidenceVersion, setEvidenceVersion] = useState(0);
+  const [addEvidenceMode, setAddEvidenceMode] = useState<'upload' | 'paste' | 'link' | null>(null);
+  const [pasteText, setPasteText] = useState('');
+  const [linkUrl, setLinkUrl] = useState('');
 
   // Active signals from the picker store
   const activeSignalIds = useMemo(() => getActiveSignalIds(accountId), [accountId, promotedSignals, showPicker]);
@@ -390,6 +400,237 @@ export function RecommendedPlaysPanel({
             </div>
           )}
         </>
+      )}
+
+      {/* ===== Inputs Summary Row ===== */}
+      {(() => {
+        const evidenceCount = listMemoryItems(accountId).length + evidenceVersion * 0;
+        return (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/20 border border-border/40">
+            <p className="text-[11px] text-muted-foreground flex-1">
+              <span className="font-medium text-foreground">Inputs:</span>{' '}
+              Signals {displaySignalCount}/3 · Evidence {evidenceCount} · Initiatives {initiativeSummary} · Trends {trendSummary}
+            </p>
+            <button
+              onClick={() => { setReviewTab('signals'); setShowReviewDrawer(true); }}
+              className="text-[10px] font-medium text-primary hover:text-primary/80 transition-colors whitespace-nowrap underline underline-offset-2"
+            >
+              Review &amp; edit inputs
+            </button>
+          </div>
+        );
+      })()}
+
+      {/* ===== Review & Edit Inputs Drawer ===== */}
+      {showReviewDrawer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowReviewDrawer(false)}>
+          <div
+            className="bg-card border border-border rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[80vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Drawer header */}
+            <div className="p-4 border-b border-border/40 flex items-center justify-between flex-shrink-0">
+              <div>
+                <p className="text-sm font-semibold text-foreground">Review &amp; edit inputs</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Manage the inputs that influence recommendations.</p>
+              </div>
+              <button onClick={() => setShowReviewDrawer(false)} className="p-1.5 rounded text-muted-foreground hover:text-foreground transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex items-center gap-1 px-4 pt-3 flex-shrink-0">
+              {(['signals', 'evidence', 'initiatives', 'trends'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setReviewTab(tab)}
+                  className={cn(
+                    'px-3 py-1.5 rounded-md text-[11px] font-medium transition-all capitalize',
+                    reviewTab === tab
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/40',
+                  )}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {/* Signals tab */}
+              {reviewTab === 'signals' && (
+                <div className="space-y-2">
+                  <p className="text-[11px] text-muted-foreground">
+                    Select up to 3 signals to influence recommendations.
+                  </p>
+                  <div className="space-y-1.5">
+                    {(() => {
+                      const pool = buildSignalPool(accountId, weekOf);
+                      return activeSignalIds.map((id) => {
+                        const found = pool.find((p) => p.id === id);
+                        return (
+                          <div key={id} className="flex items-center gap-2 p-2 rounded border border-border/40 bg-background">
+                            <span className="text-[11px] text-foreground flex-1 truncate">{found?.title ?? id}</span>
+                          </div>
+                        );
+                      });
+                    })()}
+                    {activeSignalIds.length === 0 && (
+                      <p className="text-[10px] text-muted-foreground italic">No signals selected — using all available.</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => { setShowReviewDrawer(false); onOpenPicker(); }}
+                    className="text-[11px] font-medium text-primary hover:text-primary/80 transition-colors underline underline-offset-2"
+                  >
+                    Adjust drivers
+                  </button>
+                </div>
+              )}
+
+              {/* Evidence tab */}
+              {reviewTab === 'evidence' && (
+                <div className="space-y-3">
+                  {(() => {
+                    const items = listMemoryItems(accountId);
+                    return (
+                      <>
+                        {items.length > 0 ? (
+                          <div className="space-y-1.5">
+                            {items.map((item) => (
+                              <div key={item.id} className="flex items-center gap-2 p-2 rounded border border-border/40 bg-background">
+                                <FileText className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[11px] text-foreground truncate">{item.title}</p>
+                                  <p className="text-[9px] text-muted-foreground">{item.type.replace(/_/g, ' ')}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-[10px] text-muted-foreground italic">No evidence added yet.</p>
+                        )}
+
+                        {/* Add evidence inline */}
+                        {!addEvidenceMode ? (
+                          <button
+                            onClick={() => setAddEvidenceMode('paste')}
+                            className="inline-flex items-center gap-1.5 text-[11px] font-medium text-primary hover:text-primary/80 transition-colors"
+                          >
+                            <Plus className="w-3 h-3" /> Add evidence
+                          </button>
+                        ) : (
+                          <div className="space-y-2 rounded-lg border border-border/50 bg-muted/10 p-3">
+                            <div className="flex items-center gap-1">
+                              {([
+                                { key: 'upload' as const, icon: <Upload className="w-3 h-3" />, label: 'Upload' },
+                                { key: 'paste' as const, icon: <FileText className="w-3 h-3" />, label: 'Paste text' },
+                                { key: 'link' as const, icon: <Link2 className="w-3 h-3" />, label: 'Add link' },
+                              ]).map((t) => (
+                                <button
+                                  key={t.key}
+                                  onClick={() => setAddEvidenceMode(t.key)}
+                                  className={cn(
+                                    'flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium transition-all',
+                                    addEvidenceMode === t.key
+                                      ? 'bg-primary text-primary-foreground'
+                                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/40',
+                                  )}
+                                >
+                                  {t.icon} {t.label}
+                                </button>
+                              ))}
+                            </div>
+
+                            {addEvidenceMode === 'upload' && (
+                              <div className="rounded border border-dashed border-border/60 bg-background p-4 text-center">
+                                <Upload className="w-5 h-5 text-muted-foreground mx-auto mb-1" />
+                                <p className="text-[10px] text-muted-foreground">File upload (simulated in demo)</p>
+                                <button
+                                  onClick={() => {
+                                    addMemoryItem({ account_id: accountId, type: 'other', title: `Uploaded file — ${new Date().toLocaleDateString()}` });
+                                    setAddEvidenceMode(null);
+                                    setEvidenceVersion((v) => v + 1);
+                                    onRefresh?.();
+                                    toast.success('Evidence uploaded');
+                                  }}
+                                  className="mt-2 text-[10px] font-medium text-primary hover:text-primary/80"
+                                >
+                                  Simulate upload
+                                </button>
+                              </div>
+                            )}
+
+                            {addEvidenceMode === 'paste' && (
+                              <div className="space-y-2">
+                                <Textarea value={pasteText} onChange={(e) => setPasteText(e.target.value)} placeholder="Paste notes, transcript, or context…" className="text-xs min-h-[60px]" />
+                                <button
+                                  disabled={!pasteText.trim()}
+                                  onClick={() => {
+                                    addMemoryItem({ account_id: accountId, type: 'transcript_notes', title: pasteText.trim().slice(0, 60) || 'Pasted notes', content_text: pasteText.trim() });
+                                    setPasteText(''); setAddEvidenceMode(null); setEvidenceVersion((v) => v + 1); onRefresh?.(); toast.success('Evidence saved');
+                                  }}
+                                  className={cn('h-7 px-3 rounded text-[10px] font-medium transition-colors', pasteText.trim() ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-muted text-muted-foreground cursor-not-allowed')}
+                                >
+                                  Save
+                                </button>
+                              </div>
+                            )}
+
+                            {addEvidenceMode === 'link' && (
+                              <div className="space-y-2">
+                                <Input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://…" className="text-xs h-8" />
+                                <button
+                                  disabled={!linkUrl.trim()}
+                                  onClick={() => {
+                                    addMemoryItem({ account_id: accountId, type: 'link', title: linkUrl.trim().slice(0, 80), url: linkUrl.trim() });
+                                    setLinkUrl(''); setAddEvidenceMode(null); setEvidenceVersion((v) => v + 1); onRefresh?.(); toast.success('Link saved');
+                                  }}
+                                  className={cn('h-7 px-3 rounded text-[10px] font-medium transition-colors', linkUrl.trim() ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-muted text-muted-foreground cursor-not-allowed')}
+                                >
+                                  Save
+                                </button>
+                              </div>
+                            )}
+
+                            <button onClick={() => setAddEvidenceMode(null)} className="text-[10px] text-muted-foreground hover:text-foreground transition-colors">Cancel</button>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
+
+              {/* Initiatives tab */}
+              {reviewTab === 'initiatives' && (
+                <div className="space-y-2">
+                  <p className="text-[11px] text-muted-foreground">
+                    {activeInitiativeIds.length > 0 ? `${activeInitiativeIds.length} initiative(s) selected.` : 'All initiatives included by default.'}
+                  </p>
+                  <button onClick={() => { setShowReviewDrawer(false); onOpenPicker(); }} className="text-[11px] font-medium text-primary hover:text-primary/80 transition-colors underline underline-offset-2">Adjust drivers</button>
+                </div>
+              )}
+
+              {/* Trends tab */}
+              {reviewTab === 'trends' && (
+                <div className="space-y-2">
+                  <p className="text-[11px] text-muted-foreground">
+                    {activeTrendIds.length > 0 ? `${activeTrendIds.length} trend(s) selected.` : 'All trends included by default.'}
+                  </p>
+                  <button onClick={() => { setShowReviewDrawer(false); onOpenPicker(); }} className="text-[11px] font-medium text-primary hover:text-primary/80 transition-colors underline underline-offset-2">Adjust drivers</button>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-border/40 flex-shrink-0">
+              <button onClick={() => setShowReviewDrawer(false)} className="w-full h-9 rounded text-[11px] font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">Done</button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ===== Collapsible Selected Drivers ===== */}
