@@ -35,4 +35,10 @@ export function isAtMax(focusId: string): boolean {
   return (store.get(focusId) ?? []).length >= MAX_ACTIVE;
 }
 
+/** Idempotent atomic replace — deduplicate + enforce max 3 */
+export function setActiveSignals(focusId: string, ids: string[]): void {
+  const unique = [...new Set(ids)].slice(0, MAX_ACTIVE);
+  store.set(focusId, unique);
+}
+
 export const MAX_ACTIVE_SIGNALS = MAX_ACTIVE;

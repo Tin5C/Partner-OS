@@ -7,6 +7,10 @@ export interface DealPlanTriggerContext {
   customer: string;
   signalTitle: string;
   tags?: string[];
+  /** Account ID for signal-first entry */
+  focusId?: string;
+  /** Entry source — 'quickbrief' for signal-first path */
+  entry?: 'quickbrief' | 'inbox' | 'story';
 }
 
 let _pending: DealPlanTriggerContext | null = null;

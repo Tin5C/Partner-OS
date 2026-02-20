@@ -13,7 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { DEAL_PLAN_TRIGGER_EVENT, consumeDealPlanTrigger } from '@/data/partner/dealPlanTrigger';
+import { DEAL_PLAN_TRIGGER_EVENT } from '@/data/partner/dealPlanTrigger';
 
 export type PartnerMode = 'quick-brief' | 'deal-planning' | 'account-intelligence';
 
@@ -22,13 +22,10 @@ const FOCUS_ID = 'schindler'; // demo default
 export function PartnerModeSection() {
   const [mode, setMode] = useState<PartnerMode>('quick-brief');
 
-  // Listen for deal-plan trigger from story viewer
+  // Listen for deal-plan trigger from story viewer or quick brief — only switch mode, do NOT consume context
   useEffect(() => {
     const handler = () => {
-      const ctx = consumeDealPlanTrigger();
-      if (ctx) {
-        setMode('deal-planning');
-      }
+      setMode('deal-planning');
     };
     window.addEventListener(DEAL_PLAN_TRIGGER_EVENT, handler);
     return () => window.removeEventListener(DEAL_PLAN_TRIGGER_EVENT, handler);
