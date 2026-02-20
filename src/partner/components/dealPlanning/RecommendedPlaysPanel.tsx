@@ -323,6 +323,14 @@ export function RecommendedPlaysPanel({
                 {selectedPlay.gaps.length} gap{selectedPlay.gaps.length !== 1 ? 's' : ''}
               </p>
 
+              <p className="text-[11px] text-muted-foreground italic">
+                <span className="font-medium text-foreground not-italic">Why recommended:</span>{' '}
+                {selectedPlay.gaps.length > 0
+                  ? `Strong alignment with ${selectedPlay.drivers.length} selected signal${selectedPlay.drivers.length !== 1 ? 's' : ''} and ${trendsTitlesForScoring.length} trend${trendsTitlesForScoring.length !== 1 ? 's' : ''}; ${selectedPlay.gaps.length} readiness gap${selectedPlay.gaps.length !== 1 ? 's' : ''} to close.`
+                  : `Strong alignment with ${selectedPlay.drivers.length} selected signal${selectedPlay.drivers.length !== 1 ? 's' : ''} and ${trendsTitlesForScoring.length} trend${trendsTitlesForScoring.length !== 1 ? 's' : ''}.`
+                }
+              </p>
+
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setReadinessPlay(selectedPlay)}
